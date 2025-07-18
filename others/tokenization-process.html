@@ -1,0 +1,1110 @@
+
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代币化流程 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .step-circle {
+            transition: all 0.3s ease;
+        }
+        .step-circle.completed {
+            background: #10B981;
+            border-color: #10B981;
+            color: white;
+        }
+        .step-circle.active {
+            background: #3B82F6;
+            border-color: #3B82F6;
+            color: white;
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.3);
+        }
+        .step-circle.pending {
+            background: #E5E7EB;
+            border-color: #D1D5DB;
+            color: #6B7280;
+        }
+        .step-line-progress {
+            background: linear-gradient(90deg, #10B981, #3B82F6);
+            transition: width 0.8s ease;
+        }
+        .notification {
+            transform: translateX(100%);
+            transition: transform 0.3s ease;
+        }
+        .notification.show {
+            transform: translateX(0);
+        }
+        .document-status.verified {
+            background: #DCFCE7;
+            color: #166534;
+        }
+        .document-status.pending {
+            background: #FEF3C7;
+            color: #92400E;
+        }
+        .document-status.rejected {
+            background: #FEE2E2;
+            color: #991B1B;
+        }
+        .upload-area {
+            transition: all 0.3s ease;
+        }
+        .upload-area:hover {
+            border-color: #3B82F6;
+            background: rgba(59, 130, 246, 0.05);
+        }
+        .upload-area.dragover {
+            border-color: #3B82F6;
+            background: rgba(59, 130, 246, 0.1);
+            transform: scale(1.02);
+        }
+        .progress-bar {
+            background: linear-gradient(90deg, #3B82F6, #1D4ED8);
+            animation: progress-shine 2s infinite;
+        }
+        @keyframes progress-shine {
+            0% { background-position: -200px 0; }
+            100% { background-position: 200px 0; }
+        }
+        .fade-in {
+            animation: fadeIn 0.6s ease;
+        }
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .modal {
+            display: none;
+        }
+        .modal.show {
+            display: block;
+            animation: modalShow 0.3s ease;
+        }
+        @keyframes modalShow {
+            from {
+                opacity: 0;
+                transform: translate(-50%, -50%) scale(0.9);
+            }
+            to {
+                opacity: 1;
+                transform: translate(-50%, -50%) scale(1);
+            }
+        }
+        .pulse-dot {
+            animation: pulse-dot 2s infinite;
+        }
+        @keyframes pulse-dot {
+            0% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+            50% {
+                transform: scale(1.2);
+                opacity: 0.5;
+            }
+            100% {
+                transform: scale(0.8);
+                opacity: 1;
+            }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- 左侧Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-blue-600">PropertyChain</h1>
+                    </div>
+                </div>
+                
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">首页</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">我的资产</a>
+                    <a href="#" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">交易市场</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">投资组合</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center pulse-dot">3</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://placehold.co/32x32" alt="用户头像显示公司标识和高级会员徽章" class="h-8 w-8 rounded-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <!-- 页面头部 -->
+        <div class="mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">资产代币化流程</h1>
+                        <p class="mt-2 text-gray-600">将您的实物资产转换为数字代币，开启全新的投资体验</p>
+                        <div class="mt-4 flex items-center space-x-4">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-blue-100 text-blue-800">
+                                <i class="fas fa-building mr-2"></i>
+                                嘉华国际中心B座
+                            </span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-clock mr-2"></i>
+                                审核中
+                            </span>
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-shield-check mr-2"></i>
+                                安全认证
+                            </span>
+                        </div>
+                    </div>
+                    <div class="flex space-x-3">
+                        <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" onclick="showHelp()">
+                            <i class="fas fa-question-circle mr-2"></i>
+                            帮助
+                        </button>
+                        <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors" onclick="goBack()">
+                            <i class="fas fa-arrow-left mr-2"></i>
+                            返回
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 流程进度条 -->
+        <div class="mb-8">
+            <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-8">
+                <div class="relative">
+                    <!-- 进度线 -->
+                    <div class="absolute top-6 left-0 w-full h-1 bg-gray-200 rounded-full">
+                        <div class="step-line-progress h-full rounded-full" id="progressLine" style="width: 33.33%;"></div>
+                    </div>
+                    
+                    <!-- 步骤节点 -->
+                    <div class="relative flex justify-between">
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(1)">
+                            <div class="step-circle completed w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step1-circle">
+                                <i class="fas fa-check"></i>
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">资产提交</div>
+                                <div class="text-xs text-gray-500 mt-1">已完成</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(2)">
+                            <div class="step-circle active w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step2-circle">
+                                2
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">文档审核</div>
+                                <div class="text-xs text-gray-500 mt-1">进行中</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(3)">
+                            <div class="step-circle pending w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step3-circle">
+                                3
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">资产评估</div>
+                                <div class="text-xs text-gray-500 mt-1">待开始</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(4)">
+                            <div class="step-circle pending w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step4-circle">
+                                4
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">合规审查</div>
+                                <div class="text-xs text-gray-500 mt-1">待开始</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(5)">
+                            <div class="step-circle pending w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step5-circle">
+                                5
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">智能合约</div>
+                                <div class="text-xs text-gray-500 mt-1">待开始</div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex flex-col items-center cursor-pointer" onclick="goToStep(6)">
+                            <div class="step-circle pending w-12 h-12 rounded-full border-4 flex items-center justify-center font-bold text-sm" id="step6-circle">
+                                6
+                            </div>
+                            <div class="mt-3 text-center">
+                                <div class="text-sm font-medium text-gray-900">发行上线</div>
+                                <div class="text-xs text-gray-500 mt-1">待开始</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧主内容 -->
+            <div class="lg:col-span-2">
+                <!-- 当前步骤详情 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
+                    <div class="mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-2">文档审核中</h2>
+                        <p class="text-gray-600">我们的法务和财务专家正在仔细审核您提交的所有文档，确保符合监管要求和平台标准</p>
+                    </div>
+
+                    <!-- 审核进度 -->
+                    <div class="mb-6">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-sm font-medium text-gray-700">整体进度</span>
+                            <span class="text-sm text-gray-500">65% 完成</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-3">
+                            <div class="bg-gradient-to-r from-blue-500 to-blue-600 h-3 rounded-full progress-bar" style="width: 65%"></div>
+                        </div>
+                        <div class="mt-2 flex justify-between text-xs text-gray-500">
+                            <span>预计完成时间：2024年1月23日</span>
+                            <span>剩余时间：约2天</span>
+                        </div>
+                    </div>
+
+                    <!-- 文档列表 -->
+                    <div class="space-y-4">
+                        <h3 class="text-lg font-medium text-gray-900">文档审核清单</h3>
+                        
+                        <div class="border border-gray-200 rounded-lg p-4 card-hover bg-green-50 border-green-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">房产证</h4>
+                                        <p class="text-xs text-gray-500">上传时间：2024-01-20 14:35 | 2.3MB</p>
+                                        <p class="text-xs text-green-600 mt-1">审核完成：产权清晰，信息完整</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="document-status verified px-3 py-1 rounded-full text-xs font-medium">
+                                        已验证
+                                    </span>
+                                    <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4 card-hover bg-green-50 border-green-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">土地使用权证</h4>
+                                        <p class="text-xs text-gray-500">上传时间：2024-01-20 14:37 | 1.8MB</p>
+                                        <p class="text-xs text-green-600 mt-1">审核完成：使用权明确，期限充足</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="document-status verified px-3 py-1 rounded-full text-xs font-medium">
+                                        已验证
+                                    </span>
+                                    <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4 card-hover bg-yellow-50 border-yellow-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-excel text-green-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">资产评估报告</h4>
+                                        <p class="text-xs text-gray-500">上传时间：2024-01-20 15:12 | 5.2MB</p>
+                                        <p class="text-xs text-yellow-600 mt-1">正在审核：财务团队验证评估数据</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="document-status pending px-3 py-1 rounded-full text-xs font-medium">
+                                        审核中
+                                    </span>
+                                    <div class="w-4 h-4 border-2 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4 card-hover bg-green-50 border-green-200">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-word text-blue-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">租赁合同汇总</h4>
+                                        <p class="text-xs text-gray-500">上传时间：2024-01-20 15:20 | 8.9MB</p>
+                                        <p class="text-xs text-green-600 mt-1">审核完成：租赁关系稳定，收益可预期</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="document-status verified px-3 py-1 rounded-full text-xs font-medium">
+                                        已验证
+                                    </span>
+                                    <i class="fas fa-check-circle text-green-500 text-lg"></i>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="border border-red-300 bg-red-50 rounded-lg p-4 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-red-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-pdf text-red-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">建设工程规划许可证</h4>
+                                        <p class="text-xs text-red-600 font-medium">需要提供最新版本</p>
+                                        <p class="text-xs text-gray-500 mt-1">当前版本过期，请提供有效期内的许可证</p>
+                                    </div>
+                                </div>
+                                <button class="px-4 py-2 bg-blue-500 text-white text-sm rounded-lg hover:bg-blue-600 transition-colors flex items-center space-x-2" onclick="showUploadModal()">
+                                    <i class="fas fa-upload"></i>
+                                    <span>补充文档</span>
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="border border-gray-200 rounded-lg p-4 card-hover">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-3">
+                                    <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center">
+                                        <i class="fas fa-file-contract text-purple-600"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-gray-900">环保合规证明</h4>
+                                        <p class="text-xs text-gray-500">上传时间：2024-01-20 16:15 | 3.1MB</p>
+                                        <p class="text-xs text-blue-600 mt-1">等待审核：已提交，排队等待</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-xs font-medium">
+                                        等待中
+                                    </span>
+                                    <i class="fas fa-clock text-gray-400"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 审核反馈 -->
+                    <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h4 class="text-sm font-semibold text-blue-900 mb-2">
+                            <i class="fas fa-comments mr-2"></i>
+                            审核团队反馈
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="bg-white rounded-lg p-3">
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://placehold.co/24x24" alt="法务专家张律师头像" class="w-6 h-6 rounded-full">
+                                    <div>
+                                        <div class="text-xs font-medium text-gray-900">张律师 - 法务专家</div>
+                                        <div class="text-xs text-gray-600 mt-1">房产证和土地使用权证审核完成，产权清晰无争议。建议尽快补充有效的规划许可证。</div>
+                                        <div class="text-xs text-gray-500 mt-2">2024-01-21 10:30</div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="bg-white rounded-lg p-3">
+                                <div class="flex items-start space-x-3">
+                                    <img src="https://placehold.co/24x24" alt="财务专家李会计师头像" class="w-6 h-6 rounded-full">
+                                    <div>
+                                        <div class="text-xs font-medium text-gray-900">李会计师 - 财务专家</div>
+                                        <div class="text-xs text-gray-600 mt-1">租赁合同分析完成，收益数据真实可靠。评估报告正在最后确认中，预计明天完成。</div>
+                                        <div class="text-xs text-gray-500 mt-2">2024-01-21 14:15</div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 预期时间线 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">流程时间线</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="w-3 h-3 bg-green-500 rounded-full mt-1.5"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">文档审核</div>
+                                        <div class="text-xs text-gray-500">法务和财务团队文档验证</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-medium text-green-600">进行中</div>
+                                        <div class="text-xs text-gray-500">预计 1月23日完成</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-green-500 h-1.5 rounded-full" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="w-3 h-3 bg-blue-500 rounded-full mt-1.5 pulse-dot"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">资产评估</div>
+                                        <div class="text-xs text-gray-500">第三方专业评估机构评估</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-medium text-blue-600">待开始</div>
+                                        <div class="text-xs text-gray-500">预计 1月25日完成</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-blue-500 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="w-3 h-3 bg-gray-300 rounded-full mt-1.5"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">合规审查</div>
+                                        <div class="text-xs text-gray-500">监管要求和平台标准检查</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-medium text-gray-600">待开始</div>
+                                        <div class="text-xs text-gray-500">预计 1月28日完成</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3 pb-3 border-b border-gray-100">
+                            <div class="w-3 h-3 bg-gray-300 rounded-full mt-1.5"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">智能合约部署</div>
+                                        <div class="text-xs text-gray-500">区块链智能合约开发和测试</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-medium text-gray-600">待开始</div>
+                                        <div class="text-xs text-gray-500">预计 1月30日完成</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="flex items-start space-x-3">
+                            <div class="w-3 h-3 bg-gray-300 rounded-full mt-1.5"></div>
+                            <div class="flex-1">
+                                <div class="flex justify-between items-start">
+                                    <div>
+                                        <div class="text-sm font-medium text-gray-900">正式发行上线</div>
+                                        <div class="text-xs text-gray-500">代币发行并开放交易</div>
+                                    </div>
+                                    <div class="text-right">
+                                        <div class="text-xs font-medium text-gray-600">待开始</div>
+                                        <div class="text-xs text-gray-500">预计 2月1日上线</div>
+                                    </div>
+                                </div>
+                                <div class="mt-2 w-full bg-gray-200 rounded-full h-1.5">
+                                    <div class="bg-gray-300 h-1.5 rounded-full" style="width: 0%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧边栏 -->
+            <div class="space-y-6">
+                <!-- 资产概况 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">资产概况</h3>
+                    <div class="space-y-4">
+                        <div class="text-center bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-4">
+                            <img src="https://placehold.co/200x120" alt="嘉华国际中心B座建筑外观，现代化商务楼设计" class="w-full h-20 object-cover rounded-lg mb-3">
+                            <h4 class="font-medium text-gray-900">嘉华国际中心B座</h4>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-3 text-sm">
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-600">资产估值</div>
+                                <div class="font-semibold text-blue-600">¥8.5亿</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-600">代币总量</div>
+                                <div class="font-semibold">100万枚</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-600">每枚价格</div>
+                                <div class="font-semibold">¥850</div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-3">
+                                <div class="text-gray-600">预期收益</div>
+                                <div class="font-semibold text-green-600">6.8%/年</div>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">建筑面积</span>
+                                <span class="font-medium">45,000㎡</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">可租面积</span>
+                                <span class="font-medium">38,000㎡</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">出租率</span>
+                                <span class="font-medium text-green-600">94.2%</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">年租金收入</span>
+                                <span class="font-medium">¥4,800万</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">位置</span>
+                                <span class="font-medium">深圳福田CBD</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 审核团队 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">专业审核团队</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3 p-3 bg-green-50 rounded-lg">
+                            <img src="https://placehold.co/40x40" alt="法务专家张律师专业头像" class="w-10 h-10 rounded-full">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">张明华律师</div>
+                                <div class="text-xs text-gray-500">高级法务专家 · 15年经验</div>
+                                <div class="text-xs text-green-600">负责法律文件审核</div>
+                            </div>
+                            <i class="fas fa-check-circle text-green-500"></i>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 p-3 bg-yellow-50 rounded-lg">
+                            <img src="https://placehold.co/40x40" alt="财务专家李会计师专业头像" class="w-10 h-10 rounded-full">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">李慧敏会计师</div>
+                                <div class="text-xs text-gray-500">注册会计师 · CPA</div>
+                                <div class="text-xs text-yellow-600">负责财务数据验证</div>
+                            </div>
+                            <div class="w-4 h-4 border-2 border-yellow-500 border-t-transparent rounded-full animate-spin"></div>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <img src="https://placehold.co/40x40" alt="资产评估师王专家头像" class="w-10 h-10 rounded-full">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">王建国评估师</div>
+                                <div class="text-xs text-gray-500">高级资产评估师</div>
+                                <div class="text-xs text-gray-600">负责资产价值评估</div>
+                            </div>
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                        
+                        <div class="flex items-center space-x-3 p-3 bg-gray-50 rounded-lg">
+                            <img src="https://placehold.co/40x40" alt="合规专家陈顾问头像" class="w-10 h-10 rounded-full">
+                            <div class="flex-1">
+                                <div class="text-sm font-medium text-gray-900">陈雅文顾问</div>
+                                <div class="text-xs text-gray-500">合规风控专家</div>
+                                <div class="text-xs text-gray-600">负责合规性审查</div>
+                            </div>
+                            <i class="fas fa-clock text-gray-400"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 实时更新 -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="text-lg font-semibold text-gray-900">实时更新</h3>
+                        <span class="inline-flex items-center px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">
+                            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 pulse-dot"></div>
+                            实时
+                        </span>
+                    </div>
+                    <div class="space-y-3 max-h-48 overflow-y-auto">
+                        <div class="text-xs bg-blue-50 border-l-2 border-blue-500 p-2 rounded">
+                            <div class="font-medium text-blue-900">15:42</div>
+                            <div class="text-blue-700">财务专家正在审核评估报告第3章节</div>
+                        </div>
+                        <div class="text-xs bg-green-50 border-l-2 border-green-500 p-2 rounded">
+                            <div class="font-medium text-green-900">14:28</div>
+                            <div class="text-green-700">租赁合同审核完成，收益数据验证通过</div>
+                        </div>
+                        <div class="text-xs bg-yellow-50 border-l-2 border-yellow-500 p-2 rounded">
+                            <div class="font-medium text-yellow-900">13:15</div>
+                            <div class="text-yellow-700">系统检测到规划许可证需要更新</div>
+                        </div>
+                        <div class="text-xs bg-green-50 border-l-2 border-green-500 p-2 rounded">
+                            <div class="font-medium text-green-900">11:30</div>
+                            <div class="text-green-700">土地使用权证审核通过</div>
+                        </div>
+                        <div class="text-xs bg-green-50 border-l-2 border-green-500 p-2 rounded">
+                            <div class="font-medium text-green-900">10:45</div>
+                            <div class="text-green-700">房产证法务审核完成</div>
+                        </div>
+                        <div class="text-xs bg-blue-50 border-l-2 border-blue-500 p-2 rounded">
+                            <div class="font-medium text-blue-900">09:30</div>
+                            <div class="text-blue-700">文档审核流程正式启动</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 联系支持 -->
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-xl p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">需要帮助？</h3>
+                    <p class="text-sm mb-4 opacity-90">我们的专业团队随时为您提供支持</p>
+                    <div class="space-y-2">
+                        <button class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2" onclick="contactSupport()">
+                            <i class="fas fa-phone"></i>
+                            <span>电话咨询：400-888-9999</span>
+                        </button>
+                        <button class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2" onclick="openChat()">
+                            <i class="fas fa-comments"></i>
+                            <span>在线客服 (24/7)</span>
+                        </button>
+                        <button class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white text-sm py-2 px-3 rounded-lg transition-colors flex items-center justify-center space-x-2" onclick="sendEmail()">
+                            <i class="fas fa-envelope"></i>
+                            <span>邮件咨询</span>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 安全提醒 -->
+                <div class="bg-yellow-50 border border-yellow-200 rounded-xl p-4">
+                    <div class="flex items-start space-x-3">
+                        <i class="fas fa-shield-alt text-yellow-600 mt-1"></i>
+                        <div>
+                            <h4 class="text-sm font-medium text-yellow-800">安全提醒</h4>
+                            <ul class="text-xs text-yellow-700 mt-2 space-y-1">
+                                <li>• 请确保文档真实有效</li>
+                                <li>• 及时响应审核团队要求</li>
+                                <li>• 保持联系方式畅通</li>
+                                <li>• 如有疑问及时咨询</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="space-y-3">
+                    <button class="w-full bg-blue-600 hover:bg-blue-700 text-white font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2" onclick="viewDetailedReport()">
+                        <i class="fas fa-chart-line"></i>
+                        <span>查看详细报告</span>
+                    </button>
+                    <button class="w-full bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium py-3 px-4 rounded-lg transition-colors flex items-center justify-center space-x-2" onclick="downloadDocuments()">
+                        <i class="fas fa-download"></i>
+                        <span>下载审核记录</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文档上传模态框 -->
+    <div class="fixed inset-0 bg-black bg-opacity-50 z-50 modal" id="uploadModal">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-xl max-w-lg w-full p-6 transform">
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="text-xl font-semibold text-gray-900">补充建设工程规划许可证</h3>
+                    <button onclick="closeUploadModal()" class="text-gray-400 hover:text-gray-600 transition-colors">
+                        <i class="fas fa-times text-lg"></i>
+                    </button>
+                </div>
+                
+                <div class="mb-6">
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4 mb-4">
+                        <div class="flex items-start space-x-3">
+                            <i class="fas fa-exclamation-triangle text-yellow-600 mt-0.5"></i>
+                            <div>
+                                <h4 class="text-sm font-medium text-yellow-800">文档要求</h4>
+                                <ul class="text-sm text-yellow-700 mt-2 space-y-1">
+                                    <li>• 有效期内的建设工程规划许可证</li>
+                                    <li>• 文档清晰，信息完整</li>
+                                    <li>• PDF格式，文件大小不超过10MB</li>
+                                </ul>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-area border-2 border-dashed border-gray-300 rounded-lg p-8 text-center cursor-pointer hover:border-blue-500 transition-colors" onclick="selectFile()" ondrop="dropFile(event)" ondragover="allowDrop(event)">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-medium text-gray-600 mb-2">点击上传或拖拽文件到此处</p>
+                        <p class="text-sm text-gray-500">支持 PDF、DOC、DOCX 格式，最大 10MB</p>
+                        <input type="file" id="fileInput" class="hidden" accept=".pdf,.doc,.docx" onchange="handleFileSelect(event)">
+                    </div>
+                </div>
+                
+                <div class="flex space-x-3">
+                    <button onclick="closeUploadModal()" class="flex-1 px-4 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium transition-colors">
+                        取消
+                    </button>
+                    <button onclick="uploadFile()" class="flex-1 px-4 py-3 bg-blue-500 text-white rounded-lg hover:bg-blue-600 font-medium transition-colors" id="uploadBtn" disabled>
+                        上传文档
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知消息 -->
+    <div class="fixed top-4 right-4 max-w-sm w-full notification bg-white rounded-lg shadow-lg border border-gray-200 p-4 z-50" id="notification">
+        <div class="flex items-start space-x-3">
+            <div class="flex-shrink-0">
+                <i class="fas fa-info-circle text-blue-500 text-lg" id="notificationIcon"></i>
+            </div>
+            <div class="flex-1 min-w-0">
+                <div class="text-sm font-medium text-gray-900" id="notificationTitle">通知标题</div>
+                <div class="text-sm text-gray-600 mt-1" id="notificationMessage">通知内容</div>
+            </div>
+            <button onclick="hideNotification()" class="flex-shrink-0 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times"></i>
+            </button>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentStep = 2;
+        let selectedFile = null;
+        
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepDisplay();
+            startRealTimeUpdates();
+            
+            // 模拟文档审核进度更新
+            simulateDocumentProgress();
+        });
+
+        // 更新步骤显示
+        function updateStepDisplay() {
+            const progressPercentage = ((currentStep - 1) / 5) * 100;
+            document.getElementById('progressLine').style.width = progressPercentage + '%';
+        }
+
+        // 跳转到指定步骤
+        function goToStep(step) {
+            if (step <= currentStep) {
+                currentStep = step;
+                updateStepDisplay();
+                // 这里可以添加步骤内容切换逻辑
+                showNotification('info', '步骤切换', `已切换到步骤 ${step}`);
+            }
+        }
+
+        // 显示上传模态框
+        function showUploadModal() {
+            document.getElementById('uploadModal').classList.add('show');
+        }
+
+        // 关闭上传模态框
+        function closeUploadModal() {
+            document.getElementById('uploadModal').classList.remove('show');
+            selectedFile = null;
+            document.getElementById('fileInput').value = '';
+            document.getElementById('uploadBtn').disabled = true;
+        }
+
+        // 文件选择
+        function selectFile() {
+            document.getElementById('fileInput').click();
+        }
+
+        // 处理文件选择
+        function handleFileSelect(event) {
+            selectedFile = event.target.files[0];
+            if (selectedFile) {
+                document.getElementById('uploadBtn').disabled = false;
+                showNotification('info', '文件已选择', `已选择文件: ${selectedFile.name}`);
+                
+                // 验证文件
+                validateFile(selectedFile);
+            }
+        }
+
+        // 验证文件
+        function validateFile(file) {
+            const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+            const maxSize = 10 * 1024 * 1024; // 10MB
+
+            if (!allowedTypes.includes(file.type)) {
+                showNotification('error', '文件类型错误', '请选择PDF、DOC或DOCX格式的文件');
+                document.getElementById('uploadBtn').disabled = true;
+                return false;
+            }
+
+            if (file.size > maxSize) {
+                showNotification('error', '文件过大', '文件大小不能超过10MB');
+                document.getElementById('uploadBtn').disabled = true;
+                return false;
+            }
+
+            return true;
+        }
+
+        // 拖拽上传
+        function allowDrop(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function dropFile(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                selectedFile = files[0];
+                document.getElementById('fileInput').files = files;
+                if (validateFile(selectedFile)) {
+                    document.getElementById('uploadBtn').disabled = false;
+                    showNotification('info', '文件已选择', `已选择文件: ${selectedFile.name}`);
+                }
+            }
+        }
+
+        // 上传文件
+        function uploadFile() {
+            if (selectedFile) {
+                document.getElementById('uploadBtn').disabled = true;
+                document.getElementById('uploadBtn').innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <div class="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                        <span>上传中...</span>
+                    </div>
+                `;
+                
+                // 模拟上传过程
+                setTimeout(() => {
+                    closeUploadModal();
+                    showNotification('success', '上传成功', '建设工程规划许可证已成功上传，正在安排审核');
+                    
+                    // 重置按钮状态
+                    document.getElementById('uploadBtn').disabled = false;
+                    document.getElementById('uploadBtn').innerHTML = '上传文档';
+                    
+                    // 模拟文档审核
+                    setTimeout(() => {
+                        updateDocumentStatus('建设工程规划许可证', 'verified');
+                    }, 3000);
+                }, 2000);
+            }
+        }
+
+        // 更新文档状态
+        function updateDocumentStatus(docName, status) {
+            // 这里可以添加更新文档状态的逻辑
+            if (status === 'verified') {
+                showNotification('success', '审核完成', `${docName} 已通过审核`);
+                
+                // 更新进度
+                updateOverallProgress();
+            }
+        }
+
+        // 更新整体进度
+        function updateOverallProgress() {
+            const progressBar = document.querySelector('.progress-bar');
+            const progressText = document.querySelector('.progress-bar').parentElement.previousElementSibling.querySelector('span');
+            
+            // 增加进度
+            progressBar.style.width = '85%';
+            progressText.textContent = '85% 完成';
+            
+            showNotification('info', '进度更新', '文档审核进度已更新至85%');
+        }
+
+        // 显示通知
+        function showNotification(type, title, message) {
+            const notification = document.getElementById('notification');
+            const icon = document.getElementById('notificationIcon');
+            const titleEl = document.getElementById('notificationTitle');
+            const messageEl = document.getElementById('notificationMessage');
+
+            // 设置图标和样式
+            const icons = {
+                success: 'fas fa-check-circle text-green-500',
+                error: 'fas fa-exclamation-circle text-red-500',
+                warning: 'fas fa-exclamation-triangle text-yellow-500',
+                info: 'fas fa-info-circle text-blue-500'
+            };
+
+            icon.className = icons[type] || icons.info;
+            titleEl.textContent = title;
+            messageEl.textContent = message;
+
+            // 显示通知
+            notification.classList.add('show');
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                hideNotification();
+            }, 5000);
+        }
+
+        // 隐藏通知
+        function hideNotification() {
+            document.getElementById('notification').classList.remove('show');
+        }
+
+        // 模拟实时更新
+        function startRealTimeUpdates() {
+            const updates = [
+                { time: '16:15', message: '系统自动保存审核进度', type: 'info' },
+                { time: '16:32', message: '评估报告第4章节审核完成', type: 'success' },
+                { time: '16:48', message: '财务数据交叉验证中', type: 'info' },
+            ];
+
+            let index = 0;
+            setInterval(() => {
+                if (index < updates.length) {
+                    addRealTimeUpdate(updates[index]);
+                    index++;
+                }
+            }, 300000); // 5分钟更新一次
+        }
+
+        // 添加实时更新
+        function addRealTimeUpdate(update) {
+            const container = document.querySelector('.max-h-48.overflow-y-auto');
+            const newUpdate = document.createElement('div');
+            newUpdate.className = `text-xs bg-${update.type === 'success' ? 'green' : 'blue'}-50 border-l-2 border-${update.type === 'success' ? 'green' : 'blue'}-500 p-2 rounded`;
+            newUpdate.innerHTML = `
+                <div class="font-medium text-${update.type === 'success' ? 'green' : 'blue'}-900">${update.time}</div>
+                <div class="text-${update.type === 'success' ? 'green' : 'blue'}-700">${update.message}</div>
+            `;
+            
+            container.insertBefore(newUpdate, container.firstChild);
+            
+            // 限制更新数量
+            const updates = container.children;
+            if (updates.length > 10) {
+                container.removeChild(updates[updates.length - 1]);
+            }
+        }
+
+        // 模拟文档审核进度
+        function simulateDocumentProgress() {
+            // 模拟评估报告审核完成
+            setTimeout(() => {
+                updateDocumentStatus('资产评估报告', 'verified');
+                updateOverallProgress();
+            }, 300000); // 5分钟后
+        }
+
+        // 联系支持功能
+        function contactSupport() {
+            showNotification('info', '客服电话', '400-888-9999 (工作时间: 9:00-21:00)');
+        }
+
+        function openChat() {
+            showNotification('info', '在线客服', '正在为您连接专属客服顾问...');
+            // 这里可以集成实际的在线客服系统
+        }
+
+        function sendEmail() {
+            showNotification('info', '邮件咨询', '请发送邮件至: support@propertychain.com');
+        }
+
+        // 其他功能
+        function showHelp() {
+            showNotification('info', '帮助中心', '正在打开帮助文档...');
+        }
+
+        function goBack() {
+            if (confirm('确定要返回上一页吗？当前进度将会保存。')) {
+                window.history.back();
+            }
+        }
+
+        function viewDetailedReport() {
+            showNotification('info', '生成报告', '正在生成详细审核报告...');
+        }
+
+        function downloadDocuments() {
+            showNotification('info', '下载中', '正在准备文档下载包...');
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(event) {
+            // ESC键关闭模态框
+            if (event.key === 'Escape') {
+                closeUploadModal();
+            }
+            
+            // Ctrl+R 刷新状态
+            if (event.ctrlKey && event.key === 'r') {
+                event.preventDefault();
+                showNotification('info', '状态刷新', '正在刷新审核状态...');
+                setTimeout(() => {
+                    location.reload();
+                }, 1000);
+            }
+        });
+
+        // 页面卸载前保存状态
+        window.addEventListener('beforeunload', function(event) {
+            // 保存当前状态到localStorage
+            localStorage.setItem('tokenizationProgress', JSON.stringify({
+                currentStep: currentStep,
+                timestamp: Date.now()
+            }));
+        });
+    </script>
+</body>
+</html>
+

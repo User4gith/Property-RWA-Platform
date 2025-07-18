@@ -1,0 +1,774 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>嘉华国际中心B座 - 资产详情 | PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .card-hover {
+            transition: all 0.3s ease;
+        }
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .status-active {
+            color: #10B981;
+            background: #ECFDF5;
+        }
+        .status-pending {
+            color: #F59E0B;
+            background: #FFFBEB;
+        }
+        .status-maintenance {
+            color: #EF4444;
+            background: #FEF2F2;
+        }
+        .property-image {
+            height: 400px;
+            object-fit: cover;
+        }
+        .metric-card {
+            border-left: 4px solid #3B82F6;
+        }
+        .document-verified {
+            color: #10B981;
+            background: #ECFDF5;
+        }
+        .document-pending {
+            color: #F59E0B;
+            background: #FFFBEB;
+        }
+        .yield-positive {
+            color: #10B981;
+        }
+        .yield-negative {
+            color: #EF4444;
+        }
+        .investment-tier-gold {
+            background: linear-gradient(135deg, #FCD34D, #F59E0B);
+            color: white;
+        }
+        .investment-tier-silver {
+            background: linear-gradient(135deg, #E5E7EB, #9CA3AF);
+            color: white;
+        }
+        .chart-container {
+            height: 300px;
+        }
+        .mini-chart {
+            height: 100px;
+        }
+        .location-map {
+            height: 250px;
+            background: #F3F4F6;
+            border-radius: 8px;
+        }
+        .tenant-avatar {
+            width: 32px;
+            height: 32px;
+        }
+        .progress-ring {
+            transform: rotate(-90deg);
+        }
+        .blockchain-verified {
+            background: linear-gradient(135deg, #10B981, #059669);
+            color: white;
+        }
+        .reit-badge {
+            background: linear-gradient(135deg, #8B5CF6, #7C3AED);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <!-- 左侧Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold gradient-bg bg-clip-text text-transparent">PropertyChain</h1>
+                    </div>
+                </div>
+                
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="asset-manager-dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">我的资产</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">文档管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">收益报告</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主体内容 -->
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 面包屑导航 -->
+        <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="asset-manager-dashboard.html" class="text-blue-600 hover:text-blue-800">仪表盘</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li><a href="asset-list.html" class="text-blue-600 hover:text-blue-800">我的资产</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li class="text-gray-500">嘉华国际中心B座</li>
+            </ol>
+        </nav>
+
+        <!-- 资产头部信息 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex items-center justify-between mb-6">
+                <div class="flex items-center space-x-4">
+                    <div class="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center">
+                        <i class="fas fa-building text-2xl text-blue-600"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">嘉华国际中心B座</h1>
+                        <p class="text-gray-600 mt-1">中国香港中环区金融街88号</p>
+                        <div class="flex items-center space-x-4 mt-2">
+                            <span class="blockchain-verified px-3 py-1 rounded-full text-sm font-medium">
+                                <i class="fas fa-shield-alt mr-1"></i>
+                                链上认证
+                            </span>
+                            <span class="reit-badge px-3 py-1 rounded-full text-sm font-medium">
+                                REIT-HK-001
+                            </span>
+                            <span class="status-active px-3 py-1 rounded-full text-sm font-medium">
+                                <i class="fas fa-circle mr-1"></i>
+                                运营中
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex space-x-3">
+                    <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-share-alt mr-2"></i>
+                        分享资产
+                    </button>
+                    <button class="px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-download mr-2"></i>
+                        导出报告
+                    </button>
+                    <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                        <i class="fas fa-coins mr-2"></i>
+                        管理代币
+                    </button>
+                </div>
+            </div>
+
+            <!-- 关键指标 -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-6">
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">¥8.5亿</div>
+                    <div class="text-sm text-gray-600">当前估值</div>
+                    <div class="text-xs text-green-600 mt-1">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +2.3% 较上月
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">6.8%</div>
+                    <div class="text-sm text-gray-600">年化收益率</div>
+                    <div class="text-xs text-green-600 mt-1">
+                        <i class="fas fa-arrow-up mr-1"></i>
+                        +0.2% 较上季
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">92%</div>
+                    <div class="text-sm text-gray-600">出租率</div>
+                    <div class="text-xs text-yellow-600 mt-1">
+                        <i class="fas fa-minus mr-1"></i>
+                        与上月持平
+                    </div>
+                </div>
+                <div class="text-center">
+                    <div class="text-3xl font-bold text-gray-900">100万</div>
+                    <div class="text-sm text-gray-600">代币总量</div>
+                    <div class="text-xs text-gray-500 mt-1">
+                        ¥850/枚
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 主要内容区域 -->
+        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <!-- 左侧主内容 -->
+            <div class="lg:col-span-2 space-y-8">
+                <!-- 资产图片和虚拟导览 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&auto=format&fit=crop&w=1200&h=400&q=80" 
+                             alt="嘉华国际中心B座" class="property-image w-full">
+                        <div class="absolute top-4 left-4">
+                            <button class="bg-white bg-opacity-90 backdrop-blur-sm px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-opacity-100">
+                                <i class="fas fa-eye mr-2"></i>
+                                虚拟导览
+                            </button>
+                        </div>
+                        <div class="absolute top-4 right-4">
+                            <button class="bg-white bg-opacity-90 backdrop-blur-sm px-3 py-2 rounded-lg text-sm font-medium text-gray-700 hover:bg-opacity-100">
+                                <i class="fas fa-camera mr-2"></i>
+                                更多图片 (12)
+                            </button>
+                        </div>
+                    </div>
+                    <div class="p-6">
+                        <div class="flex space-x-4">
+                            <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=120&h=80&fit=crop" alt="外观" class="w-20 h-16 rounded-lg object-cover cursor-pointer hover:opacity-75">
+                            <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=120&h=80&fit=crop" alt="大堂" class="w-20 h-16 rounded-lg object-cover cursor-pointer hover:opacity-75">
+                            <img src="https://images.unsplash.com/photo-1497366754035-f200968a6e72?w=120&h=80&fit=crop" alt="办公区" class="w-20 h-16 rounded-lg object-cover cursor-pointer hover:opacity-75">
+                            <img src="https://images.unsplash.com/photo-1524758631624-e2822e304c36?w=120&h=80&fit=crop" alt="会议室" class="w-20 h-16 rounded-lg object-cover cursor-pointer hover:opacity-75">
+                            <button class="w-20 h-16 bg-gray-100 rounded-lg flex items-center justify-center text-gray-500 hover:bg-gray-200">
+                                <span class="text-sm">+8</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资产详细信息 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">资产信息</h2>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="space-y-4">
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">建筑面积</span>
+                                <span class="font-medium">45,000 ㎡</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">可租赁面积</span>
+                                <span class="font-medium">38,500 ㎡</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">楼层数</span>
+                                <span class="font-medium">地上42层，地下3层</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">建成年份</span>
+                                <span class="font-medium">2019年</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">物业类型</span>
+                                <span class="font-medium">甲级写字楼</span>
+                            </div>
+                        </div>
+                        <div class="space-y-4">
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">停车位</span>
+                                <span class="font-medium">450个</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">绿色认证</span>
+                                <span class="font-medium">LEED金级</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">管理公司</span>
+                                <span class="font-medium">第一太平戴维斯</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">保险公司</span>
+                                <span class="font-medium">中国平安</span>
+                            </div>
+                            <div class="flex justify-between py-2 border-b border-gray-100">
+                                <span class="text-gray-600">评估机构</span>
+                                <span class="font-medium">仲量联行</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 收益分析 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">收益分析</h2>
+                        <div class="flex space-x-2">
+                            <button class="px-3 py-1 text-sm bg-blue-100 text-blue-700 rounded-lg">月度</button>
+                            <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">季度</button>
+                            <button class="px-3 py-1 text-sm text-gray-600 hover:bg-gray-100 rounded-lg">年度</button>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                        <div class="metric-card bg-blue-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">月租金收入</p>
+                                    <p class="text-2xl font-bold text-gray-900">¥1,850万</p>
+                                    <p class="text-sm yield-positive">+3.2% 环比</p>
+                                </div>
+                                <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-blue-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card bg-green-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">净运营收入</p>
+                                    <p class="text-2xl font-bold text-gray-900">¥1,520万</p>
+                                    <p class="text-sm yield-positive">+2.8% 环比</p>
+                                </div>
+                                <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-chart-line text-green-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="metric-card bg-purple-50 p-4 rounded-lg">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-sm text-gray-600">资本增值</p>
+                                    <p class="text-2xl font-bold text-gray-900">¥620万</p>
+                                    <p class="text-sm yield-positive">+1.8% 环比</p>
+                                </div>
+                                <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-trending-up text-purple-600"></i>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 收益图表 -->
+                    <div class="chart-container">
+                        <canvas id="revenueChart"></canvas>
+                    </div>
+                </div>
+
+                <!-- 租户信息 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h2 class="text-xl font-semibold text-gray-900">租户信息</h2>
+                        <span class="text-sm text-gray-600">出租率: 92%</span>
+                    </div>
+                    
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <img src="https://images.unsplash.com/photo-1560472354-b33ff0c44a43?w=64&h=64&fit=crop" alt="腾讯" class="tenant-avatar rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">腾讯科技</h4>
+                                    <p class="text-sm text-gray-600">30-35层 | 8,500㎡</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-gray-900">¥680万/月</p>
+                                <p class="text-sm text-gray-600">2027年到期</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <img src="https://images.unsplash.com/photo-1611224923853-80b023f02d71?w=64&h=64&fit=crop" alt="阿里巴巴" class="tenant-avatar rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">阿里巴巴</h4>
+                                    <p class="text-sm text-gray-600">20-25层 | 6,800㎡</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-gray-900">¥520万/月</p>
+                                <p class="text-sm text-gray-600">2026年到期</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-4">
+                                <img src="https://images.unsplash.com/photo-1549923746-c502d488b3ea?w=64&h=64&fit=crop" alt="汇丰银行" class="tenant-avatar rounded-lg">
+                                <div>
+                                    <h4 class="font-medium text-gray-900">汇丰银行</h4>
+                                    <p class="text-sm text-gray-600">15-18层 | 5,200㎡</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-gray-900">¥420万/月</p>
+                                <p class="text-sm text-gray-600">2025年到期</p>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-yellow-50 rounded-lg border border-yellow-200">
+                            <div class="flex items-center space-x-4">
+                                <div class="tenant-avatar bg-gray-200 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-plus text-gray-500"></i>
+                                </div>
+                                <div>
+                                    <h4 class="font-medium text-gray-900">空置区域</h4>
+                                    <p class="text-sm text-gray-600">12-14层 | 3,200㎡</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="font-medium text-gray-700">待租</p>
+                                <p class="text-sm text-gray-600">预期¥280万/月</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 区块链记录 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h2 class="text-xl font-semibold text-gray-900 mb-6">区块链记录</h2>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between p-4 bg-green-50 rounded-lg border border-green-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-check text-green-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">代币合约部署</p>
+                                    <p class="text-sm text-gray-600">合约地址: 0x742d...a8f3</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">2024-01-15</p>
+                                <a href="#" class="text-xs text-blue-600 hover:underline">查看交易</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-file-contract text-blue-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">产权证明上链</p>
+                                    <p class="text-sm text-gray-600">哈希: 0x9a2b...c5d7</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">2024-01-12</p>
+                                <a href="#" class="text-xs text-blue-600 hover:underline">查看证明</a>
+                            </div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg border border-purple-200">
+                            <div class="flex items-center space-x-3">
+                                <div class="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                                    <i class="fas fa-shield-alt text-purple-600 text-sm"></i>
+                                </div>
+                                <div>
+                                    <p class="font-medium text-gray-900">智能合约审计</p>
+                                    <p class="text-sm text-gray-600">审计机构: CertiK</p>
+                                </div>
+                            </div>
+                            <div class="text-right">
+                                <p class="text-sm text-gray-600">2024-01-10</p>
+                                <a href="#" class="text-xs text-blue-600 hover:underline">查看报告</a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 右侧边栏 -->
+            <div class="space-y-6">
+                <!-- 投资摘要 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">投资摘要</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">代币价格</span>
+                            <span class="text-sm font-medium">¥850</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">最小投资额</span>
+                            <span class="text-sm font-medium">¥8,500 (10枚)</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">投资级别</span>
+                            <span class="investment-tier-gold px-2 py-1 rounded text-xs font-medium">金级资产</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">已售比例</span>
+                            <span class="text-sm font-medium">68%</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 68%"></div>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">分红频率</span>
+                            <span class="text-sm font-medium">季度</span>
+                        </div>
+                        <div class="flex justify-between">
+                            <span class="text-sm text-gray-600">下次分红</span>
+                            <span class="text-sm font-medium">2024-03-31</span>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-6 pt-4 border-t border-gray-200">
+                        <button class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium">
+                            <i class="fas fa-shopping-cart mr-2"></i>
+                            购买代币
+                        </button>
+                        <button class="w-full mt-2 border border-gray-300 text-gray-700 py-3 rounded-lg hover:bg-gray-50 font-medium">
+                            <i class="fas fa-heart mr-2"></i>
+                            加入关注
+                        </button>
+                    </div>
+                </div>
+
+                <!-- 位置信息 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">位置信息</h3>
+                    <div class="location-map mb-4 flex items-center justify-center text-gray-500">
+                        <div class="text-center">
+                            <i class="fas fa-map-marker-alt text-3xl mb-2"></i>
+                            <p class="text-sm">交互式地图</p>
+                            <p class="text-xs">中环金融街88号</p>
+                        </div>
+                    </div>
+                    <div class="space-y-3">
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-subway text-blue-600"></i>
+                            <span class="text-sm text-gray-700">中环站 - 步行2分钟</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-plane text-blue-600"></i>
+                            <span class="text-sm text-gray-700">香港国际机场 - 45分钟</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-utensils text-blue-600"></i>
+                            <span class="text-sm text-gray-700">周边餐厅 - 50+</span>
+                        </div>
+                        <div class="flex items-center space-x-3">
+                            <i class="fas fa-hospital text-blue-600"></i>
+                            <span class="text-sm text-gray-700">养和医院 - 步行8分钟</span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 风险评估 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">风险评估</h3>
+                    <div class="space-y-4">
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">市场风险</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-1/4 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-green-600">低</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">流动性风险</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-2/4 h-2 bg-yellow-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-yellow-600">中</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">信用风险</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-1/4 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-green-600">低</span>
+                            </div>
+                        </div>
+                        <div class="flex justify-between items-center">
+                            <span class="text-sm text-gray-600">运营风险</span>
+                            <div class="flex items-center space-x-2">
+                                <div class="w-16 h-2 bg-gray-200 rounded-full">
+                                    <div class="w-1/3 h-2 bg-green-500 rounded-full"></div>
+                                </div>
+                                <span class="text-xs text-green-600">低</span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="mt-4 p-3 bg-green-50 rounded-lg">
+                        <div class="flex items-center space-x-2">
+                            <i class="fas fa-shield-alt text-green-600"></i>
+                            <span class="text-sm font-medium text-green-800">综合评级: A+</span>
+                        </div>
+                        <p class="text-xs text-green-700 mt-1">优质资产，风险可控</p>
+                    </div>
+                </div>
+
+                <!-- 相关文档 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">相关文档</h3>
+                    <div class="space-y-3">
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-file-pdf text-red-600"></i>
+                                <span class="text-sm text-gray-700">资产评估报告</span>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-file-contract text-blue-600"></i>
+                                <span class="text-sm text-gray-700">法律意见书</span>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-file-excel text-green-600"></i>
+                                <span class="text-sm text-gray-700">财务报表</span>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                        <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-file-image text-purple-600"></i>
+                                <span class="text-sm text-gray-700">建筑图纸</span>
+                            </div>
+                            <button class="text-blue-600 hover:text-blue-800 text-sm">
+                                <i class="fas fa-download"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 市场表现 -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4">市场表现</h3>
+                    <div class="mini-chart mb-4">
+                        <canvas id="priceChart"></canvas>
+                    </div>
+                    <div class="grid grid-cols-2 gap-4 text-center">
+                        <div>
+                            <div class="text-lg font-bold text-gray-900">¥850</div>
+                            <div class="text-xs text-gray-600">当前价格</div>
+                        </div>
+                        <div>
+                            <div class="text-lg font-bold text-green-600">+2.4%</div>
+                            <div class="text-xs text-gray-600">30天涨幅</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 联系信息 -->
+                <div class="bg-gradient-to-r from-blue-500 to-purple-600 rounded-lg p-6 text-white">
+                    <h3 class="text-lg font-semibold mb-2">专属客户经理</h3>
+                    <div class="flex items-center space-x-3 mb-4">
+                        <img src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=48&h=48&fit=crop&crop=face" alt="客户经理" class="w-12 h-12 rounded-full border-2 border-white">
+                        <div>
+                            <div class="font-medium">李经理</div>
+                            <div class="text-sm opacity-90">高级投资顾问</div>
+                        </div>
+                    </div>
+                    <div class="space-y-2">
+                        <button class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-2 px-3 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-phone mr-2"></i>
+                            +852 9876 5432
+                        </button>
+                        <button class="w-full bg-white bg-opacity-20 hover:bg-opacity-30 text-white py-2 px-3 rounded-lg text-sm transition-colors">
+                            <i class="fas fa-envelope mr-2"></i>
+                            发送邮件
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 相似资产推荐 -->
+        <div class="mt-12">
+            <div class="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+                <h2 class="text-xl font-semibold text-gray-900 mb-6">相似资产推荐</h2>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="border border-gray-200 rounded-lg overflow-hidden card-hover">
+                        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400&h=200&fit=crop" alt="国际金融中心" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">国际金融中心</h3>
+                            <p class="text-sm text-gray-600 mb-3">中环金融街核心地段</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold text-gray-900">¥1,200/枚</span>
+                                <span class="text-sm text-green-600">7.2% 收益</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg overflow-hidden card-hover">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400&h=200&fit=crop" alt="太古广场" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">太古广场三座</h3>
+                            <p class="text-sm text-gray-600 mb-3">金钟商务核心区</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold text-gray-900">¥950/枚</span>
+                                <span class="text-sm text-green-600">6.5% 收益</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="border border-gray-200 rounded-lg overflow-hidden card-hover">
+                        <img src="https://images.unsplash.com/photo-1497366216548-37526070297c?w=400&h=200&fit=crop" alt="环球贸易广场" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <h3 class="font-semibold text-gray-900 mb-2">环球贸易广场</h3>
+                            <p class="text-sm text-gray-600 mb-3">九龙尖沙咀地标</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-lg font-bold text-gray-900">¥1,100/枚</span>
+                                <span class="text-sm text-green-600">6.8% 收益</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知消息 -->
+    <div class="fixed top-4 right-4 z-50 notification" id="notification">
+        <div class="bg-white rounded-lg shadow-lg border border-gray-200 p-4 max-w-sm">
+            <div class="flex items-start space-x-3">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-info-circle text-blue-500"></i>
+                </div>
+                <div>
+                    <h4 class="text-sm font-medium text-gray-900">系统通知</h4>
+                    <p class="text-sm text-gray-600">您的资产已成功更新。</p>
+                </div>
+            </div>
+            <button class="mt-4 text-blue-600 hover:text-blue-800 text-sm">查看详情</button>
+        </div>
+    </div>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6">
+        <div class="container mx-auto text-center">
+            <p class="text-sm">© 2024 资产管理公司. 保留所有权利.</p>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="#" class="text-gray-400 hover:text-white">隐私政策</a>
+                <a href="#" class="text-gray-400 hover:text-white">服务条款</a>
+                <a href="#" class="text-gray-400 hover:text-white">联系我们</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>

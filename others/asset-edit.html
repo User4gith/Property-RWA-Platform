@@ -1,0 +1,963 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>编辑资产 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .step-indicator {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 600;
+            font-size: 0.875rem;
+        }
+        
+        .step-active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .step-completed {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .step-inactive {
+            background-color: #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            border-radius: 0.125rem;
+            transition: width 0.3s ease;
+        }
+        
+        .form-step {
+            display: none;
+        }
+        
+        .form-step.active {
+            display: block;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        
+        .tag-input {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+            padding: 0.5rem;
+            border: 1px solid #d1d5db;
+            border-radius: 0.375rem;
+            min-height: 2.5rem;
+        }
+        
+        .tag {
+            background-color: #eff6ff;
+            color: #1e40af;
+            padding: 0.25rem 0.5rem;
+            border-radius: 0.25rem;
+            font-size: 0.875rem;
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .tag button {
+            background: none;
+            border: none;
+            color: #1e40af;
+            cursor: pointer;
+            padding: 0;
+            margin-left: 0.25rem;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-xl font-bold text-gray-900">PropertyChain</h1>
+                    </div>
+                </div>
+                <div class="flex space-x-8">
+                    <a href="asset-manager-dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">我的资产</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">文档管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">收益报告</a>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=32&h=32&q=80" alt="用户头像" class="w-8 h-8 rounded-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="pt-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- 页面标题 -->
+            <div class="mb-8">
+                <div class="flex items-center space-x-4">
+                    <a href="asset-list.html" class="text-blue-600 hover:text-blue-800">
+                        <i class="fas fa-arrow-left"></i>
+                    </a>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">编辑资产</h1>
+                        <p class="mt-2 text-gray-600">修改您的房地产资产信息，确保数据准确性</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 进度指示器 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-active" id="step1-indicator">1</div>
+                        <span class="text-sm font-medium text-gray-900">资产基础信息</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 16.67%;" id="progress-bar"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-inactive" id="step2-indicator">2</div>
+                        <span class="text-sm font-medium text-gray-500">法律文档</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-inactive" id="step3-indicator">3</div>
+                        <span class="text-sm font-medium text-gray-500">财务信息</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-inactive" id="step4-indicator">4</div>
+                        <span class="text-sm font-medium text-gray-500">合规审查</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-inactive" id="step5-indicator">5</div>
+                        <span class="text-sm font-medium text-gray-500">代币化设置</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%;"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-inactive" id="step6-indicator">6</div>
+                        <span class="text-sm font-medium text-gray-500">完成</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单内容 -->
+            <form id="assetForm" class="space-y-8">
+                <!-- 步骤1：资产基础信息 -->
+                <div class="form-step active" id="step1">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="border-b border-gray-200 pb-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">资产基础信息</h2>
+                            <p class="mt-2 text-gray-600">请提供资产的基本信息，这些信息将用于生成资产的数字身份</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">资产名称 *</label>
+                                <input type="text" id="assetName" value="上海虹桥商务区办公楼A座" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入资产名称">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">资产类型 *</label>
+                                <select id="assetType" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">请选择资产类型</option>
+                                    <option value="residential" selected>住宅</option>
+                                    <option value="commercial">商业</option>
+                                    <option value="office">办公</option>
+                                    <option value="industrial">工业</option>
+                                    <option value="land">土地</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">资产编号</label>
+                                <input type="text" id="assetId" value="SHA-HQ-A001" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="系统自动生成或手动输入">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">建筑面积 (㎡) *</label>
+                                <input type="number" id="buildingArea" value="15000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入建筑面积">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">土地面积 (㎡)</label>
+                                <input type="number" id="landArea" value="8000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入土地面积">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">建成年份</label>
+                                <input type="number" id="buildYear" value="2020" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入建成年份">
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产地址 *</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <select id="province" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">请选择省份</option>
+                                    <option value="shanghai" selected>上海市</option>
+                                    <option value="beijing">北京市</option>
+                                    <option value="guangdong">广东省</option>
+                                </select>
+                                <select id="city" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">请选择城市</option>
+                                    <option value="shanghai" selected>上海市</option>
+                                </select>
+                                <select id="district" class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                    <option value="">请选择区县</option>
+                                    <option value="minhang" selected>闵行区</option>
+                                    <option value="huangpu">黄浦区</option>
+                                    <option value="xuhui">徐汇区</option>
+                                </select>
+                            </div>
+                            <input type="text" id="detailedAddress" value="虹桥商务区核心区申虹路688号" class="w-full mt-4 px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入详细地址">
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产描述</label>
+                            <textarea id="assetDescription" rows="4" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请描述资产的特点、优势等信息">该办公楼位于上海虹桥商务区核心地段，紧邻虹桥高铁站和虹桥机场，交通便利。建筑采用现代化设计，配备智能化办公系统，适合高端企业入驻。</textarea>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产标签</label>
+                            <div class="tag-input" id="tagContainer">
+                                <div class="tag">
+                                    商务办公
+                                    <button type="button" onclick="removeTag(this)">×</button>
+                                </div>
+                                <div class="tag">
+                                    交通便利
+                                    <button type="button" onclick="removeTag(this)">×</button>
+                                </div>
+                                <div class="tag">
+                                    智能化
+                                    <button type="button" onclick="removeTag(this)">×</button>
+                                </div>
+                                <input type="text" id="tagInput" placeholder="添加标签..." class="border-none outline-none bg-transparent flex-1 min-w-32">
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">资产图片</label>
+                            <div class="file-upload-area" id="imageUpload">
+                                <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-lg text-gray-600 mb-2">点击上传或拖拽图片到此处</p>
+                                <p class="text-sm text-gray-500">支持 JPG、PNG、GIF 格式，单个文件不超过 10MB</p>
+                                <input type="file" id="imageInput" multiple accept="image/*" class="hidden">
+                            </div>
+                            <div id="imagePreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4">
+                                <!-- 现有图片预览 -->
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80" alt="资产图片" class="w-full h-24 object-cover rounded-lg">
+                                    <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                                <div class="relative">
+                                    <img src="https://images.unsplash.com/photo-1560448204-e02f11c3d0e2?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=300&q=80" alt="资产图片" class="w-full h-24 object-cover rounded-lg">
+                                    <button type="button" class="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-xs hover:bg-red-600">
+                                        <i class="fas fa-times"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2：法律文档 -->
+                <div class="form-step" id="step2">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="border-b border-gray-200 pb-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">法律文档</h2>
+                            <p class="mt-2 text-gray-600">请上传资产相关的法律文档，确保资产的合法性和完整性</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">不动产权证 *</label>
+                                <div class="file-upload-area">
+                                    <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg text-gray-600 mb-2">上传不动产权证</p>
+                                    <p class="text-sm text-gray-500">支持 PDF、JPG、PNG 格式</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                                <div class="mt-2 text-sm text-green-600">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    已上传：不动产权证_沪房地闵字第123456号.pdf
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">土地使用证</label>
+                                <div class="file-upload-area">
+                                    <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg text-gray-600 mb-2">上传土地使用证</p>
+                                    <p class="text-sm text-gray-500">支持 PDF、JPG、PNG 格式</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                                <div class="mt-2 text-sm text-green-600">
+                                    <i class="fas fa-check-circle mr-1"></i>
+                                    已上传：土地使用证_沪地证字第789012号.pdf
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">建设工程规划许可证</label>
+                                <div class="file-upload-area">
+                                    <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg text-gray-600 mb-2">上传建设工程规划许可证</p>
+                                    <p class="text-sm text-gray-500">支持 PDF、JPG、PNG 格式</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">其他相关证件</label>
+                                <div class="file-upload-area">
+                                    <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-lg text-gray-600 mb-2">上传其他相关证件</p>
+                                    <p class="text-sm text-gray-500">如消防验收证、环评报告等</p>
+                                    <input type="file" class="hidden" multiple accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3：财务信息 -->
+                <div class="form-step" id="step3">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="border-b border-gray-200 pb-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">财务信息</h2>
+                            <p class="mt-2 text-gray-600">请提供资产的详细财务信息，用于估值和投资分析</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">资产估值 (万元) *</label>
+                                <input type="number" id="assetValue" value="50000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入资产估值">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">估值日期 *</label>
+                                <input type="date" id="valuationDate" value="2024-01-15" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">年租金收入 (万元)</label>
+                                <input type="number" id="annualRent" value="2500" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入年租金收入">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">年运营成本 (万元)</label>
+                                <input type="number" id="operatingCost" value="500" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入年运营成本">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">预期收益率 (%)</label>
+                                <input type="number" id="expectedReturn" value="5.2" step="0.1" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入预期年收益率">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">出租率 (%)</label>
+                                <input type="number" id="occupancyRate" value="95" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入当前出租率">
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">估值机构</label>
+                            <input type="text" id="valuationAgency" value="上海中原地产评估有限公司" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入估值机构名称">
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">估值报告</label>
+                            <div class="file-upload-area">
+                                <i class="fas fa-file-alt text-4xl text-gray-400 mb-4"></i>
+                                <p class="text-lg text-gray-600 mb-2">上传估值报告</p>
+                                <p class="text-sm text-gray-500">支持 PDF 格式</p>
+                                <input type="file" class="hidden" accept=".pdf">
+                            </div>
+                            <div class="mt-2 text-sm text-green-600">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                已上传：资产估值报告_2024年1月.pdf
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤4：合规审查 -->
+                <div class="form-step" id="step4">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="border-b border-gray-200 pb-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">合规审查</h2>
+                            <p class="mt-2 text-gray-600">请确认以下合规条件，确保资产符合代币化要求</p>
+                        </div>
+
+                        <div class="space-y-6">
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="legal-compliance" checked class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div>
+                                    <label for="legal-compliance" class="text-sm font-medium text-gray-700">法律合规性</label>
+                                    <p class="text-sm text-gray-500 mt-1">确认资产产权清晰，无法律纠纷，符合相关法律法规要求</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="financial-compliance" checked class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div>
+                                    <label for="financial-compliance" class="text-sm font-medium text-gray-700">财务合规性</label>
+                                    <p class="text-sm text-gray-500 mt-1">确认财务信息真实准确，估值合理，符合会计准则</p>
+                                </div>
+                                                            </div>
+
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="risk-assessment" checked class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div>
+                                    <label for="risk-assessment" class="text-sm font-medium text-gray-700">风险评估</label>
+                                    <p class="text-sm text-gray-500 mt-1">已完成风险评估，了解市场风险、信用风险等潜在风险</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="regulatory-approval" class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div>
+                                    <label for="regulatory-approval" class="text-sm font-medium text-gray-700">监管审批</label>
+                                    <p class="text-sm text-gray-500 mt-1">确认已获得必要的监管审批或豁免</p>
+                                </div>
+                            </div>
+
+                            <div class="flex items-start space-x-3">
+                                <input type="checkbox" id="insurance-coverage" checked class="mt-1 w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                <div>
+                                    <label for="insurance-coverage" class="text-sm font-medium text-gray-700">保险覆盖</label>
+                                    <p class="text-sm text-gray-500 mt-1">确认资产已购买适当的保险，覆盖主要风险</p>
+                                </div>
+                            </div>
+
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                                <div class="flex items-start">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600 mr-3 mt-1"></i>
+                                    <div>
+                                        <h4 class="text-sm font-medium text-yellow-800">合规声明</h4>
+                                        <p class="text-sm text-yellow-700 mt-1">
+                                            我确认以上所有信息真实准确，理解虚假信息可能导致的法律后果，并同意接受相关监管部门的审查。
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤5：代币化设置 -->
+                <div class="form-step" id="step5">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="border-b border-gray-200 pb-6 mb-6">
+                            <h2 class="text-xl font-semibold text-gray-900">代币化设置</h2>
+                            <p class="mt-2 text-gray-600">配置资产代币化参数，设定代币发行和治理规则</p>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">代币名称 *</label>
+                                <input type="text" id="tokenName" value="SHA-HQ-A001 Property Token" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入代币名称">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">代币符号 *</label>
+                                <input type="text" id="tokenSymbol" value="SHPT" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入代币符号">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">总发行量 *</label>
+                                <input type="number" id="totalSupply" value="5000000" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入总发行量">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">初始发行价格 (元)</label>
+                                <input type="number" id="initialPrice" value="10" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent" placeholder="请输入初始发行价格">
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">代币化比例 (%)</label>
+                            <input type="range" id="tokenizationRatio" value="80" min="1" max="100" class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer">
+                            <div class="flex justify-between text-sm text-gray-500 mt-1">
+                                <span>1%</span>
+                                <span id="ratioValue">80%</span>
+                                <span>100%</span>
+                            </div>
+                            <p class="text-sm text-gray-600 mt-2">当前设置：资产价值的80%将被代币化，剩余20%作为储备</p>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-4">收益分配设置</label>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">投资者收益 (%)</label>
+                                    <input type="number" id="investorShare" value="70" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center" readonly>
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">管理费 (%)</label>
+                                    <input type="number" id="managementFee" value="20" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center">
+                                </div>
+                                <div>
+                                    <label class="block text-xs text-gray-500 mb-1">平台费 (%)</label>
+                                    <input type="number" id="platformFee" value="10" class="w-full px-3 py-2 border border-gray-300 rounded-lg text-center" readonly>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">收益分配周期</label>
+                            <select id="distributionPeriod" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent">
+                                <option value="monthly">月度分配</option>
+                                <option value="quarterly" selected>季度分配</option>
+                                <option value="semi-annual">半年度分配</option>
+                                <option value="annual">年度分配</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-6">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">治理权限设置</label>
+                            <div class="space-y-3">
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="voting-rights" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <label for="voting-rights" class="text-sm text-gray-700">代币持有者享有投票权</label>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="proposal-rights" class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <label for="proposal-rights" class="text-sm text-gray-700">允许代币持有者提出提案</label>
+                                </div>
+                                <div class="flex items-center space-x-3">
+                                    <input type="checkbox" id="transfer-restrictions" checked class="w-4 h-4 text-blue-600 border-gray-300 rounded focus:ring-blue-500">
+                                    <label for="transfer-restrictions" class="text-sm text-gray-700">设置代币转让限制</label>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-6 bg-blue-50 border border-blue-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-info-circle text-blue-600 mr-3 mt-1"></i>
+                                <div>
+                                    <h4 class="text-sm font-medium text-blue-800">代币化预览</h4>
+                                    <div class="text-sm text-blue-700 mt-2 space-y-1">
+                                        <p>• 代币化价值：¥40,000万 (资产价值的80%)</p>
+                                        <p>• 预计年收益：¥2,600万</p>
+                                        <p>• 投资者年收益：¥1,820万 (70%)</p>
+                                        <p>• 年化收益率：4.55%</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤6：完成 -->
+                <div class="form-step" id="step6">
+                    <div class="bg-white rounded-lg shadow-sm p-6">
+                        <div class="text-center py-8">
+                            <div class="mx-auto flex items-center justify-center h-20 w-20 rounded-full bg-green-100 mb-6">
+                                <i class="fas fa-check text-green-600 text-3xl"></i>
+                            </div>
+                            <h2 class="text-2xl font-bold text-gray-900 mb-4">资产信息更新完成</h2>
+                            <p class="text-gray-600 mb-8">您的资产信息已成功更新，系统将重新进行审核和验证。</p>
+                            
+                            <div class="bg-gray-50 rounded-lg p-6 mb-8">
+                                <h3 class="text-lg font-semibold text-gray-900 mb-4">更新摘要</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-left">
+                                    <div>
+                                        <dt class="text-sm text-gray-500">资产名称</dt>
+                                        <dd class="text-sm font-medium text-gray-900">上海虹桥商务区办公楼A座</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm text-gray-500">资产类型</dt>
+                                        <dd class="text-sm font-medium text-gray-900">住宅</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm text-gray-500">资产估值</dt>
+                                        <dd class="text-sm font-medium text-gray-900">¥50,000万</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm text-gray-500">代币化比例</dt>
+                                        <dd class="text-sm font-medium text-gray-900">80%</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm text-gray-500">预期收益率</dt>
+                                        <dd class="text-sm font-medium text-gray-900">5.2%</dd>
+                                    </div>
+                                    <div>
+                                        <dt class="text-sm text-gray-500">更新时间</dt>
+                                        <dd class="text-sm font-medium text-gray-900">2025-07-14 16:45</dd>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="flex justify-center space-x-4">
+                                <button type="button" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                                    <i class="fas fa-download mr-2"></i>下载更新报告
+                                </button>
+                                <a href="asset-list.html" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                    <i class="fas fa-arrow-left mr-2"></i>返回资产列表
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 操作按钮 -->
+                <div class="flex justify-between items-center mt-8">
+                    <button type="button" id="prevBtn" onclick="previousStep()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50" style="display: none;">
+                        <i class="fas fa-arrow-left mr-2"></i>上一步
+                    </button>
+                    <div class="flex space-x-4">
+                        <button type="button" onclick="saveDraft()" class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                            <i class="fas fa-save mr-2"></i>保存草稿
+                        </button>
+                        <button type="button" id="nextBtn" onclick="nextStep()" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            下一步<i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        <button type="submit" id="submitBtn" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" style="display: none;">
+                            <i class="fas fa-check mr-2"></i>提交更新
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script>
+        let currentStep = 1;
+        const totalSteps = 6;
+
+        // 初始化页面
+        document.addEventListener('DOMContentLoaded', function() {
+            updateStepIndicators();
+            
+            // 标签输入功能
+            setupTagInput();
+            
+            // 文件上传功能
+            setupFileUploads();
+            
+            // 代币化比例滑块
+            setupTokenizationSlider();
+            
+            // 收益分配计算
+            setupRevenueCalculation();
+        });
+
+        // 步骤导航
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    updateStepDisplay();
+                }
+            }
+        }
+
+        function previousStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                updateStepDisplay();
+            }
+        }
+
+        function updateStepDisplay() {
+            // 隐藏所有步骤
+            document.querySelectorAll('.form-step').forEach(step => {
+                step.classList.remove('active');
+            });
+            
+            // 显示当前步骤
+            document.getElementById(`step${currentStep}`).classList.add('active');
+            
+            // 更新进度条和指示器
+            updateStepIndicators();
+            
+            // 更新按钮状态
+            updateButtons();
+        }
+
+        function updateStepIndicators() {
+            const progressPercentage = ((currentStep - 1) / (totalSteps - 1)) * 100;
+            document.getElementById('progress-bar').style.width = `${progressPercentage}%`;
+            
+            for (let i = 1; i <= totalSteps; i++) {
+                const indicator = document.getElementById(`step${i}-indicator`);
+                const stepText = indicator.nextElementSibling;
+                
+                if (i < currentStep) {
+                    indicator.className = 'step-indicator step-completed';
+                    stepText.className = 'text-sm font-medium text-gray-900';
+                } else if (i === currentStep) {
+                    indicator.className = 'step-indicator step-active';
+                    stepText.className = 'text-sm font-medium text-gray-900';
+                } else {
+                    indicator.className = 'step-indicator step-inactive';
+                    stepText.className = 'text-sm font-medium text-gray-500';
+                }
+            }
+        }
+
+        function updateButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+            
+            // 上一步按钮
+            prevBtn.style.display = currentStep === 1 ? 'none' : 'block';
+            
+            // 下一步/提交按钮
+            if (currentStep === totalSteps) {
+                nextBtn.style.display = 'none';
+                submitBtn.style.display = 'block';
+            } else {
+                nextBtn.style.display = 'block';
+                submitBtn.style.display = 'none';
+            }
+        }
+
+        function validateCurrentStep() {
+            // 这里可以添加每个步骤的验证逻辑
+            switch (currentStep) {
+                case 1:
+                    return validateBasicInfo();
+                case 2:
+                    return validateDocuments();
+                case 3:
+                    return validateFinancialInfo();
+                case 4:
+                    return validateCompliance();
+                case 5:
+                    return validateTokenization();
+                default:
+                    return true;
+            }
+        }
+
+        function validateBasicInfo() {
+            const requiredFields = ['assetName', 'assetType', 'buildingArea'];
+            for (const field of requiredFields) {
+                const element = document.getElementById(field);
+                if (!element.value.trim()) {
+                    alert(`请填写${element.previousElementSibling.textContent}`);
+                    element.focus();
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function validateDocuments() {
+            // 检查必需文档是否已上传
+            return true; // 简化验证
+        }
+
+        function validateFinancialInfo() {
+            const assetValue = document.getElementById('assetValue').value;
+            if (!assetValue || assetValue <= 0) {
+                alert('请输入有效的资产估值');
+                return false;
+            }
+            return true;
+        }
+
+        function validateCompliance() {
+            const requiredCheckboxes = ['legal-compliance', 'financial-compliance', 'risk-assessment'];
+            for (const id of requiredCheckboxes) {
+                if (!document.getElementById(id).checked) {
+                    alert('请确认所有必需的合规条件');
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        function validateTokenization() {
+            const tokenName = document.getElementById('tokenName').value;
+            const tokenSymbol = document.getElementById('tokenSymbol').value;
+            const totalSupply = document.getElementById('totalSupply').value;
+            
+            if (!tokenName || !tokenSymbol || !totalSupply) {
+                alert('请填写完整的代币化信息');
+                return false;
+            }
+            return true;
+        }
+
+        // 标签输入功能
+        function setupTagInput() {
+            const tagInput = document.getElementById('tagInput');
+            const tagContainer = document.getElementById('tagContainer');
+            
+            tagInput.addEventListener('keypress', function(e) {
+                if (e.key === 'Enter' && this.value.trim()) {
+                    e.preventDefault();
+                    addTag(this.value.trim());
+                    this.value = '';
+                }
+            });
+        }
+
+        function addTag(tagText) {
+            const tagContainer = document.getElementById('tagContainer');
+            const tagInput = document.getElementById('tagInput');
+            
+            const tag = document.createElement('div');
+            tag.className = 'tag';
+            tag.innerHTML = `
+                ${tagText}
+                <button type="button" onclick="removeTag(this)">×</button>
+            `;
+            
+            tagContainer.insertBefore(tag, tagInput);
+        }
+
+        function removeTag(button) {
+            button.parentElement.remove();
+        }
+
+        // 文件上传功能
+        function setupFileUploads() {
+            document.querySelectorAll('.file-upload-area').forEach(area => {
+                const input = area.querySelector('input[type="file"]');
+                
+                area.addEventListener('click', () => input.click());
+                
+                area.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    area.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', () => {
+                    area.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    area.classList.remove('dragover');
+                    handleFiles(e.dataTransfer.files);
+                });
+            });
+        }
+
+        function handleFiles(files) {
+            // 处理文件上传逻辑
+            console.log('上传文件:', files);
+        }
+
+        // 代币化比例滑块
+        function setupTokenizationSlider() {
+            const slider = document.getElementById('tokenizationRatio');
+            const ratioValue = document.getElementById('ratioValue');
+            
+            slider.addEventListener('input', function() {
+                ratioValue.textContent = this.value + '%';
+                updateTokenizationPreview();
+            });
+        }
+
+        function updateTokenizationPreview() {
+            // 更新代币化预览信息
+            const assetValue = parseFloat(document.getElementById('assetValue').value) || 50000;
+            const ratio = parseFloat(document.getElementById('tokenizationRatio').value) / 100;
+            const annualRent = parseFloat(document.getElementById('annualRent').value) || 2500;
+            const operatingCost = parseFloat(document.getElementById('operatingCost').value) || 500;
+            
+            const tokenizedValue = assetValue * ratio;
+            const netIncome = annualRent - operatingCost;
+            const investorShare = netIncome * 0.7; // 70%给投资者
+            const yieldRate = (investorShare / tokenizedValue) * 100;
+            
+            // 更新预览显示
+            // 这里可以添加更新预览信息的代码
+        }
+
+        // 收益分配计算
+        function setupRevenueCalculation() {
+            const managementFeeInput = document.getElementById('managementFee');
+            const investorShareInput = document.getElementById('investorShare');
+            const platformFeeInput = document.getElementById('platformFee');
+            
+            managementFeeInput.addEventListener('input', function() {
+                const managementFee = parseFloat(this.value) || 0;
+                const platformFee = parseFloat(platformFeeInput.value) || 10;
+                const investorShare = 100 - managementFee - platformFee;
+                
+                if (investorShare >= 0) {
+                    investorShareInput.value = investorShare;
+                } else {
+                    alert('费用总和不能超过100%');
+                    this.value = Math.max(0, 100 - platformFee);
+                    investorShareInput.value = 100 - this.value - platformFee;
+                }
+            });
+        }
+
+        // 保存草稿
+        function saveDraft() {
+            const formData = new FormData(document.getElementById('assetForm'));
+            // 这里可以添加保存草稿的逻辑
+            alert('草稿已保存');
+        }
+
+        // 表单提交
+        document.getElementById('assetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (validateCurrentStep()) {
+                // 显示完成步骤
+                currentStep = totalSteps;
+                updateStepDisplay();
+                
+                // 这里可以添加提交数据到服务器的逻辑
+                console.log('资产信息更新提交');
+            }
+        });
+    </script>
+</body>
+</html>

@@ -1,0 +1,1994 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增资产 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .step-indicator {
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .step-active {
+            background-color: #3b82f6;
+            color: white;
+        }
+        
+        .step-completed {
+            background-color: #10b981;
+            color: white;
+        }
+        
+        .step-pending {
+            background-color: #e5e7eb;
+            color: #6b7280;
+        }
+        
+        .step-content {
+            display: none;
+        }
+        
+        .step-content.active {
+            display: block;
+        }
+        
+        .form-section {
+            background: white;
+            border-radius: 0.75rem;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+            padding: 1.5rem;
+            margin-bottom: 1.5rem;
+        }
+        
+        .required-field::after {
+            content: " *";
+            color: #ef4444;
+        }
+        
+        .file-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 0.5rem;
+            padding: 2rem;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        
+        .file-upload-area:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        
+        .file-upload-area.dragover {
+            border-color: #3b82f6;
+            background-color: #dbeafe;
+        }
+        
+        .uploaded-file {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.75rem;
+            background-color: #f3f4f6;
+            border-radius: 0.5rem;
+            margin-bottom: 0.5rem;
+        }
+        
+        .validation-error {
+            color: #ef4444;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .validation-success {
+            color: #10b981;
+            font-size: 0.875rem;
+            margin-top: 0.25rem;
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background-color: #e5e7eb;
+            border-radius: 2px;
+            overflow: hidden;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background-color: #3b82f6;
+            transition: width 0.3s ease;
+        }
+        
+        .tooltip {
+            position: relative;
+            display: inline-block;
+            cursor: help;
+        }
+        
+        .tooltip .tooltiptext {
+            visibility: hidden;
+            width: 200px;
+            background-color: #374151;
+            color: white;
+            text-align: center;
+            border-radius: 6px;
+            padding: 8px;
+            position: absolute;
+            z-index: 1;
+            bottom: 125%;
+            left: 50%;
+            margin-left: -100px;
+            opacity: 0;
+            transition: opacity 0.3s;
+            font-size: 0.875rem;
+        }
+        
+        .tooltip:hover .tooltiptext {
+            visibility: visible;
+            opacity: 1;
+        }
+        
+        .blockchain-upload {
+            background: linear-gradient(135deg, #1e3a8a 0%, #3730a3 100%);
+            color: white;
+        }
+        
+        .data-format-example {
+            background-color: #f8fafc;
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 1rem;
+            font-family: 'Courier New', monospace;
+            font-size: 0.875rem;
+        }
+        
+        .compliance-checklist {
+            background-color: #fef3c7;
+            border-left: 4px solid #f59e0b;
+            padding: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .iot-config {
+            background: linear-gradient(135deg, #059669 0%, #047857 100%);
+            color: white;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产平台</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="asset-manager-dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">我的资产</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">合规管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">收益报告</a>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src=".unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&auto=format&fit=crop&w=32&h=32&q=80" alt="用户头像" class="w-8 h-8 rounded-full">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- 主内容 -->
+    <div class="pt-4">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- 页面标题 -->
+            <div class="mb-8">
+                <h1 class="text-3xl font-bold text-gray-900">新增资产</h1>
+                <p class="mt-2 text-gray-600">按照RWA标准添加您的房地产资产，完成代币化准备</p>
+            </div>
+
+            <!-- 进度指示器 -->
+            <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-active" id="step1-indicator">1</div>
+                        <span class="text-sm font-medium text-gray-900">资产基础信息</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 16.67%"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-pending" id="step2-indicator">2</div>
+                        <span class="text-sm font-medium text-gray-500">合规文件</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-pending" id="step3-indicator">3</div>
+                        <span class="text-sm font-medium text-gray-500">托管设置</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-pending" id="step4-indicator">4</div>
+                        <span class="text-sm font-medium text-gray-500">代币参数</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-pending" id="step5-indicator">5</div>
+                        <span class="text-sm font-medium text-gray-500">链上配置</span>
+                    </div>
+                    <div class="flex-1 h-1 bg-gray-200 mx-4">
+                        <div class="progress-fill" style="width: 0%"></div>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <div class="step-indicator step-pending" id="step6-indicator">6</div>
+                        <span class="text-sm font-medium text-gray-500">确认提交</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表单内容 -->
+            <form id="assetForm" class="space-y-8">
+                <!-- 步骤1: 资产基础信息 -->
+                <div id="step1" class="step-content active">
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">资产描述数据</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">物业地址</label>
+                                <input type="text" id="propertyAddress" name="propertyAddress" 
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入详细地址">
+                                <div id="addressError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">建筑面积 (平方米)</label>
+                                <input type="number" id="buildingArea" name="buildingArea" 
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入建筑面积">
+                                <div id="areaError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">用途</label>
+                                <select id="propertyUsage" name="propertyUsage" 
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择用途</option>
+                                    <option value="office">办公</option>
+                                    <option value="retail">零售</option>
+                                    <option value="mixed">办公/零售混合</option>
+                                    <option value="residential">住宅</option>
+                                    <option value="industrial">工业</option>
+                                </select>
+                                <div id="usageError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">建造年份</label>
+                                <input type="number" id="buildYear" name="buildYear" min="1900" max="2024"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入建造年份">
+                                <div id="yearError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">楼层信息</label>
+                                <input type="text" id="floorInfo" name="floorInfo" 
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="例如：15-18层">
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700">停车位数量</label>
+                                <input type="number" id="parkingSpaces" name="parkingSpaces" 
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入停车位数量">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">价值评估数据</h2>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">当前估值 (万元)</label>
+                                <input type="number" id="currentValuation" name="currentValuation" step="0.01"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入当前估值">
+                                <div id="valuationError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">估值机构</label>
+                                <select id="valuationInstitution" name="valuationInstitution" 
+                                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                    <option value="">请选择估值机构</option>
+                                    <option value="china-appraisal">中国房地产估价师协会</option>
+                                    <option value="knight-frank">第一太平戴维斯</option>
+                                    <option value="cbre">世邦魏理仕</option>
+                                    <option value="jll">仲量联行</option>
+                                    <option value="cushman">戴德梁行</option>
+                                    <option value="other">其他</option>
+                                </select>
+                                <div id="institutionError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">市场租金率 (元/平方米/天)</label>
+                                <input type="number" id="marketRentRate" name="marketRentRate" step="0.01"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入市场租金率">
+                                <div id="rentRateError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">当前空置率 (%)</label>
+                                <input type="number" id="vacancyRate" name="vacancyRate" step="0.01" min="0" max="100"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入空置率">
+                                <div id="vacancyError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">年租金收入 (万元)</label>
+                                <input type="number" id="annualRentIncome" name="annualRentIncome" step="0.01"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入年租金收入">
+                                <div id="rentIncomeError" class="validation-error"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field">净运营收入 (万元)</label>
+                                <input type="number" id="netOperatingIncome" name="netOperatingIncome" step="0.01"
+                                       class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                       placeholder="请输入净运营收入">
+                                <div id="noiError" class="validation-error"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">可比物业数据</h2>
+                        <div class="space-y-4">
+                            <div id="comparableProperties">
+                                <div class="comparable-property border border-gray-200 rounded-lg p-4">
+                                    <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">物业名称</label>
+                                            <input type="text" name="comparableProperty[0][name]" 
+                                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   placeholder="例如：建外SOHO">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">交易价格 (万元/平方米)</label>
+                                            <input type="number" name="comparableProperty[0][price]" step="0.01"
+                                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                                   placeholder="请输入交易价格">
+                                        </div>
+                                        <div>
+                                            <label class="block text-sm font-medium text-gray-700">交易时间</label>
+                                            <input type="date" name="comparableProperty[0][date]" 
+                                                   class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                        <div class="flex items-end">
+                                            <button type="button" onclick="removeComparableProperty(this)" 
+                                                    class="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                            <button type="button" onclick="addComparableProperty()" 
+                                    class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                                <i class="fas fa-plus mr-2"></i>添加可比物业
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">数据格式要求</h2>
+                        <div class="compliance-checklist">
+                            <h3 class="font-medium text-gray-900 mb-2">
+                                <i class="fas fa-exclamation-triangle mr-2"></i>数据要求
+                            </h3>
+                            <ul class="text-sm text-gray-700 space-y-1">
+                                <li>• 数据需结构化存储 (JSON/CSV格式)</li>
+                                <li>• 来源必须权威 (交易所、第三方报告)</li>
+                                <li>• 确保资产可代币化且具有市场价值</li>
+                                <li>• 避免低流动性资产</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="data-format-example">
+                            <h4 class="font-medium text-gray-900 mb-2">数据格式示例 (JSON):</h4>
+                            <pre>{
+  "asset_id": "REIT-[CITY]-[NUMBER]",
+  "location": "详细地址",
+  "area": 1200,
+  "usage": "办公/零售",
+  "valuation": {
+    "amount": 85000000,
+    "currency": "CNY",
+    "date": "2024-01-15",
+    "appraiser": "估值机构名称"
+  },
+  "market_data": {
+    "rent_rate": 8.5,
+    "vacancy_rate": 0.05,
+    "annual_income": 7200000,
+    "net_operating_income": 6500000
+  }
+}</pre>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤2: 合规文件 -->
+                <div id="step2" class="step-content">
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">产权证明文件</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field mb-2">
+                                    房产证
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传房产证扫描件，需清晰可见证书编号</span>
+                                    </div>
+                                </label>
+                                <div class="file-upload-area" onclick="document.getElementById('propertyDeed').click()">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">点击上传或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mt-1">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                </div>
+                                <input type="file" id="propertyDeed" name="propertyDeed" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="handleFileUpload(this, 'propertyDeedFiles')">
+                                <div id="propertyDeedFiles" class="mt-2"></div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mt-2">证书编号</label>
+                                    <input type="text" id="propertyDeedNumber" name="propertyDeedNumber" 
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="请输入房产证编号">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field mb-2">
+                                    土地使用证
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传土地使用证扫描件，需包含使用期限信息</span>
+                                    </div>
+                                </label>
+                                <div class="file-upload-area" onclick="document.getElementById('landCertificate').click()">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">点击上传或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mt-1">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                </div>
+                                <input type="file" id="landCertificate" name="landCertificate" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="handleFileUpload(this, 'landCertificateFiles')">
+                                <div id="landCertificateFiles" class="mt-2"></div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mt-2">证书编号</label>
+                                    <input type="text" id="landCertificateNumber" name="landCertificateNumber" 
+                                           class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                           placeholder="请输入土地使用证编号">
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field mb-2">
+                                    商业租赁协议
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传所有有效的租赁合同，需包含租金和期限信息</span>
+                                    </div>
+                                </label>
+                                <div class="file-upload-area" onclick="document.getElementById('leaseAgreements').click()">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">点击上传或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mt-1">支持 PDF 格式，可上传多个文件，每个最大 10MB</p>
+                                </div>
+                                <input type="file" id="leaseAgreements" name="leaseAgreements" accept=".pdf" multiple class="hidden" onchange="handleFileUpload(this, 'leaseAgreementFiles')">
+                                <div id="leaseAgreementFiles" class="mt-2"></div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">合规文件</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field mb-2">
+                                    SPV (特殊目的载体) 注册文件
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传SPV公司注册证书和章程，需符合开曼群岛或香港法律</span>
+                                    </div>
+                                </label>
+                                <div class="file-upload-area" onclick="document.getElementById('spvDocuments').click()">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">点击上传或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mt-1">支持 PDF 格式，可上传多个文件</p>
+                                </div>
+                                <input type="file" id="spvDocuments" name="spvDocuments" accept=".pdf" multiple class="hidden" onchange="handleFileUpload(this, 'spvDocumentFiles')">
+                                <div id="spvDocumentFiles" class="mt-2"></div>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">SPV名称</label>
+                                        <input type="text" id="spvName" name="spvName" 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="例如：PropertyChain SPV Ltd.">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">注册地</label>
+                                        <select id="spvJurisdiction" name="spvJurisdiction" 
+                                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">请选择注册地</option>
+                                            <option value="cayman">开曼群岛</option>
+                                            <option value="hongkong">香港</option>
+                                            <option value="singapore">新加坡</option>
+                                            <option value="bvi">英属维尔京群岛</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 required-field mb-2">
+                                    股权结构图
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传详细的股权结构图，需显示所有股东和持股比例</span>
+                                    </div>
+                                </label>
+                                <div class="file-upload-area" onclick="document.getElementById('ownershipStructure').click()">
+                                    <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                    <p class="text-gray-600">点击上传或拖拽文件到此处</p>
+                                    <p class="text-sm text-gray-500 mt-1">支持 PDF, JPG, PNG 格式</p>
+                                </div>
+                                <input type="file" id="ownershipStructure" name="ownershipStructure" accept=".pdf,.jpg,.jpeg,.png" class="hidden" onchange="handleFileUpload(this, 'ownershipStructureFiles')">
+                                <div id="ownershipStructureFiles" class="mt-2"></div>
+                            </div>
+                            
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    监管许可证
+                                    <div class="tooltip">
+                                        <i class="fas fa-info-circle text-blue-500 ml-1"></i>
+                                        <span class="tooltiptext">上传相关监管机构的许可证或申请文件</span>
+                                    </div>
+                                </label>
+                                <div class="space-y-4">
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="masLicense" name="regulatoryLicenses" value="mas">
+                                        <label for="masLicense" class="text-sm text-gray-700">香港MAS牌照</label>
+                                        <select id="masStatus" name="masStatus" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                                            <option value="applied">已申请</option>
+                                            <option value="approved">已获批</option>
+                                            <option value="pending">准备申请</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="cbrcLicense" name="regulatoryLicenses" value="cbrc">
+                                        <label for="cbrcLicense" class="text-sm text-gray-700">中国银保监会备案</label>
+                                        <select id="cbrcStatus" name="cbrcStatus" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                                            <option value="applied">已申请</option>
+                                            <option value="approved">已获批</option>
+                                            <option value="pending">准备申请</option>
+                                        </select>
+                                    </div>
+                                    <div class="flex items-center space-x-4">
+                                        <input type="checkbox" id="sgMasLicense" name="regulatoryLicenses" value="sg-mas">
+                                        <label for="sgMasLicense" class="text-sm text-gray-700">新加坡MAS牌照</label>
+                                        <select id="sgMasStatus" name="sgMasStatus" class="px-3 py-1 border border-gray-300 rounded-md text-sm">
+                                            <option value="applied">已申请</option>
+                                            <option value="approved">已获批</option>
+                                            <option value="pending">准备申请</option>
+                                        </select>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section blockchain-upload">
+                        <h2 class="text-xl font-semibold mb-6">区块链存证</h2>
+                        <div class="space-y-4">
+                            <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                                <h3 class="font-medium mb-2">文件哈希上链</h3>
+                                <p class="text-sm opacity-90 mb-4">
+                                    所有上传的文件将自动生成哈希值并上链存证，确保文件的完整性和不可篡改性。
+                                </p>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">区块链网络</label>
+                                        <select id="blockchainNetwork" name="blockchainNetwork" 
+                                                class="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-md text-white placeholder-gray-300">
+                                            <option value="ethereum">以太坊主网</option>
+                                            <option value="polygon">Polygon</option>
+                                            <option value="bsc">BSC</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">存证费用</label>
+                                        <input type="text" value="约 $15-50" readonly 
+                                               class="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-md text-white">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                                <h3 class="font-medium mb-2">合规要求确认</h3>
+                                <div class="space-y-2">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="complianceConfirm1" name="complianceConfirm" value="digital" class="rounded">
+                                        <span class="text-sm">确认文件已数字化且符合上链要求</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="complianceConfirm2" name="complianceConfirm" value="jurisdiction" class="rounded">
+                                        <span class="text-sm">确认符合目标市场法规要求</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" id="complianceConfirm3" name="complianceConfirm" value="ownership" class="rounded">
+                                        <span class="text-sm">确认解决法律权属问题</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤3: 托管设置 -->
+                <div id="step3" class="step-content">
+                    <div class="form-section">
+                        <h2 class="text-xl font-semibold text-gray-900 mb-6">托管协议</h2>
+                        
+                        <div class="space-y-6">
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">物业管理公司</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 required-field">管理公司名称</label>
+                                        <input type="text" id="managementCompany" name="managementCompany" 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="例如：北京万科物业服务有限公司">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 required-field">合同期限</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="date" id="managementStartDate" name="managementStartDate" 
+                                                   class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <input type="date" id="managementEndDate" name="managementEndDate" 
+                                                   class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">管理费用 (万元/年)</label>
+                                        <input type="number" id="managementFee" name="managementFee" step="0.01"
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="请输入年度管理费用">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">联系人</label>
+                                        <input type="text" id="managementContact" name="managementContact" 
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="联系人姓名及电话">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">管理合同</label>
+                                    <div class="file-upload-area" onclick="document.getElementById('managementContract').click()">
+                                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                                        <p class="text-gray-600">上传物业管理合同</p>
+                                        <p class="text-sm text-gray-500 mt-1">支持 PDF 格式，最大 10MB</p>
+                                    </div>
+                                    <input type="file" id="managementContract" name="managementContract" accept=".pdf" class="hidden" onchange="handleFileUpload(this, 'managementContractFiles')">
+                                    <div id="managementContractFiles" class="mt-2"></div>
+                                </div>
+                            </div>
+                            
+                            <div>
+                                <h3 class="text-lg font-medium text-gray-900 mb-4">保险配置</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 required-field">保险公司</label>
+                                        <select id="insuranceCompany" name="insuranceCompany" 
+                                                class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <option value="">请选择保险公司</option>
+                                            <option value="picc">中国人保财险</option>
+                                            <option value="cpic">中国太保</option>
+                                            <option value="pingan">平安财险</option>
+                                            <option value="china-life">中国人寿财险</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700 required-field">保险金额 (万元)</label>
+                                        <input type="number" id="insuranceAmount" name="insuranceAmount" step="0.01"
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="请输入保险金额">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">保险期限</label>
+                                        <div class="grid grid-cols-2 gap-2">
+                                            <input type="date" id="insuranceStartDate" name="insuranceStartDate" 
+                                                   class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                            <input type="date" id="insuranceEndDate" name="insuranceEndDate" 
+                                                   class="px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                                        </div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium text-gray-700">年保费 (万元)</label>
+                                        <input type="number" id="insurancePremium" name="insurancePremium" step="0.01"
+                                               class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                                               placeholder="请输入年保费">
+                                    </div>
+                                </div>
+                                <div class="mt-4">
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">保险覆盖范围</label>
+                                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="fire" class="rounded">
+                                            <span class="text-sm">火灾</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="earthquake" class="rounded">
+                                            <span class="text-sm">地震</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="flood" class="rounded">
+                                            <span class="text-sm">水灾</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="theft" class="rounded">
+                                            <span class="text-sm">盗窃</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="liability" class="rounded">
+                                            <span class="text-sm">责任险</span>
+                                        </label>
+                                        <label class="flex items-center space-x-2">
+                                            <input type="checkbox" name="insuranceCoverage" value="business" class="rounded">
+                                            <span class="text-sm">营业中断</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-section iot-config">
+                        <h2 class="text-xl font-semibold mb-6">IoT实时监控配置</h2>
+                        
+                        <div class="space-y-6">
+                            <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                                <h3 class="font-medium mb-4">安防监控系统</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">摄像头数量</label>
+                                        <input type="number" id="cameraCount" name="cameraCount" 
+                                               class="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-md text-white placeholder-gray-300"
+                                               placeholder="例如：48">
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">监控厂商</label>
+                                        <select id="securityVendor" name="securityVendor" 
+                                                class="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-md text-white">
+                                            <option value="">请选择厂商</option>
+                                            <option value="hikvision">海康威视</option>
+                                            <option value="dahua">大华</option>
+                                            <option value="uniview">宇视</option>
+                                            <option value="other">其他</option>
+                                        </select>
+                                    </div>
+                                    <div>
+                                        <label class="block text-sm font-medium mb-1">存储期限 (天)</label>
+                                        <input type="number" id="storageRetention" name="storageRetention" 
+                                               class="w-full px-3 py-2 bg-white bg-opacity-20 border border-white border-opacity-30 rounded-md text-white placeholder-gray-300"
+                                               placeholder="例如：30">
+                                    </div>
+                                </div>
+                            </div>
+                            
+                            <div class="bg-white bg-opacity-10 p-4 rounded-lg">
+                                <h3 class="font-medium mb-4">环境监测系统</h3>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" name="environmentalMonitoring" value="temperature" class="rounded">
+                                        <span class="text-sm">温度监测</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" name="environmentalMonitoring" value="humidity" class="rounded">
+                                        <span class="text-sm">湿度监测</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" name="environmentalMonitoring" value="air-quality" class="rounded">
+                                        <span class="text-sm">空气质量</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2">
+                                        <input type="checkbox" name="environmentalMonitoring" value="noise" class="rounded">
+                                        <span class="text-sm">噪音监测</span>
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 步骤4-6的其余内容保持不变... -->
+                
+                <!-- 操作按钮 -->
+                <div class="flex justify-between items-center mt-8">
+                    <button type="button" id="prevBtn" onclick="previousStep()" 
+                            class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50" 
+                            style="display: none;">
+                        <i class="fas fa-arrow-left mr-2"></i>上一步
+                    </button>
+                    
+                    <div class="flex space-x-4">
+                        <button type="button" onclick="saveDraft()" 
+                                class="px-6 py-2 border border-gray-300 text-gray-700 rounded-md hover:bg-gray-50">
+                            <i class="fas fa-save mr-2"></i>保存草稿
+                        </button>
+                        
+                        <button type="button" id="nextBtn" onclick="nextStep()" 
+                                class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                            下一步<i class="fas fa-arrow-right ml-2"></i>
+                        </button>
+                        
+                        <button type="submit" id="submitBtn" 
+                                class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700" 
+                                style="display: none;">
+                            <i class="fas fa-check mr-2"></i>提交申请
+                        </button>
+                    </div>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+       let currentStep = 1;
+    const totalSteps = 6;
+
+    // 步骤导航 - 修正版（允许自由浏览）
+    function nextStep() {
+        // 不强制验证，允许用户查看下一步内容
+        if (currentStep < totalSteps) {
+            // 可选：显示当前步骤的验证状态，但不阻止前进
+            const isCurrentStepValid = validateCurrentStep(false); // false表示不显示错误提示
+            
+            currentStep++;
+            showStep(currentStep);
+            updateProgress();
+            
+            // 滚动到页面顶部
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+            
+            // 如果当前步骤未完成，给出友好提示
+            if (!isCurrentStepValid) {
+                showInfoToast(`您可以稍后返回完善第${currentStep - 1}步的信息`);
+            }
+        }
+    }
+
+    function previousStep() {
+        if (currentStep > 1) {
+            currentStep--;
+            showStep(currentStep);
+            updateProgress();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
+    function showStep(step) {
+        // 隐藏所有步骤
+        for (let i = 1; i <= totalSteps; i++) {
+            document.getElementById(`step${i}`).classList.remove('active');
+            document.getElementById(`step${i}-indicator`).classList.remove('step-active', 'step-completed');
+            document.getElementById(`step${i}-indicator`).classList.add('step-pending');
+        }
+        
+        // 显示当前步骤
+        document.getElementById(`step${step}`).classList.add('active');
+        document.getElementById(`step${step}-indicator`).classList.remove('step-pending');
+        document.getElementById(`step${step}-indicator`).classList.add('step-active');
+        
+        // 标记已完成的步骤
+        for (let i = 1; i < step; i++) {
+            document.getElementById(`step${i}-indicator`).classList.remove('step-pending');
+            document.getElementById(`step${i}-indicator`).classList.add('step-completed');
+        }
+        
+        // 更新按钮状态
+        document.getElementById('prevBtn').style.display = step === 1 ? 'none' : 'block';
+        document.getElementById('nextBtn').style.display = step === totalSteps ? 'none' : 'block';
+        document.getElementById('submitBtn').style.display = step === totalSteps ? 'block' : 'none';
+        
+        // 更新步骤状态
+        updateStepStatus();
+    }
+
+    function updateProgress() {
+        const progressBars = document.querySelectorAll('.progress-fill');
+        progressBars.forEach((bar, index) => {
+            const width = index < currentStep - 1 ? '100%' : 
+                        index === currentStep - 1 ? `${(currentStep / totalSteps) * 100}%` : '0%';
+            bar.style.width = width;
+        });
+        
+        // 更新整体进度
+        showStepCompletionHint();
+    }
+
+    // 修正版验证函数 - 添加静默模式参数
+    function validateCurrentStep(showErrors = true) {
+        switch (currentStep) {
+            case 1:
+                return validateStep1(showErrors);
+            case 2:
+                return validateStep2(showErrors);
+            case 3:
+                return validateStep3(showErrors);
+            case 4:
+                return validateStep4(showErrors);
+            case 5:
+                return validateStep5(showErrors);
+            case 6:
+                return validateStep6(showErrors);
+            default:
+                return true;
+        }
+    }
+
+    function validateStep1(showErrors = true) {
+        const requiredFields = [
+            { id: 'propertyAddress', name: '物业地址' },
+            { id: 'buildingArea', name: '建筑面积' },
+            { id: 'propertyUsage', name: '用途' },
+            { id: 'buildYear', name: '建造年份' },
+            { id: 'currentValuation', name: '当前估值' },
+            { id: 'valuationInstitution', name: '估值机构' },
+            { id: 'marketRentRate', name: '市场租金率' },
+            { id: 'vacancyRate', name: '空置率' },
+            { id: 'annualRentIncome', name: '年租金收入' },
+            { id: 'netOperatingIncome', name: '净运营收入' }
+        ];
+        
+        let isValid = true;
+        let incompleteFields = [];
+        
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element) return;
+            
+            const errorId = field.id.replace(/([A-Z])/g, match => match.toLowerCase()) + 'Error';
+            const errorElement = document.getElementById(errorId);
+            
+            // 清除之前的样式（只在显示错误时）
+            if (showErrors) {
+                element.classList.remove('border-red-500', 'border-green-500');
+            }
+            
+            if (!element.value || element.value.trim() === '') {
+                isValid = false;
+                incompleteFields.push(field.name);
+                
+                if (showErrors) {
+                    if (errorElement) {
+                        errorElement.textContent = `${field.name}为必填项`;
+                        errorElement.classList.add('validation-error');
+                    }
+                    element.classList.add('border-red-500');
+                }
+            } else {
+                if (showErrors) {
+                    if (errorElement) {
+                        errorElement.textContent = '';
+                        errorElement.classList.remove('validation-error');
+                    }
+                    element.classList.add('border-green-500');
+                }
+                
+                // 数据验证
+                if (field.id === 'buildingArea' && parseFloat(element.value) <= 0) {
+                    isValid = false;
+                    if (showErrors) {
+                        if (errorElement) {
+                            errorElement.textContent = '建筑面积必须大于0';
+                        }
+                        element.classList.remove('border-green-500');
+                        element.classList.add('border-red-500');
+                    }
+                }
+                
+                if (field.id === 'vacancyRate') {
+                    const rate = parseFloat(element.value);
+                    if (rate < 0 || rate > 100) {
+                        isValid = false;
+                        if (showErrors) {
+                            if (errorElement) {
+                                errorElement.textContent = '空置率应在0-100之间';
+                            }
+                            element.classList.remove('border-green-500');
+                            element.classList.add('border-red-500');
+                        }
+                    }
+                }
+            }
+        });
+        
+        return isValid;
+    }
+
+    function validateStep2(showErrors = true) {
+        const requiredFiles = [
+            { id: 'propertyDeed', name: '房产证' },
+            { id: 'landCertificate', name: '土地使用证' },
+            { id: 'leaseAgreements', name: '商业租赁协议' }
+        ];
+        
+        let isValid = true;
+        
+        requiredFiles.forEach(file => {
+            const fileInput = document.getElementById(file.id);
+            if (!fileInput || !fileInput.files.length) {
+                isValid = false;
+                
+                if (showErrors && fileInput) {
+                    const uploadArea = fileInput.parentElement.querySelector('.file-upload-area');
+                    if (uploadArea) {
+                        uploadArea.style.borderColor = '#ef4444';
+                        uploadArea.style.backgroundColor = '#fef2f2';
+                    }
+                }
+            } else if (showErrors) {
+                const uploadArea = fileInput.parentElement.querySelector('.file-upload-area');
+                if (uploadArea) {
+                    uploadArea.style.borderColor = '#10b981';
+                    uploadArea.style.backgroundColor = '#f0fdf4';
+                }
+            }
+        });
+        
+        return isValid;
+    }
+
+    function validateStep3(showErrors = true) {
+        const requiredFields = [
+            { id: 'managementCompany', name: '物业管理公司名称' },
+            { id: 'insuranceCompany', name: '保险公司' },
+            { id: 'insuranceAmount', name: '保险金额' }
+        ];
+        
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element) return;
+            
+            if (showErrors) {
+                element.classList.remove('border-red-500', 'border-green-500');
+            }
+            
+            if (!element.value || element.value.trim() === '') {
+                isValid = false;
+                if (showErrors) {
+                    element.classList.add('border-red-500');
+                }
+            } else if (showErrors) {
+                element.classList.add('border-green-500');
+            }
+        });
+        
+        return isValid;
+    }
+
+    function validateStep4(showErrors = true) {
+        const requiredFields = [
+            { id: 'tokenName', name: '代币名称' },
+            { id: 'tokenSymbol', name: '代币符号' },
+            { id: 'initialPrice', name: '初始价格' }
+        ];
+        
+        let isValid = true;
+        
+        requiredFields.forEach(field => {
+            const element = document.getElementById(field.id);
+            if (!element) return;
+            
+            if (showErrors) {
+                element.classList.remove('border-red-500', 'border-green-500');
+            }
+            
+            if (!element.value || element.value.trim() === '') {
+                isValid = false;
+                if (showErrors) {
+                    element.classList.add('border-red-500');
+                }
+            } else if (showErrors) {
+                element.classList.add('border-green-500');
+            }
+        });
+        
+        return isValid;
+    }
+
+    function validateStep5(showErrors = true) {
+        const mainChain = document.getElementById('mainChain');
+        if (!mainChain || !mainChain.value) {
+            return false;
+        }
+        return true;
+    }
+
+    function validateStep6(showErrors = true) {
+        const finalConfirmation = document.getElementById('finalConfirmation');
+        return finalConfirmation && finalConfirmation.checked;
+    }
+
+    // 文件上传处理
+    function handleFileUpload(input, containerId) {
+        const container = document.getElementById(containerId);
+        container.innerHTML = '';
+        
+        Array.from(input.files).forEach((file, index) => {
+            const fileDiv = document.createElement('div');
+            fileDiv.className = 'uploaded-file';
+            fileDiv.innerHTML = `
+                <div class="flex items-center space-x-2">
+                    <i class="fas fa-file-pdf text-red-500"></i>
+                    <span class="text-sm font-medium">${file.name}</span>
+                    <span class="text-xs text-gray-500">(${formatFileSize(file.size)})</span>
+                </div>
+                <button type="button" onclick="removeFile(this, '${input.id}', ${index})" 
+                        class="text-red-500 hover:text-red-700">
+                    <i class="fas fa-times"></i>
+                </button>
+            `;
+            container.appendChild(fileDiv);
+        });
+    }
+
+    function formatFileSize(bytes) {
+        if (bytes === 0) return '0 Bytes';
+        const k = 1024;
+        const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+        const i = Math.floor(Math.log(bytes) / Math.log(k));
+        return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+    }
+
+    function removeFile(button, inputId, index) {
+        const input = document.getElementById(inputId);
+        const dt = new DataTransfer();
+        const files = Array.from(input.files);
+        
+        files.splice(index, 1);
+        files.forEach(file => dt.items.add(file));
+        
+        input.files = dt.files;
+        button.closest('.uploaded-file').remove();
+    }
+
+    // 可比物业管理
+    let comparablePropertyIndex = 1;
+
+    function addComparableProperty() {
+        const container = document.getElementById('comparableProperties');
+        const newProperty = document.createElement('div');
+        newProperty.className = 'comparable-property border border-gray-200 rounded-lg p-4';
+        newProperty.innerHTML = `
+            <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">物业名称</label>
+                    <input type="text" name="comparableProperty[${comparablePropertyIndex}][name]" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="例如：建外SOHO">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">交易价格 (万元/平方米)</label>
+                    <input type="number" name="comparableProperty[${comparablePropertyIndex}][price]" step="0.01"
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500"
+                        placeholder="请输入交易价格">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700">交易时间</label>
+                    <input type="date" name="comparableProperty[${comparablePropertyIndex}][date]" 
+                        class="mt-1 block w-full px-3 py-2 border border-gray-300 rounded-md shadow-sm focus:outline-none focus:ring-blue-500 focus:border-blue-500">
+                </div>
+                <div class="flex items-end">
+                    <button type="button" onclick="removeComparableProperty(this)" 
+                            class="px-3 py-2 bg-red-600 text-white rounded-md hover:bg-red-700">
+                        <i class="fas fa-trash"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        container.appendChild(newProperty);
+        comparablePropertyIndex++;
+    }
+
+    function removeComparableProperty(button) {
+        button.closest('.comparable-property').remove();
+    }
+
+    // 代币发行量计算
+    function calculateTokenSupply() {
+        const buildingArea = document.getElementById('buildingArea');
+        const tokenMultiplier = document.getElementById('tokenMultiplier');
+        const totalSupply = document.getElementById('totalSupply');
+        const areaForToken = document.getElementById('areaForToken');
+        
+        if (buildingArea && buildingArea.value) {
+            const area = parseFloat(buildingArea.value);
+            const multiplier = parseFloat(tokenMultiplier?.value) || 10000;
+            const supply = area * multiplier;
+            
+            if (totalSupply) {
+                totalSupply.textContent = supply.toLocaleString() + ' 枚';
+            }
+            
+            if (areaForToken) {
+                areaForToken.value = area;
+            }
+            
+            // 计算初始价格
+            calculateInitialPrice();
+        }
+    }
+
+    function calculateInitialPrice() {
+        const currentValuation = document.getElementById('currentValuation');
+        const buildingArea = document.getElementById('buildingArea');
+        const tokenMultiplier = document.getElementById('tokenMultiplier');
+        const initialPrice = document.getElementById('initialPrice');
+        
+        if (currentValuation && buildingArea && currentValuation.value && buildingArea.value) {
+            const valuation = parseFloat(currentValuation.value) * 10000; // 万元转元
+            const area = parseFloat(buildingArea.value);
+            const multiplier = parseFloat(tokenMultiplier?.value) || 10000;
+            const totalSupply = area * multiplier;
+            
+            if (totalSupply > 0) {
+                const price = valuation / totalSupply;
+                if (initialPrice) {
+                    initialPrice.value = price.toFixed(2);
+                }
+            }
+        }
+    }
+
+    // 收益分配计算
+    function calculateDistribution() {
+        const totalIncome = document.getElementById('totalIncome');
+        const annualRentIncome = document.getElementById('annualRentIncome');
+        
+        const managementFeeRate = parseFloat(document.getElementById('managementFeeRate')?.value) || 0;
+        const maintenanceReserveRate = parseFloat(document.getElementById('maintenanceReserveRate')?.value) || 0;
+        const insuranceFeeRate = parseFloat(document.getElementById('insuranceFeeRate')?.value) || 0;
+        const taxRate = parseFloat(document.getElementById('taxRate')?.value) || 0;
+        
+        if (annualRentIncome && annualRentIncome.value) {
+            const income = parseFloat(annualRentIncome.value);
+            
+            // 更新总收入显示
+            if (totalIncome) {
+                totalIncome.textContent = `¥${income}万/年`;
+            }
+            
+            // 计算各项费用
+            const managementFee = income * managementFeeRate / 100;
+            const maintenanceReserve = income * maintenanceReserveRate / 100;
+            const insuranceFee = income * insuranceFeeRate / 100;
+            const tax = income * taxRate / 100;
+            
+            // 计算可分配收益
+            const distributable = income - managementFee - maintenanceReserve - insuranceFee - tax;
+            
+            // 更新显示
+            const mgmtFeeElement = document.getElementById('managementFeeAmount');
+            const maintReserveElement = document.getElementById('maintenanceReserveAmount');
+            const insuranceFeeElement = document.getElementById('insuranceFeeAmount');
+            const taxElement = document.getElementById('taxAmount');
+            const distributableElement = document.getElementById('distributableIncome');
+            
+            if (mgmtFeeElement) mgmtFeeElement.textContent = `-¥${managementFee.toFixed(1)}万`;
+            if (maintReserveElement) maintReserveElement.textContent = `-¥${maintenanceReserve.toFixed(1)}万`;
+            if (insuranceFeeElement) insuranceFeeElement.textContent = `-¥${insuranceFee.toFixed(1)}万`;
+            if (taxElement) taxElement.textContent = `-¥${tax.toFixed(1)}万`;
+            if (distributableElement) distributableElement.textContent = `¥${distributable.toFixed(1)}万/年`;
+            
+            // 计算每枚代币收益
+            const buildingArea = document.getElementById('buildingArea');
+            const tokenMultiplier = document.getElementById('tokenMultiplier');
+            
+            if (buildingArea && buildingArea.value) {
+                const area = parseFloat(buildingArea.value);
+                const multiplier = parseFloat(tokenMultiplier?.value) || 10000;
+                const totalSupply = area * multiplier;
+                
+                if (totalSupply > 0) {
+                    const tokenAnnualReturn = (distributable * 10000) / totalSupply; // 万元转元
+                    const tokenReturnElement = document.getElementById('tokenAnnualReturn');
+                    if (tokenReturnElement) {
+                        tokenReturnElement.textContent = `¥${tokenAnnualReturn.toFixed(4)}`;
+                    }
+                }
+            }
+        }
+    }
+
+    // 网络费用更新
+    function updateNetworkFees() {
+        const mainChain = document.getElementById('mainChain');
+        const networkDescription = document.getElementById('networkDescription');
+        
+        if (!mainChain || !networkDescription) return;
+        
+        const descriptions = {
+            'ethereum': '高安全性，费用较高，适合大额资产',
+            'polygon': '低费用，快速确认，与以太坊兼容',
+            'bsc': '低费用，快速交易，大用户群体',
+            'arbitrum': '以太坊二层网络，低费用高安全',
+            'optimism': '以太坊二层网络，优化的用户体验'
+        };
+        
+        networkDescription.textContent = descriptions[mainChain.value] || '';
+    }
+
+    // 显示步骤完成状态
+    function updateStepStatus() {
+        for (let i = 1; i <= totalSteps; i++) {
+            const indicator = document.getElementById(`step${i}-indicator`);
+            if (!indicator) continue;
+            
+            // 临时切换到该步骤进行验证
+            const originalStep = currentStep;
+            currentStep = i;
+            const isValid = validateCurrentStep(false); // 静默验证
+            currentStep = originalStep;
+            
+            // 更新步骤状态显示
+            const stepText = indicator.parentElement.querySelector('span');
+            if (isValid) {
+                if (i < currentStep) {
+                    indicator.classList.remove('step-pending');
+                    indicator.classList.add('step-completed');
+                    indicator.innerHTML = '<i class="fas fa-check"></i>';
+                }
+                if (stepText) {
+                    stepText.classList.remove('text-gray-500');
+                    stepText.classList.add('text-green-600');
+                }
+            } else {
+                if (i < currentStep) {
+                    indicator.classList.remove('step-completed');
+                    indicator.classList.add('step-pending');
+                    indicator.textContent = i;
+                }
+                if (stepText && i !== currentStep) {
+                    stepText.classList.remove('text-green-600');
+                    stepText.classList.add('text-gray-500');
+                }
+            }
+        }
+    }
+
+    // 友好的信息提示
+    function showInfoToast(message) {
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-blue-500 text-white px-6 py-3 rounded-lg shadow-lg z-50 max-w-sm';
+        toast.innerHTML = `
+            <div class="flex items-center space-x-2">
+                <i class="fas fa-info-circle"></i>
+                <span class="text-sm">${message}</span>
+                <button onclick="this.parentElement.parentElement.remove()" class="ml-2 text-white hover:text-gray-200">
+                    <i class="fas fa-times text-xs"></i>
+                </button>
+            </div>
+        `;
+        
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.remove();
+            }
+        }, 4000);
+    }
+
+    // 添加步骤完成度提示
+    function showStepCompletionHint() {
+        const stepCompletions = [];
+        
+        for (let i = 1; i <= totalSteps; i++) {
+            const originalStep = currentStep;
+            currentStep = i;
+            const isValid = validateCurrentStep(false);
+            currentStep = originalStep;
+            
+            stepCompletions.push({
+                step: i,
+                completed: isValid,
+                name: getStepName(i)
+            });
+        }
+        
+        const completedSteps = stepCompletions.filter(s => s.completed).length;
+        const totalProgress = Math.round((completedSteps / totalSteps) * 100);
+        
+        // 更新进度显示
+        updateProgressDisplay(completedSteps, totalSteps, totalProgress);
+    }
+
+    function getStepName(step) {
+        const stepNames = {
+            1: '资产基础信息',
+            2: '合规文件',
+            3: '托管设置',
+            4: '代币参数',
+            5: '链上配置',
+            6: '确认提交'
+        };
+        return stepNames[step] || `步骤${step}`;
+    }
+
+    function updateProgressDisplay(completed, total, percentage) {
+        // 在页面顶部显示整体进度
+        let progressBar = document.getElementById('overallProgress');
+        if (!progressBar) {
+            progressBar = document.createElement('div');
+            progressBar.id = 'overallProgress';
+            progressBar.className = 'bg-white border-b border-gray-200 px-6 py-3';
+            progressBar.innerHTML = `
+                <div class="max-w-7xl mx-auto">
+                    <div class="flex items-center justify-between text-sm text-gray-600 mb-2">
+                        <span>整体完成进度</span>
+                        <span id="progressText">${completed}/${total} 步骤完成</span>
+                    </div>
+                    <div class="w-full bg-gray-200 rounded-full h-2">
+                        <div id="progressFill" class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: ${percentage}%"></div>
+                    </div>
+                </div>
+            `;
+            
+            const nav = document.querySelector('nav');
+            if (nav) {
+                nav.parentNode.insertBefore(progressBar, nav.nextSibling);
+            }
+        } else {
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            if (progressText) progressText.textContent = `${completed}/${total} 步骤完成`;
+            if (progressFill) progressFill.style.width = `${percentage}%`;
+        }
+    }
+
+    // 保存草稿
+    function saveDraft() {
+        const formData = new FormData(document.getElementById('assetForm'));
+        const draftData = {};
+        
+        for (let [key, value] of formData.entries()) {
+            draftData[key] = value;
+        }
+        
+        localStorage.setItem('assetDraft', JSON.stringify(draftData));
+        
+        // 显示保存成功消息
+        const toast = document.createElement('div');
+        toast.className = 'fixed top-4 right-4 bg-green-500 text-white px-6 py-3 rounded-lg shadow-lg z-50';
+        toast.innerHTML = '<i class="fas fa-check mr-2"></i>草稿已保存';
+        document.body.appendChild(toast);
+        
+        setTimeout(() => {
+            toast.remove();
+        }, 3000);
+    }
+
+    // 加载草稿
+    function loadDraft() {
+        const draftData = localStorage.getItem('assetDraft');
+        if (draftData) {
+            const data = JSON.parse(draftData);
+            
+            Object.entries(data).forEach(([key, value]) => {
+                const field = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+                if (field) {
+                    field.value = value;
+                }
+            });
+            
+            // 重新计算相关数据
+            calculateTokenSupply();
+            calculateDistribution();
+        }
+    }
+
+    // 修正表单提交 - 只在最终提交时进行完整验证
+    document.getElementById('assetForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        // 完整验证所有步骤
+        let allValid = true;
+        let incompleteSteps = [];
+        
+        for (let i = 1; i <= totalSteps; i++) {
+            const originalStep = currentStep;
+            currentStep = i;
+            const isValid = validateCurrentStep(false);
+            currentStep = originalStep;
+            
+            if (!isValid) {
+                allValid = false;
+                incompleteSteps.push(getStepName(i));
+            }
+        }
+        
+        if (!allValid) {
+            const message = `请完善以下步骤后再提交：\n${incompleteSteps.join('\n')}`;
+            if (confirm(`${message}\n\n点击确定返回第一个未完成步骤，点击取消继续检查。`)) {
+                // 跳转到第一个未完成的步骤
+                for (let i = 1; i <= totalSteps; i++) {
+                    const originalStep = currentStep;
+                    currentStep = i;
+                    const isValid = validateCurrentStep(false);
+                    currentStep = originalStep;
+                    
+                    if (!isValid) {
+                        currentStep = i;
+                        showStep(currentStep);
+                        updateProgress();
+                        validateCurrentStep(true); // 显示错误提示
+                        break;
+                    }
+                }
+            }
+            return;
+        }
+        
+        // 所有验证通过，提交表单
+        if (confirm('所有信息已填写完整，确认提交资产申请？')) {
+            submitForm();
+        }
+    });
+
+    function submitForm() {
+        const submitBtn = document.getElementById('submitBtn');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>提交中...';
+        submitBtn.disabled = true;
+        
+        // 模拟提交过程
+        setTimeout(() => {
+            localStorage.removeItem('assetDraft');
+            alert('资产申请提交成功！我们将在5个工作日内完成审核。');
+            window.location.href = 'asset-list.html';
+        }, 2000);
+    }
+
+    // 温和的实时验证
+    function addGentleValidation() {
+        const inputs = document.querySelectorAll('input, select');
+        
+        inputs.forEach(input => {
+            input.addEventListener('blur', function() {
+                // 只有在用户填写了内容时才显示验证结果
+                if (this.value && this.value.trim() !== '') {
+                    validateSingleField(this);
+                }
+            });
+            
+            input.addEventListener('input', function() {
+                // 清除错误状态，但不强制验证
+                this.classList.remove('border-red-500');
+                if (this.value && this.value.trim() !== '') {
+                    this.classList.add('border-green-500');
+                } else {
+                    this.classList.remove('border-green-500');
+                }
+            });
+        });
+    }
+
+    // 单个字段验证
+    function validateSingleField(field) {
+        const isRequired = field.hasAttribute('required') || 
+                        field.closest('.required-field') || 
+                        field.previousElementSibling?.classList.contains('required-field');
+        
+        if (isRequired && (!field.value || field.value.trim() === '')) {
+                field.classList.add('border-red-500');
+                field.classList.remove('border-green-500');
+                return false;
+            } else if (field.value && field.value.trim() !== '') {
+                field.classList.remove('border-red-500');
+                field.classList.add('border-green-500');
+                return true;
+            }
+            
+            return true;
+        }
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 加载草稿
+            loadDraft();
+            
+            // 初始化进度显示
+            updateProgress();
+            showStepCompletionHint();
+            
+            // 绑定事件监听器
+            const buildingArea = document.getElementById('buildingArea');
+            const currentValuation = document.getElementById('currentValuation');
+            const annualRentIncome = document.getElementById('annualRentIncome');
+            const tokenMultiplier = document.getElementById('tokenMultiplier');
+            const mainChain = document.getElementById('mainChain');
+            
+            if (buildingArea) {
+                buildingArea.addEventListener('input', calculateTokenSupply);
+            }
+            
+            if (currentValuation) {
+                currentValuation.addEventListener('input', calculateInitialPrice);
+            }
+            
+            if (annualRentIncome) {
+                annualRentIncome.addEventListener('input', calculateDistribution);
+            }
+            
+            if (tokenMultiplier) {
+                tokenMultiplier.addEventListener('input', calculateTokenSupply);
+            }
+            
+            if (mainChain) {
+                mainChain.addEventListener('change', updateNetworkFees);
+            }
+            
+            // 绑定收益分配参数变化事件
+            const distributionInputs = [
+                'managementFeeRate',
+                'maintenanceReserveRate', 
+                'insuranceFeeRate',
+                'taxRate'
+            ];
+            
+            distributionInputs.forEach(inputId => {
+                const element = document.getElementById(inputId);
+                if (element) {
+                    element.addEventListener('input', calculateDistribution);
+                }
+            });
+            
+            // 每次表单变化时更新进度
+            document.getElementById('assetForm').addEventListener('input', function() {
+                setTimeout(() => {
+                    showStepCompletionHint();
+                    updateStepStatus();
+                }, 100);
+            });
+            
+            document.getElementById('assetForm').addEventListener('change', function() {
+                setTimeout(() => {
+                    showStepCompletionHint();
+                    updateStepStatus();
+                }, 100);
+            });
+            
+            // 初始化温和验证
+            addGentleValidation();
+            
+            // 文件拖拽上传功能
+            const fileUploadAreas = document.querySelectorAll('.file-upload-area');
+            fileUploadAreas.forEach(area => {
+                area.addEventListener('dragover', function(e) {
+                    e.preventDefault();
+                    this.classList.add('dragover');
+                });
+                
+                area.addEventListener('dragleave', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                });
+                
+                area.addEventListener('drop', function(e) {
+                    e.preventDefault();
+                    this.classList.remove('dragover');
+                    
+                    const fileInput = this.parentElement.querySelector('input[type="file"]');
+                    if (fileInput) {
+                        fileInput.files = e.dataTransfer.files;
+                        const onchangeAttr = fileInput.getAttribute('onchange');
+                        if (onchangeAttr) {
+                            const match = onchangeAttr.match(/handleFileUpload$this,\s*'([^']+)'$/);
+                            if (match) {
+                                const containerId = match[1];
+                                handleFileUpload(fileInput, containerId);
+                            }
+                        }
+                    }
+                });
+            });
+            
+            // 初始化第一步
+            showStep(1);
+        });
+
+        // 添加CSS样式用于文件拖拽效果
+        const style = document.createElement('style');
+        style.textContent = `
+            .file-upload-area.dragover {
+                border-color: #3b82f6 !important;
+                background-color: #eff6ff !important;
+            }
+            
+            .validation-error {
+                color: #ef4444;
+                font-size: 0.875rem;
+                margin-top: 0.25rem;
+            }
+            
+            .step-indicator {
+                transition: all 0.3s ease;
+            }
+            
+            .step-pending {
+                background-color: #e5e7eb;
+                color: #6b7280;
+            }
+            
+            .step-active {
+                background-color: #3b82f6;
+                color: white;
+            }
+            
+            .step-completed {
+                background-color: #10b981;
+                color: white;
+            }
+            
+            .uploaded-file {
+                display: flex;
+                justify-content: space-between;
+                align-items: center;
+                padding: 0.75rem;
+                border: 1px solid #d1d5db;
+                border-radius: 0.375rem;
+                margin-bottom: 0.5rem;
+                background-color: #f9fafb;
+            }
+            
+            .comparable-property {
+                margin-bottom: 1rem;
+            }
+            
+            .progress-fill {
+                transition: width 0.3s ease;
+            }
+            
+            /* 自定义滚动条 */
+            .overflow-y-auto::-webkit-scrollbar {
+                width: 6px;
+            }
+            
+            .overflow-y-auto::-webkit-scrollbar-track {
+                background: #f1f5f9;
+            }
+            
+            .overflow-y-auto::-webkit-scrollbar-thumb {
+                background: #cbd5e1;
+                border-radius: 3px;
+            }
+            
+            .overflow-y-auto::-webkit-scrollbar-thumb:hover {
+                background: #94a3b8;
+            }
+            
+            /* 表单焦点样式 */
+            .focus\:ring-blue-500:focus {
+                ring-color: #3b82f6;
+                ring-width: 2px;
+            }
+            
+            /* 步骤指示器动画 */
+            @keyframes pulse {
+                0%, 100% { opacity: 1; }
+                50% { opacity: 0.7; }
+            }
+            
+            .step-active {
+                animation: pulse 2s infinite;
+            }
+            
+            /* 成功/错误边框动画 */
+            .border-green-500 {
+                border-color: #10b981 !important;
+                box-shadow: 0 0 0 1px rgba(16, 185, 129, 0.1);
+            }
+            
+            .border-red-500 {
+                border-color: #ef4444 !important;
+                box-shadow: 0 0 0 1px rgba(239, 68, 68, 0.1);
+            }
+            
+            /* 按钮禁用状态 */
+            .opacity-50 {
+                opacity: 0.5;
+            }
+            
+            .cursor-not-allowed {
+                cursor: not-allowed;
+            }
+            
+            /* Toast动画 */
+            .fixed.top-4.right-4 {
+                animation: slideInRight 0.3s ease-out;
+            }
+            
+            @keyframes slideInRight {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+            
+            /* 响应式改进 */
+            @media (max-width: 768px) {
+                .file-upload-area {
+                    min-height: 120px;
+                }
+                
+                .comparable-property .grid {
+                    grid-template-columns: 1fr;
+                }
+                
+                .step-indicator {
+                    width: 2rem;
+                    height: 2rem;
+                    font-size: 0.875rem;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+
+        // 添加键盘快捷键支持
+        document.addEventListener('keydown', function(e) {
+            // Ctrl/Cmd + S 保存草稿
+            if ((e.ctrlKey || e.metaKey) && e.key === 's') {
+                e.preventDefault();
+                saveDraft();
+            }
+            
+            // Ctrl/Cmd + 右箭头 下一步
+            if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowRight') {
+                e.preventDefault();
+                if (currentStep < totalSteps) {
+                    nextStep();
+                }
+            }
+            
+            // Ctrl/Cmd + 左箭头 上一步
+            if ((e.ctrlKey || e.metaKey) && e.key === 'ArrowLeft') {
+                e.preventDefault();
+                if (currentStep > 1) {
+                    previousStep();
+                }
+            }
+        });
+
+        // 添加表单数据预览功能
+        function previewFormData() {
+            const formData = new FormData(document.getElementById('assetForm'));
+            const preview = {};
+            
+            for (let [key, value] of formData.entries()) {
+                if (value) {
+                    preview[key] = value;
+                }
+            }
+            
+            console.log('当前表单数据预览:', preview);
+            
+            // 可以在这里添加数据预览的UI显示
+            const previewModal = document.createElement('div');
+            previewModal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+            previewModal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-2xl max-h-96 overflow-y-auto">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-lg font-semibold">表单数据预览</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-times"></i>
+                        </button>
+                    </div>
+                    <pre class="text-sm bg-gray-100 p-4 rounded overflow-auto">${JSON.stringify(preview, null, 2)}</pre>
+                </div>
+            `;
+            
+            document.body.appendChild(previewModal);
+        }
+
+        // 添加表单自动保存功能
+        let autoSaveTimeout;
+        function autoSave() {
+            clearTimeout(autoSaveTimeout);
+            autoSaveTimeout = setTimeout(() => {
+                const formData = new FormData(document.getElementById('assetForm'));
+                const hasData = Array.from(formData.values()).some(value => value && value.trim() !== '');
+                
+                if (hasData) {
+                    saveDraft();
+                }
+            }, 30000); // 30秒后自动保存
+        }
+
+        // 监听表单变化进行自动保存
+        document.getElementById('assetForm').addEventListener('input', autoSave);
+        document.getElementById('assetForm').addEventListener('change', autoSave);
+
+        // 页面离开前提醒保存
+        window.addEventListener('beforeunload', function(e) {
+            const formData = new FormData(document.getElementById('assetForm'));
+            const hasUnsavedData = Array.from(formData.values()).some(value => value && value.trim() !== '');
+            
+            if (hasUnsavedData) {
+                const confirmationMessage = '您有未保存的数据，确定要离开吗？';
+                e.returnValue = confirmationMessage;
+                return confirmationMessage;
+            }
+        });
+
+    </script>
+</body>
+</html>

@@ -1,0 +1,1082 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代币化管理 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .status-active { background: #DCFCE7; color: #15803D; }
+        .status-paused { background: #FEF3C7; color: #B45309; }
+        .status-locked { background: #FEE2E2; color: #DC2626; }
+        .status-pending { background: #E0E7FF; color: #4338CA; }
+        .status-ready { background: #F3E8FF; color: #7C3AED; }
+        .tab-active { border-bottom: 3px solid #3B82F6; color: #3B82F6; }
+        .price-up { color: #10B981; }
+        .price-down { color: #EF4444; }
+        .price-unchanged { color: #6B7280; }
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #E5E7EB;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #3B82F6;
+        }
+        .token-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 12px;
+            overflow: hidden;
+            transition: all 0.3s ease;
+        }
+        .token-card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 20px 40px rgba(0,0,0,0.12);
+            border-color: #3B82F6;
+        }
+        .asset-selection-card {
+            background: white;
+            border: 2px solid #E5E7EB;
+            border-radius: 12px;
+            padding: 20px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+        .asset-selection-card:hover {
+            border-color: #3B82F6;
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+        }
+        .asset-selection-card.selected {
+            border-color: #3B82F6;
+            background: #EFF6FF;
+        }
+        .tokenization-step {
+            position: relative;
+            padding-left: 40px;
+            padding-bottom: 30px;
+        }
+        .tokenization-step:last-child {
+            padding-bottom: 0;
+        }
+        .tokenization-step::before {
+            content: '';
+            position: absolute;
+            left: 15px;
+            top: 30px;
+            bottom: 0;
+            width: 2px;
+            background: #E5E7EB;
+        }
+        .tokenization-step:last-child::before {
+            display: none;
+        }
+        .step-icon {
+            position: absolute;
+            left: 0;
+            top: 0;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+        }
+        .step-icon.completed {
+            background: #10B981;
+            color: white;
+        }
+        .step-icon.active {
+            background: #3B82F6;
+            color: white;
+            animation: pulse 2s infinite;
+        }
+        .step-icon.pending {
+            background: #F3F4F6;
+            color: #9CA3AF;
+            border: 2px solid #E5E7EB;
+        }
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+        .progress-bar {
+            height: 6px;
+            background: #E5E7EB;
+            border-radius: 3px;
+            overflow: hidden;
+        }
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3B82F6, #8B5CF6);
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #6B7280;
+        }
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            background: #EF4444;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="asset-dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="asset-list.html" class="text-gray-600 hover:text-gray-900 pb-4">资产管理</a>
+                    <a href="asset-tokenization.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">代币化</a>
+                    <!-- <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">文档管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">收益报告</a> -->
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">8</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">XX地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 页面标题和说明 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">代币化管理</h1>
+            <p class="text-gray-600 mt-2">管理资产代币化流程，监控代币交易和收益分配</p>
+            
+            <!-- 流程提示 -->
+            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4 mt-4 flex items-center space-x-3">
+                <i class="fas fa-info-circle text-blue-600 text-lg"></i>
+                <div>
+                    <p class="text-sm text-blue-800">
+                        <strong>代币化流程：</strong>
+                        1. 在<a href="asset-list.html" class="underline font-medium">资产管理</a>中添加资产 → 
+                        2. 选择合适的资产进行代币化 → 
+                        3. 配置代币参数 → 
+                        4. 发行并管理代币
+                    </p>
+                </div>
+            </div>
+        </div>
+
+        <!-- 代币化统计概览 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-building text-blue-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">资产</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">总资产数</h3>
+                <p class="text-2xl font-bold text-gray-900">23</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-green-600">18个已代币化</span>
+                    <span class="text-xs text-purple-600">5个可代币化</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-coins text-green-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">代币</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">活跃代币</h3>
+                <p class="text-2xl font-bold text-gray-900">18</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-green-600">15个交易中</span>
+                    <span class="text-xs text-orange-600">3个锁定期</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">24H</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">总交易额</h3>
+                <p class="text-2xl font-bold text-gray-900">¥856万</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs price-up">+12.5%</span>
+                    <span class="text-xs text-gray-500 ml-2">vs 昨日</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-orange-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">投资者</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">总投资者数</h3>
+                <p class="text-2xl font-bold text-gray-900">3,856</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-green-600">+125</span>
+                    <span class="text-xs text-gray-500 ml-2">本周新增</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选项卡导航 -->
+        <div class="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0">
+            <div class="flex space-x-1 p-1">
+                <button onclick="switchTab('tokenized')" id="tab-tokenized" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg tab-active">
+                    <i class="fas fa-coins mr-2"></i>已代币化资产
+                </button>
+                <button onclick="switchTab('ready')" id="tab-ready" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-rocket mr-2"></i>待代币化资产
+                    <span class="ml-2 bg-purple-100 text-purple-800 text-xs px-2 py-0.5 rounded-full">5</span>
+                </button>
+                <button onclick="switchTab('progress')" id="tab-progress" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-clock mr-2"></i>代币化进行中
+                    <span class="ml-2 bg-blue-100 text-blue-800 text-xs px-2 py-0.5 rounded-full">2</span>
+                </button>
+                <button onclick="switchTab('analytics')" id="tab-analytics" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-chart-bar mr-2"></i>市场分析
+                </button>
+            </div>
+        </div>
+
+        <!-- 选项卡内容 -->
+        <div class="bg-white rounded-b-xl shadow-sm border border-gray-200 p-6">
+            <!-- 已代币化资产标签 -->
+            <div id="content-tokenized" class="tab-content">
+                <div class="space-y-6">
+                    <!-- 操作提示 -->
+                    <div class="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
+                        <p class="text-sm text-gray-600">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            这里显示所有已完成代币化的资产，您可以管理它们的交易设置和查看收益
+                        </p>
+                        <a href="asset-list.html" class="text-sm text-blue-600 hover:text-blue-700 font-medium">
+                            <i class="fas fa-plus mr-1"></i>添加新资产
+                        </a>
+                    </div>
+
+                    <!-- 已代币化资产列表 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <!-- 代币卡片1 - 交易中 -->
+                        <div class="token-card">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center space-x-4">
+                                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=60&h=60&fit=crop" 
+                                             alt="上海静安嘉里中心" class="w-14 h-14 rounded-lg object-cover">
+                                        <div>
+                                            <h3 class="font-bold text-gray-900">SHANGHAI-JC</h3>
+                                            <p class="text-sm text-gray-600">上海静安嘉里中心</p>
+                                        </div>
+                                    </div>
+                                    <span class="status-badge status-active">交易中</span>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500">当前价格</p>
+                                        <p class="text-lg font-semibold text-gray-900">¥0.87</p>
+                                        <p class="text-xs price-up">+0.5%</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">24H成交量</p>
+                                        <p class="text-lg font-semibold text-gray-900">¥126万</p>
+                                        <p class="text-xs text-gray-500">1,448,276枚</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">流通量</p>
+                                        <p class="text-lg font-semibold text-gray-900">100%</p>
+                                        <p class="text-xs text-gray-500">3,200万/3,200万</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">持有人</p>
+                                        <p class="text-lg font-semibold text-gray-900">1,256</p>
+                                        <p class="text-xs text-green-600">+23本周</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button onclick="manageTradingSettings('SJC')" class="flex-1 px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 text-sm font-medium">
+                                        <i class="fas fa-cog mr-1"></i>交易设置
+                                    </button>
+                                    <button onclick="viewTokenDetails('SJC')" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                        <i class="fas fa-chart-line mr-1"></i>详细数据
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 代币卡片2 - 锁定期 -->
+                        <div class="token-card">
+                            <div class="p-6">
+                                <div class="flex items-start justify-between mb-4">
+                                    <div class="flex items-center space-x-4">
+                                        <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=60&h=60&fit=crop" 
+                                             alt="深圳前海中心" class="w-14 h-14 rounded-lg object-cover">
+                                        <div>
+                                            <h3 class="font-bold text-gray-900">SHENZHEN-QH</h3>
+                                            <p class="text-sm text-gray-600">深圳前海中心A座</p>
+                                        </div>
+                                    </div>
+                                    <span class="status-badge status-locked">锁定中</span>
+                                </div>
+
+                                <div class="grid grid-cols-2 gap-4 mb-4">
+                                    <div>
+                                        <p class="text-xs text-gray-500">发行价格</p>
+                                        <p class="text-lg font-semibold text-gray-900">¥1.52</p>
+                                        <p class="text-xs text-gray-500">待定价</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">总发行量</p>
+                                        <p class="text-lg font-semibold text-gray-900">2,500万</p>
+                                        <p class="text-xs text-gray-500">预售中</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">锁定期</p>
+                                        <p class="text-lg font-semibold text-gray-900">180天</p>
+                                        <p class="text-xs text-orange-600">剩余165天</p>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs text-gray-500">预约人数</p>
+                                        <p class="text-lg font-semibold text-gray-900">856</p>
+                                        <p class="text-xs text-green-600">持续增长</p>
+                                    </div>
+                                </div>
+
+                                <div class="bg-yellow-50 border border-yellow-200 p-3 rounded-lg mb-4">
+                                    <div class="flex items-center space-x-2">
+                                        <i class="fas fa-lock text-yellow-600"></i>
+                                        <p class="text-sm text-yellow-800">代币将在2024年7月15日解锁并开始交易</p>
+                                    </div>
+                                </div>
+
+                                <div class="flex space-x-2">
+                                    <button onclick="editTokenInfo('QH')" class="flex-1 px-4 py-2 bg-yellow-600 text-white rounded-lg hover:bg-yellow-700 text-sm font-medium">
+                                        <i class="fas fa-edit mr-1"></i>编辑信息
+                                    </button>
+                                    <button onclick="viewPreorders('QH')" class="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200 text-sm font-medium">
+                                        <i class="fas fa-users mr-1"></i>预约名单
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 更多已代币化资产... -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 待代币化资产标签 -->
+            <div id="content-ready" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 操作提示 -->
+                    <div class="flex items-center justify-between p-4 bg-purple-50 rounded-lg">
+                        <p class="text-sm text-purple-800">
+                            <i class="fas fa-info-circle mr-1"></i>
+                            以下资产已通过审核，可以开始代币化流程
+                        </p>
+                        <button onclick="refreshAssetList()" class="text-sm text-purple-600 hover:text-purple-700 font-medium">
+                            <i class="fas fa-sync-alt mr-1"></i>刷新列表
+                        </button>
+                    </div>
+
+                    <!-- 待代币化资产列表 -->
+                    <div class="grid grid-cols-1 gap-4">
+                        <!-- 资产选择卡片1 -->
+                        <div class="asset-selection-card" onclick="selectAssetForTokenization(1)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=80&h=80&fit=crop" 
+                                         alt="北京朝阳SOHO" class="w-20 h-20 rounded-lg object-cover">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">北京朝阳SOHO</h3>
+                                        <p class="text-sm text-gray-600 mt-1">写字楼 · 42,000㎡ · 北京朝阳区</p>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-tag mr-1 text-gray-400"></i>估值：¥5.2亿
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-percentage mr-1 text-gray-400"></i>出租率：95.3%
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-chart-line mr-1 text-gray-400"></i>预期收益：7.5%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge status-ready">可代币化</span>
+                                    <button onclick="startTokenization(1)" class="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+                                        开始代币化
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 资产选择卡片2 -->
+                        <div class="asset-selection-card" onclick="selectAssetForTokenization(2)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <img src="https://images.unsplash.com/photo-1565043666747-69f6646db940?w=80&h=80&fit=crop" 
+                                         alt="广州珠江新城" class="w-20 h-20 rounded-lg object-cover">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">广州珠江新城商业中心</h3>
+                                        <p class="text-sm text-gray-600 mt-1">商业综合体 · 28,000㎡ · 广州天河区</p>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-tag mr-1 text-gray-400"></i>估值：¥3.8亿
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-percentage mr-1 text-gray-400"></i>出租率：92.1%
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-chart-line mr-1 text-gray-400"></i>预期收益：6.8%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge status-ready">可代币化</span>
+                                    <button onclick="startTokenization(2)" class="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+                                        开始代币化
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 资产选择卡片3 -->
+                        <div class="asset-selection-card" onclick="selectAssetForTokenization(3)">
+                            <div class="flex items-center justify-between">
+                                <div class="flex items-center space-x-4">
+                                    <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=80&h=80&fit=crop" 
+                                         alt="成都IFS" class="w-20 h-20 rounded-lg object-cover">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">成都IFS国际金融中心</h3>
+                                        <p class="text-sm text-gray-600 mt-1">购物中心 · 35,000㎡ · 成都锦江区</p>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-tag mr-1 text-gray-400"></i>估值：¥4.5亿
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-percentage mr-1 text-gray-400"></i>出租率：96.8%
+                                            </span>
+                                            <span class="text-sm text-gray-500">
+                                                <i class="fas fa-chart-line mr-1 text-gray-400"></i>预期收益：8.2%
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <span class="status-badge status-ready">可代币化</span>
+                                    <button onclick="startTokenization(3)" class="mt-3 px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700 text-sm font-medium">
+                                        开始代币化
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 没有更多资产提示 -->
+                        <div class="text-center py-8 text-gray-500">
+                            <p class="mb-4">没有更多可代币化的资产了</p>
+                            <a href="asset-list.html" class="text-blue-600 hover:text-blue-700 font-medium">
+                                <i class="fas fa-plus mr-1"></i>添加新资产
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 代币化进行中标签 -->
+            <div id="content-progress" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 进行中的代币化项目 -->
+                    <div class="space-y-6">
+                        <!-- 项目1 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center space-x-4">
+                                    <img src="https://images.unsplash.com/photo-1478860409698-8707f313ee8b?w=60&h=60&fit=crop" 
+                                         alt="南京德基广场" class="w-14 h-14 rounded-lg object-cover">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">南京德基广场</h3>
+                                        <p class="text-sm text-gray-600">购物中心 · 52,000㎡</p>
+                                        <p class="text-xs text-gray-500 mt-1">开始时间：2024-01-10</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-blue-600">75%</div>
+                                    <p class="text-xs text-gray-500">总体进度</p>
+                                </div>
+                            </div>
+
+                            <!-- 进度条 -->
+                            <div class="mb-6">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 75%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">预计完成时间：3个工作日</p>
+                            </div>
+
+                            <!-- 步骤详情 -->
+                            <div class="space-y-4">
+                                <div class="tokenization-step">
+                                    <div class="step-icon completed">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">法律合规审查</h4>
+                                        <p class="text-sm text-gray-600 mt-1">所有法律文件已审核通过</p>
+                                        <p class="text-xs text-gray-500 mt-1">完成时间：2024-01-12</p>
+                                    </div>
+                                </div>
+
+                                <div class="tokenization-step">
+                                    <div class="step-icon completed">
+                                        <i class="fas fa-check"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">智能合约开发</h4>
+                                        <p class="text-sm text-gray-600 mt-1">ERC-1400标准合约已部署到测试网</p>
+                                        <p class="text-xs text-gray-500 mt-1">完成时间：2024-01-14</p>
+                                    </div>
+                                </div>
+
+                                <div class="tokenization-step">
+                                    <div class="step-icon active">
+                                        <i class="fas fa-spinner fa-spin"></i>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">链上映射</h4>
+                                        <p class="text-sm text-gray-600 mt-1">正在将资产信息映射到区块链...</p>
+                                        <div class="flex items-center space-x-4 mt-2">
+                                            <span class="text-xs text-blue-600">进度：65%</span>
+                                            <span class="text-xs text-gray-500">预计2小时完成</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="tokenization-step">
+                                    <div class="step-icon pending">4</div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">监管备案</h4>
+                                        <p class="text-sm text-gray-600 mt-1">待提交监管机构备案</p>
+                                    </div>
+                                </div>
+
+                                <div class="tokenization-step">
+                                    <div class="step-icon pending">5</div>
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">代币发行</h4>
+                                        <p class="text-sm text-gray-600 mt-1">待发行代币并开放交易</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 操作按钮 -->
+                            <div class="flex justify-end space-x-3 mt-6 pt-6 border-t border-gray-200">
+                                <button onclick="viewProgressDetails(1)" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
+                                    <i class="fas fa-info-circle mr-1"></i>查看详情
+                                </button>
+                                <button onclick="accelerateProcess(1)" class="px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 text-sm">
+                                    <i class="fas fa-rocket mr-1"></i>加速处理
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 项目2 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-start justify-between mb-6">
+                                <div class="flex items-center space-x-4">
+                                    <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=60&h=60&fit=crop" 
+                                         alt="武汉国际广场" class="w-14 h-14 rounded-lg object-cover">
+                                    <div>
+                                        <h3 class="text-lg font-semibold text-gray-900">武汉国际广场</h3>
+                                        <p class="text-sm text-gray-600">写字楼 · 38,000㎡</p>
+                                        <p class="text-xs text-gray-500 mt-1">开始时间：2024-01-12</p>
+                                    </div>
+                                </div>
+                                <div class="text-right">
+                                    <div class="text-2xl font-bold text-blue-600">40%</div>
+                                    <p class="text-xs text-gray-500">总体进度</p>
+                                </div>
+                            </div>
+
+                            <!-- 进度条 -->
+                            <div class="mb-6">
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: 40%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">预计完成时间：7个工作日</p>
+                            </div>
+
+                            <!-- 当前状态 -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                                <div class="flex items-center space-x-3">
+                                    <i class="fas fa-gavel text-blue-600 text-lg"></i>
+                                    <div>
+                                        <p class="font-medium text-blue-900">法律合规审查进行中</p>
+                                        <p class="text-sm text-blue-700 mt-1">正在审核产权证明和相关法律文件</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 操作按钮 -->
+                            <div class="flex justify-end space-x-3 mt-6">
+                                <button onclick="viewProgressDetails(2)" class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 text-sm">
+                                    <i class="fas fa-info-circle mr-1"></i>查看详情
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 市场分析标签 -->
+            <div id="content-analytics" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 分析内容（保持原有的市场分析部分） -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">交易量趋势</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <canvas id="volumeChart" height="300"></canvas>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">价格走势</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <canvas id="priceChart" height="300"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 开始代币化模态框 -->
+    <div id="tokenizationModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50">
+        <div class="bg-white rounded-xl p-6 m-6 max-w-2xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-rocket text-purple-600 mr-2"></i>开始代币化
+                </h3>
+                <button onclick="closeTokenizationModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+
+            <div id="tokenizationContent">
+                <!-- 动态内容将在这里插入 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前选中的标签
+        let currentTab = 'tokenized';
+        let selectedAssetId = null;
+
+        // 切换标签
+        function switchTab(tab) {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('[id^="tab-"]').forEach(tabBtn => {
+                tabBtn.classList.remove('tab-active');
+            });
+            
+            // 显示选中的内容
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            
+            currentTab = tab;
+            
+            // 初始化对应标签的图表
+            if (tab === 'analytics') {
+                initAnalyticsCharts();
+            }
+        }
+
+        // 选择资产进行代币化
+        function selectAssetForTokenization(assetId) {
+            // 移除所有选中状态
+            document.querySelectorAll('.asset-selection-card').forEach(card => {
+                card.classList.remove('selected');
+            });
+            
+            // 添加选中状态
+            event.currentTarget.classList.add('selected');
+            selectedAssetId = assetId;
+        }
+
+        // 开始代币化
+        function startTokenization(assetId) {
+            event.stopPropagation();
+            
+            const modal = document.getElementById('tokenizationModal');
+            const content = document.getElementById('tokenizationContent');
+            
+            // 获取资产信息（实际应该从API获取）
+            const assetInfo = getAssetInfo(assetId);
+            
+            content.innerHTML = `
+                <form id="tokenizationForm" class="space-y-6">
+                    <!-- 资产信息 -->
+                    <div class="bg-purple-50 rounded-lg p-4">
+                        <h4 class="font-medium text-purple-900 mb-2">资产信息</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>
+                                <span class="text-purple-700">资产名称：</span>
+                                <span class="font-medium text-purple-900">${assetInfo.name}</span>
+                            </div>
+                            <div>
+                                <span class="text-purple-700">资产类型：</span>
+                                <span class="font-medium text-purple-900">${assetInfo.type}</span>
+                            </div>
+                            <div>
+                                <span class="text-purple-700">资产估值：</span>
+                                <span class="font-medium text-purple-900">${assetInfo.value}</span>
+                            </div>
+                            <div>
+                                <span class="text-purple-700">预期收益：</span>
+                                <span class="font-medium text-purple-900">${assetInfo.expectedReturn}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 代币基本信息 -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-4">代币基本信息</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">代币名称</label>
+                                <input type="text" id="tokenName" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" 
+                                       placeholder="例如：Beijing Chaoyang SOHO Token" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">代币符号</label>
+                                <input type="text" id="tokenSymbol" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" 
+                                       placeholder="例如：BCST" maxlength="10" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">总发行量</label>
+                                <input type="number" id="totalSupply" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" 
+                                       placeholder="例如：10000000" required>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">每代币价格（¥）</label>
+                                <input type="number" id="tokenPrice" step="0.01" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500" 
+                                       placeholder="例如：1.00" required>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 发行设置 -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-4">发行设置</h4>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">锁定期（天）</label>
+                                <select id="lockupPeriod" class="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500">
+                                    <option value="0">无锁定期</option>
+                                    <option value="30">30天</option>
+                                    <option value="90">90天</option>
+                                    <option value="180">180天</option>
+                                    <option value="365">365天</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="enableWhitelist" class="w-4 h-4 text-purple-600 rounded">
+                                    <span class="text-sm text-gray-700">启用白名单机制</span>
+                                </label>
+                            </div>
+                            <div>
+                                <label class="flex items-center space-x-3">
+                                    <input type="checkbox" id="enableDividends" class="w-4 h-4 text-purple-600 rounded" checked>
+                                    <span class="text-sm text-gray-700">启用收益分红功能</span>
+                                </label>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 合规设置 -->
+                    <div>
+                        <h4 class="font-medium text-gray-900 mb-4">合规要求</h4>
+                        <div class="space-y-3">
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" id="kycRequired" class="w-4 h-4 text-purple-600 rounded" checked>
+                                <span class="text-sm text-gray-700">投资者必须完成KYC认证</span>
+                            </label>
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" id="minInvestment" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">设置最低投资额限制</span>
+                            </label>
+                            <label class="flex items-center space-x-3">
+                                <input type="checkbox" id="accreditedOnly" class="w-4 h-4 text-purple-600 rounded">
+                                <span class="text-sm text-gray-700">仅限合格投资者</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- 预估信息 -->
+                    <div class="bg-gray-50 rounded-lg p-4">
+                        <h4 class="font-medium text-gray-900 mb-3">预估信息</h4>
+                        <div class="space-y-2 text-sm">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">预计处理时间：</span>
+                                <span class="font-medium text-gray-900">5-7个工作日</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">代币化费用：</span>
+                                <span class="font-medium text-gray-900">¥50,000</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">链上Gas费用：</span>
+                                <span class="font-medium text-gray-900">约¥5,000</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 操作按钮 -->
+                    <div class="flex justify-end space-x-3 pt-4 border-t border-gray-200">
+                        <button type="button" onclick="closeTokenizationModal()" 
+                                class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            取消
+                        </button>
+                        <button type="submit" class="px-4 py-2 bg-purple-600 text-white rounded-lg hover:bg-purple-700">
+                            确认开始代币化
+                        </button>
+                    </div>
+                </form>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+            
+            // 表单提交处理
+            document.getElementById('tokenizationForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                submitTokenization();
+            });
+        }
+
+        // 获取资产信息
+        function getAssetInfo(assetId) {
+            // 模拟数据，实际应该从API获取
+            const assets = {
+                1: {
+                    name: '北京朝阳SOHO',
+                    type: '写字楼',
+                    value: '¥5.2亿',
+                    expectedReturn: '7.5%'
+                },
+                2: {
+                    name: '广州珠江新城商业中心',
+                    type: '商业综合体',
+                    value: '¥3.8亿',
+                    expectedReturn: '6.8%'
+                },
+                3: {
+                    name: '成都IFS国际金融中心',
+                    type: '购物中心',
+                    value: '¥4.5亿',
+                    expectedReturn: '8.2%'
+                }
+            };
+            
+            return assets[assetId] || {};
+        }
+
+        // 关闭代币化模态框
+        function closeTokenizationModal() {
+            document.getElementById('tokenizationModal').classList.add('hidden');
+            document.getElementById('tokenizationModal').classList.remove('flex');
+        }
+
+        // 提交代币化
+        function submitTokenization() {
+            // 收集表单数据
+            const formData = {
+                tokenName: document.getElementById('tokenName').value,
+                tokenSymbol: document.getElementById('tokenSymbol').value,
+                totalSupply: document.getElementById('totalSupply').value,
+                tokenPrice: document.getElementById('tokenPrice').value,
+                lockupPeriod: document.getElementById('lockupPeriod').value,
+                enableWhitelist: document.getElementById('enableWhitelist').checked,
+                enableDividends: document.getElementById('enableDividends').checked,
+                kycRequired: document.getElementById('kycRequired').checked,
+                minInvestment: document.getElementById('minInvestment').checked,
+                accreditedOnly: document.getElementById('accreditedOnly').checked
+            };
+            
+            console.log('提交代币化数据：', formData);
+            
+            // 关闭模态框
+            closeTokenizationModal();
+            
+            // 显示成功提示
+            alert('代币化申请已提交！我们将在1-2个工作日内开始处理。');
+            
+            // 刷新页面或跳转到进度页面
+            switchTab('progress');
+        }
+
+        // 刷新资产列表
+        function refreshAssetList() {
+            // 模拟刷新
+            const btn = event.target;
+            btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-1"></i>刷新中...';
+            
+            setTimeout(() => {
+                btn.innerHTML = '<i class="fas fa-sync-alt mr-1"></i>刷新列表';
+                alert('资产列表已更新');
+            }, 1000);
+        }
+
+        // 查看进度详情
+        function viewProgressDetails(projectId) {
+            alert(`查看项目 ${projectId} 的详细进度`);
+        }
+
+        // 加速处理
+        function accelerateProcess(projectId) {
+            if (confirm('加速处理需要额外支付服务费用，是否继续？')) {
+                alert(`已申请加速处理项目 ${projectId}`);
+            }
+        }
+
+        // 交易设置
+        function manageTradingSettings(token) {
+            alert(`管理 ${token} 的交易设置`);
+        }
+
+        // 查看代币详情
+        function viewTokenDetails(token) {
+            alert(`查看 ${token} 的详细数据`);
+        }
+
+        // 编辑代币信息
+        function editTokenInfo(token) {
+            alert(`编辑 ${token} 的信息`);
+        }
+
+        // 查看预约名单
+        function viewPreorders(token) {
+            alert(`查看 ${token} 的预约名单`);
+        }
+
+        // 初始化分析图表
+        function initAnalyticsCharts() {
+            // 交易量趋势图
+            const volumeCtx = document.getElementById('volumeChart').getContext('2d');
+            new Chart(volumeCtx, {
+                type: 'bar',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月'],
+                    datasets: [{
+                        label: '月交易量',
+                        data: [820, 932, 901, 934, 1290, 1330],
+                        backgroundColor: '#3B82F6'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+
+            // 价格走势图
+            const priceCtx = document.getElementById('priceChart').getContext('2d');
+            new Chart(priceCtx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00'],
+                    datasets: [{
+                        label: '平均价格',
+                        data: [0.85, 0.86, 0.865, 0.87, 0.868, 0.87],
+                        borderColor: '#10B981',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false
+                }
+            });
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 默认显示第一个标签
+            switchTab('tokenized');
+        });
+    </script>
+</body>
+</html>

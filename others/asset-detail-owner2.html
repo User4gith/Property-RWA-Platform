@@ -1,0 +1,1607 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上海静安嘉里中心 - 资产详情 - PropertyChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        .gradient-bg { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+        .card-hover { transition: all 0.3s ease; }
+        .card-hover:hover { transform: translateY(-2px); box-shadow: 0 10px 25px rgba(0,0,0,0.1); }
+        .status-active { background: #10B981; }
+        .status-pending { background: #F59E0B; }
+        .status-inactive { background: #EF4444; }
+        .tab-active { border-bottom: 3px solid #3B82F6; color: #3B82F6; }
+        .gallery-thumb { cursor: pointer; transition: all 0.3s ease; }
+        .gallery-thumb:hover { transform: scale(1.05); }
+        .gallery-thumb.active { border: 3px solid #3B82F6; }
+        .metric-card {
+            background: white;
+            border-radius: 12px;
+            padding: 20px;
+            border: 1px solid #E5E7EB;
+            transition: all 0.3s ease;
+        }
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.1);
+            border-color: #3B82F6;
+        }
+        .document-card {
+            background: #F9FAFB;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .document-card:hover {
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+        }
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 24px;
+            bottom: -24px;
+            width: 2px;
+            background: #E5E7EB;
+        }
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid #3B82F6;
+        }
+        .timeline-dot.completed {
+            background: #3B82F6;
+        }
+        .blockchain-info {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: #F3F4F6;
+            padding: 8px 12px;
+            border-radius: 6px;
+            word-break: break-all;
+        }
+        .roi-positive { color: #10B981; }
+        .roi-negative { color: #EF4444; }
+        .chart-container {
+            position: relative;
+            height: 300px;
+        }
+        .iot-status-card {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .iot-status-card:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+        }
+        .status-indicator {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        .tenant-card {
+            background: white;
+            border: 1px solid #E5E7EB;
+            border-radius: 10px;
+            padding: 16px;
+            transition: all 0.2s ease;
+        }
+        .tenant-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.08);
+            transform: translateY(-1px);
+        }
+        .revenue-positive { background: #ECFDF5; color: #059669; }
+        .revenue-negative { background: #FEF2F2; color: #DC2626; }
+        .action-button {
+            padding: 10px 20px;
+            border-radius: 8px;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        }
+        .badge {
+            padding: 4px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+        .badge-success { background: #DCFCE7; color: #15803D; }
+        .badge-warning { background: #FEF3C7; color: #B45309; }
+        .badge-danger { background: #FEE2E2; color: #DC2626; }
+        .badge-info { background: #DBEAFE; color: #1E40AF; }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="asset-manager-dashboard.html" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="asset-list2.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">资产管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">文档管理</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">收益报告</a>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 面包屑导航 -->
+        <nav class="mb-6">
+            <ol class="flex items-center space-x-2 text-sm">
+                <li><a href="asset-manager-dashboard.html" class="text-blue-600 hover:text-blue-800">仪表盘</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li><a href="asset-list2.html" class="text-blue-600 hover:text-blue-800">资产管理</a></li>
+                <li><i class="fas fa-chevron-right text-gray-400"></i></li>
+                <li class="text-gray-500">上海静安嘉里中心</li>
+            </ol>
+        </nav>
+
+        <!-- 资产头部信息 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between">
+                <div class="flex items-center space-x-6 mb-4 lg:mb-0">
+                    <div class="relative">
+                        <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100&h=100&fit=crop" 
+                             alt="上海静安嘉里中心" class="w-24 h-24 rounded-xl object-cover">
+                        <div class="absolute -bottom-2 -right-2 bg-green-500 text-white px-2 py-1 rounded-full text-xs font-bold">
+                            <i class="fas fa-check mr-1"></i>已认证
+                        </div>
+                    </div>
+                    <div>
+                        <h1 class="text-2xl font-bold text-gray-900 mb-2">上海静安嘉里中心</h1>
+                        <div class="flex flex-wrap items-center gap-3">
+                            <span class="badge badge-success">已代币化</span>
+                            <span class="text-sm text-gray-600">
+                                <i class="fas fa-map-marker-alt mr-1"></i>上海市静安区南京西路1515号
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                <i class="fas fa-building mr-1"></i>写字楼
+                            </span>
+                            <span class="text-sm text-gray-600">
+                                <i class="fas fa-ruler mr-1"></i>32,000㎡
+                            </span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex flex-wrap gap-3">
+                    <button onclick="editAsset()" class="action-button bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-edit"></i>编辑资产
+                    </button>
+                    <button onclick="exportReport()" class="action-button bg-white border border-gray-300 text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-download"></i>导出报告
+                    </button>
+                    <button onclick="shareAsset()" class="action-button bg-blue-600 text-white hover:bg-blue-700">
+                        <i class="fas fa-share"></i>分享
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 关键指标卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-dollar-sign text-blue-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">实时</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">资产估值</h3>
+                <p class="text-2xl font-bold text-gray-900">¥2.78亿</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs roi-positive">+2.3%</span>
+                    <span class="text-xs text-gray-500 ml-2">较上月</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-coins text-green-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">SJC</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">代币价格</h3>
+                <p class="text-2xl font-bold text-gray-900">¥0.87</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs roi-positive">+0.5%</span>
+                    <span class="text-xs text-gray-500 ml-2">24小时</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-percentage text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">年化</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">投资收益率</h3>
+                <p class="text-2xl font-bold roi-positive">7.2%</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-gray-500">出租率 98.5%</span>
+                </div>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-orange-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-users text-orange-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded-full">持有人</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">代币持有者</h3>
+                <p class="text-2xl font-bold text-gray-900">1,256</p>
+                <div class="flex items-center mt-2">
+                    <span class="text-xs text-gray-500">流通量 100%</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 选项卡导航 -->
+        <div class="bg-white rounded-t-xl shadow-sm border border-gray-200 border-b-0">
+            <div class="flex space-x-1 p-1">
+                <button onclick="switchTab('overview')" id="tab-overview" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg tab-active">
+                    <i class="fas fa-chart-line mr-2"></i>概览
+                </button>
+                <button onclick="switchTab('token')" id="tab-token" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-coins mr-2"></i>代币管理
+                </button>
+                <button onclick="switchTab('finance')" id="tab-finance" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-calculator mr-2"></i>财务数据
+                </button>
+                <button onclick="switchTab('tenant')" id="tab-tenant" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-home mr-2"></i>租赁管理
+                </button>
+                <button onclick="switchTab('document')" id="tab-document" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-file-alt mr-2"></i>文档中心
+                </button>
+                <button onclick="switchTab('iot')" id="tab-iot" class="flex-1 py-3 px-4 text-sm font-medium text-gray-700 hover:text-gray-900 rounded-lg">
+                    <i class="fas fa-wifi mr-2"></i>IoT监控
+                </button>
+            </div>
+        </div>
+
+        <!-- 选项卡内容 -->
+        <div class="bg-white rounded-b-xl shadow-sm border border-gray-200 p-6">
+            <!-- 概览标签 -->
+            <div id="content-overview" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左侧内容 -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- 资产图片轮播 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">资产图片</h3>
+                            <div class="relative">
+                                <img id="mainImage" src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=400&fit=crop" 
+                                     alt="主图" class="w-full h-96 object-cover rounded-lg">
+                                <button onclick="prevImage()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button onclick="nextImage()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="flex space-x-2 mt-4">
+                                <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100&h=100&fit=crop" 
+                                     alt="缩略图1" class="gallery-thumb active w-20 h-20 object-cover rounded-lg" onclick="selectImage(0)">
+                                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop" 
+                                     alt="缩略图2" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(1)">
+                                <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=100&h=100&fit=crop" 
+                                     alt="缩略图3" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(2)">
+                                <img src="https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=100&h=100&fit=crop" 
+                                     alt="缩略图4" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(3)">
+                            </div>
+                        </div>
+
+                        <!-- 资产描述 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">资产描述</h3>
+                            <p class="text-gray-600 leading-relaxed">
+                                上海静安嘉里中心位于上海市中心繁华的南京西路商圈，是一座集甲级写字楼、高端购物中心、豪华酒店于一体的综合性地标建筑。项目总建筑面积约32,000平方米，其中可租赁面积28,000平方米。
+                            </p>
+                            <p class="text-gray-600 leading-relaxed mt-3">
+                                大楼配备先进的智能化管理系统，包括24小时安保、中央空调、高速电梯等设施。周边交通便利，距离地铁2号线、7号线静安寺站仅200米，是众多世界500强企业的首选办公地点。
+                            </p>
+                        </div>
+
+                        <!-- 收益趋势图 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">收益趋势</h3>
+                            <div class="chart-container">
+                                <canvas id="revenueChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧信息 -->
+                    <div class="space-y-6">
+                        <!-- 基本信息 -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">基本信息</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">建成年份</span>
+                                    <span class="text-sm font-medium text-gray-900">2015年</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">建筑层数</span>
+                                    <span class="text-sm font-medium text-gray-900">45层</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">停车位</span>
+                                    <span class="text-sm font-medium text-gray-900">500个</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">电梯数量</span>
+                                    <span class="text-sm font-medium text-gray-900">12部</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">物业等级</span>
+                                    <span class="text-sm font-medium text-gray-900">甲级</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">物业公司</span>
+                                    <span class="text-sm font-medium text-gray-900">仲量联行</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 代币化进度 -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">代币化历程</h3>
+                            <div class="space-y-4">
+                                <div class="timeline-item">
+                                    <div class="timeline-dot completed"></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">资产评估完成</p>
+                                        <p class="text-xs text-gray-500">2024年1月15日</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot completed"></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">法律合规审查</p>
+                                        <p class="text-xs text-gray-500">2024年1月25日</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot completed"></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">智能合约部署</p>
+                                        <p class="text-xs text-gray-500">2024年2月5日</p>
+                                    </div>
+                                </div>
+                                <div class="timeline-item">
+                                    <div class="timeline-dot completed"></div>
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">代币发行上线</p>
+                                        <p class="text-xs text-gray-500">2024年2月10日</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 下次分红 -->
+                        <div class="bg-gradient-to-r from-blue-50 to-purple-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">下次分红</h3>
+                            <div class="text-center">
+                                <p class="text-3xl font-bold text-blue-600 mb-2">15天</p>
+                                <p class="text-sm text-gray-600">2024年2月1日</p>
+                                <p class="text-sm text-gray-500 mt-2">预计分红金额</p>
+                                <p class="text-xl font-bold text-gray-900">¥186万</p>
+                            </div>
+                            <button onclick="scheduleDividend()" class="w-full mt-4 bg-blue-600 text-white py-2 rounded-lg hover:bg-blue-700">
+                                分红管理
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 代币管理标签 -->
+            <div id="content-token" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 代币信息 -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- 代币概览 -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">代币信息</h3>
+                            <div class="grid grid-cols-2 gap-4">
+                                <div>
+                                    <p class="text-sm text-gray-600">代币名称</p>
+                                    <p class="text-lg font-semibold text-gray-900">SHANGHAI-JC</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">代币符号</p>
+                                    <p class="text-lg font-semibold text-gray-900">SJC</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">区块链网络</p>
+                                    <p class="text-lg font-semibold text-gray-900">Polygon</p>
+                                </div>
+                                <div>
+                                    <p class="text-sm text-gray-600">合约标准</p>
+                                    <p class="text-lg font-semibold text-gray-900">ERC-1400</p>
+                                </div>
+                                <div class="col-span-2">
+                                    <p class="text-sm text-gray-600 mb-2">智能合约地址</p>
+                                    <div class="blockchain-info">
+                                        0x742d35Cc6634C0532925a3b844Bc7e1dF8bC82fA
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 代币分配 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">代币分配</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-4 h-4 bg-blue-500 rounded-full"></div>
+                                            <span class="text-sm text-gray-700">公开发售</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-medium text-gray-900">80%</div>
+                                            <div class="text-xs text-gray-500">2,560万枚</div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-500 h-2 rounded-full" style="width: 80%"></div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-4 h-4 bg-green-500 rounded-full"></div>
+                                            <span class="text-sm text-gray-700">项目方保留</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-medium text-gray-900">15%</div>
+                                            <div class="text-xs text-gray-500">480万枚</div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-green-500 h-2 rounded-full" style="width: 15%"></div>
+                                    </div>
+
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <div class="w-4 h-4 bg-purple-500 rounded-full"></div>
+                                            <span class="text-sm text-gray-700">运营储备</span>
+                                        </div>
+                                        <div class="text-right">
+                                            <div class="text-sm font-medium text-gray-900">5%</div>
+                                            <div class="text-xs text-gray-500">160万枚</div>
+                                        </div>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-purple-500 h-2 rounded-full" style="width: 5%"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 价格走势图 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">代币价格走势</h3>
+                            <div class="chart-container">
+                                <canvas id="priceChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧信息 -->
+                    <div class="space-y-6">
+                        <!-- 交易信息 -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">交易信息</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">当前价格</span>
+                                    <span class="text-sm font-medium text-gray-900">¥0.87</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">24H成交量</span>
+                                    <span class="text-sm font-medium text-gray-900">¥126万</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">24H涨跌</span>
+                                    <span class="text-sm font-medium roi-positive">+0.5%</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">总市值</span>
+                                    <span class="text-sm font-medium text-gray-900">¥2,784万</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">流通市值</span>
+                                    <span class="text-sm font-medium text-gray-900">¥2,784万</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-sm text-gray-600">持有人数</span>
+                                    <span class="text-sm font-medium text-gray-900">1,256人</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 最近交易 -->
+                        <div class="bg-gray-50 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">最近交易</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">买入</p>
+                                        <p class="text-xs text-gray-500">5分钟前</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium roi-positive">+10,000枚</p>
+                                        <p class="text-xs text-gray-500">¥0.87</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">卖出</p>
+                                        <p class="text-xs text-gray-500">12分钟前</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium roi-negative">-5,000枚</p>
+                                        <p class="text-xs text-gray-500">¥0.86</p>
+                                    </div>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="text-sm font-medium text-gray-900">买入</p>
+                                        <p class="text-xs text-gray-500">25分钟前</p>
+                                    </div>
+                                    <div class="text-right">
+                                        <p class="text-sm font-medium roi-positive">+25,000枚</p>
+                                        <p class="text-xs text-gray-500">¥0.86</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <button onclick="viewAllTransactions()" class="w-full mt-4 text-blue-600 text-sm font-medium hover:text-blue-700">
+                                查看全部交易记录 →
+                            </button>
+                        </div>
+
+                        <!-- 操作按钮 -->
+                        <div class="space-y-3">
+                            <button onclick="mintTokens()" class="w-full bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium">
+                                <i class="fas fa-plus-circle mr-2"></i>增发代币
+                            </button>
+                            <button onclick="burnTokens()" class="w-full bg-red-600 text-white py-3 rounded-lg hover:bg-red-700 font-medium">
+                                <i class="fas fa-fire mr-2"></i>销毁代币
+                            </button>
+                            <button onclick="updateTokenInfo()" class="w-full bg-gray-600 text-white py-3 rounded-lg hover:bg-gray-700 font-medium">
+                                <i class="fas fa-cog mr-2"></i>更新代币信息
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 财务数据标签 -->
+            <div id="content-finance" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 收益概览 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">收益概览</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="bg-green-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 mb-1">本月收入</p>
+                                <p class="text-2xl font-bold text-gray-900">¥268万</p>
+                                <p class="text-xs roi-positive mt-1">+12.5% vs 上月</p>
+                            </div>
+                            <div class="bg-blue-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 mb-1">本月支出</p>
+                                <p class="text-2xl font-bold text-gray-900">¥42万</p>
+                                <p class="text-xs roi-negative mt-1">+5.2% vs 上月</p>
+                            </div>
+                            <div class="bg-purple-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 mb-1">净收益</p>
+                                <p class="text-2xl font-bold text-gray-900">¥226万</p>
+                                <p class="text-xs roi-positive mt-1">+14.1% vs 上月</p>
+                            </div>
+                            <div class="bg-orange-50 rounded-lg p-4">
+                                <p class="text-sm text-gray-600 mb-1">年度累计</p>
+                                <p class="text-2xl font-bold text-gray-900">¥2,156万</p>
+                                <p class="text-xs text-gray-500 mt-1">目标完成度 78%</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 收入构成 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">收入构成</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <canvas id="incomeChart"></canvas>
+                            </div>
+                        </div>
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">支出分析</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <canvas id="expenseChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 月度报表 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">月度财务报表</h3>
+                        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">月份</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">租金收入</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">其他收入</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">运营成本</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">净收益</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">同比</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2024年1月</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥245万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥23万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥42万</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">¥226万</td>
+                                        <td class="px-6 py-4 text-sm roi-positive">+14.1%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2023年12月</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥220万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥18万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥40万</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">¥198万</td>
+                                        <td class="px-6 py-4 text-sm roi-positive">+8.5%</td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2023年11月</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥215万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥20万</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">¥45万</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-gray-900">¥190万</td>
+                                        <td class="px-6 py-4 text-sm roi-positive">+5.2%</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 分红历史 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">分红历史</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">2024年Q1</span>
+                                    <span class="badge badge-success">已发放</span>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">¥560万</p>
+                                <p class="text-xs text-gray-500 mt-1">每代币 ¥0.175</p>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">2023年Q4</span>
+                                    <span class="badge badge-success">已发放</span>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">¥520万</p>
+                                <p class="text-xs text-gray-500 mt-1">每代币 ¥0.162</p>
+                            </div>
+                            <div class="bg-white border border-gray-200 rounded-lg p-4">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">2023年Q3</span>
+                                    <span class="badge badge-success">已发放</span>
+                                </div>
+                                <p class="text-lg font-semibold text-gray-900">¥480万</p>
+                                <p class="text-xs text-gray-500 mt-1">每代币 ¥0.150</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 租赁管理标签 -->
+            <div id="content-tenant" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 出租概况 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">出租概况</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="metric-card">
+                                <h4 class="text-sm text-gray-600 mb-2">总出租面积</h4>
+                                <p class="text-2xl font-bold text-gray-900">27,600㎡</p>
+                                <p class="text-xs text-gray-500 mt-1">总面积 28,000㎡</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4 class="text-sm text-gray-600 mb-2">出租率</h4>
+                                <p class="text-2xl font-bold roi-positive">98.5%</p>
+                                <p class="text-xs roi-positive mt-1">+1.2% vs 上月</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4 class="text-sm text-gray-600 mb-2">租户数量</h4>
+                                <p class="text-2xl font-bold text-gray-900">45家</p>
+                                <p class="text-xs text-gray-500 mt-1">平均613㎡/租户</p>
+                            </div>
+                            <div class="metric-card">
+                                <h4 class="text-sm text-gray-600 mb-2">平均租金</h4>
+                                <p class="text-2xl font-bold text-gray-900">¥8.5/㎡/天</p>
+                                <p class="text-xs roi-positive mt-1">+3.5% vs 去年</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 主要租户 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">主要租户</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                            <div class="tenant-card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">德勤会计师事务所</h4>
+                                        <p class="text-sm text-gray-600">15-18层</p>
+                                    </div>
+                                    <span class="badge badge-success">正常</span>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">租赁面积</span>
+                                        <span class="font-medium">3,200㎡</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">合同到期</span>
+                                        <span class="font-medium">2026-12-31</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">月租金</span>
+                                        <span class="font-medium">¥81.6万</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tenant-card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">微软（中国）</h4>
+                                        <p class="text-sm text-gray-600">20-22层</p>
+                                    </div>
+                                    <span class="badge badge-success">正常</span>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">租赁面积</span>
+                                        <span class="font-medium">2,800㎡</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">合同到期</span>
+                                        <span class="font-medium">2025-06-30</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">月租金</span>
+                                        <span class="font-medium">¥71.4万</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="tenant-card">
+                                <div class="flex items-start justify-between mb-3">
+                                    <div>
+                                        <h4 class="font-medium text-gray-900">汇丰银行</h4>
+                                        <p class="text-sm text-gray-600">25-26层</p>
+                                    </div>
+                                    <span class="badge badge-warning">即将到期</span>
+                                </div>
+                                <div class="space-y-2 text-sm">
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">租赁面积</span>
+                                        <span class="font-medium">1,600㎡</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">合同到期</span>
+                                        <span class="font-medium text-orange-600">2024-03-31</span>
+                                    </div>
+                                    <div class="flex justify-between">
+                                        <span class="text-gray-600">月租金</span>
+                                        <span class="font-medium">¥40.8万</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 租约到期提醒 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">租约到期提醒</h3>
+                        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">租户</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">楼层</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">面积</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">到期日期</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">剩余天数</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">汇丰银行</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">25-26层</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">1,600㎡</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2024-03-31</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-orange-600">45天</td>
+                                        <td class="px-6 py-4"><span class="badge badge-warning">协商中</span></td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="renewLease(1)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                续签
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">普华永道</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">10-12层</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2,100㎡</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">2024-06-30</td>
+                                        <td class="px-6 py-4 text-sm font-medium text-yellow-600">135天</td>
+                                        <td class="px-6 py-4"><span class="badge badge-info">待联系</span></td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="contactTenant(2)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                联系
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 空置单元 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">空置单元</h3>
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-center space-x-3">
+                                <i class="fas fa-door-open text-yellow-600 text-xl"></i>
+                                <div>
+                                    <p class="font-medium text-gray-900">8层东侧</p>
+                                    <p class="text-sm text-gray-600">面积：400㎡ | 空置时间：15天</p>
+                                    <p class="text-sm text-gray-500 mt-1">推荐租金：¥8.8/㎡/天</p>
+                                </div>
+                                <button onclick="publishListing()" class="ml-auto bg-yellow-600 text-white px-4 py-2 rounded-lg hover:bg-yellow-700">
+                                    发布招租
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文档中心标签 -->
+            <div id="content-document" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 文档分类 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">文档分类</h3>
+                        <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            <button onclick="filterDocuments('all')" class="p-4 bg-blue-50 rounded-lg hover:bg-blue-100 transition-colors">
+                                <i class="fas fa-folder text-blue-600 text-2xl mb-2"></i>
+                                <p class="text-sm font-medium text-gray-900">全部文档</p>
+                                <p class="text-xs text-gray-500">28个</p>
+                            </button>
+                            <button onclick="filterDocuments('legal')" class="p-4 bg-green-50 rounded-lg hover:bg-green-100 transition-colors">
+                                <i class="fas fa-gavel text-green-600 text-2xl mb-2"></i>
+                                <p class="text-sm font-medium text-gray-900">法律文件</p>
+                                <p class="text-xs text-gray-500">12个</p>
+                            </button>
+                            <button onclick="filterDocuments('financial')" class="p-4 bg-purple-50 rounded-lg hover:bg-purple-100 transition-colors">
+                                <i class="fas fa-chart-line text-purple-600 text-2xl mb-2"></i>
+                                <p class="text-sm font-medium text-gray-900">财务报告</p>
+                                <p class="text-xs text-gray-500">8个</p>
+                            </button>
+                            <button onclick="filterDocuments('technical')" class="p-4 bg-orange-50 rounded-lg hover:bg-orange-100 transition-colors">
+                                <i class="fas fa-tools text-orange-600 text-2xl mb-2"></i>
+                                <p class="text-sm font-medium text-gray-900">技术文档</p>
+                                <p class="text-xs text-gray-500">8个</p>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- 文档列表 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">最新文档</h3>
+                        <div class="space-y-3">
+                            <div class="document-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">产权证书</p>
+                                            <p class="text-xs text-gray-500">上传于 2024-01-15 | 2.3MB</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="viewDocument(1)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadDocument(1)" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="document-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-pdf text-red-500 text-xl"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">2023年度审计报告</p>
+                                            <p class="text-xs text-gray-500">上传于 2024-01-10 | 5.8MB</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="viewDocument(2)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadDocument(2)" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="document-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-word text-blue-500 text-xl"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">租赁合同模板</p>
+                                            <p class="text-xs text-gray-500">上传于 2023-12-20 | 156KB</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="viewDocument(3)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadDocument(3)" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="document-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-image text-green-500 text-xl"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">建筑平面图</p>
+                                            <p class="text-xs text-gray-500">上传于 2023-11-15 | 12.5MB</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="viewDocument(4)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadDocument(4)" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div class="document-card">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center space-x-3">
+                                        <i class="fas fa-file-excel text-green-600 text-xl"></i>
+                                        <div>
+                                            <p class="font-medium text-gray-900">租金收入明细表</p>
+                                            <p class="text-xs text-gray-500">上传于 2024-01-01 | 248KB</p>
+                                        </div>
+                                    </div>
+                                    <div class="flex items-center space-x-2">
+                                        <button onclick="viewDocument(5)" class="text-blue-600 hover:text-blue-800">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="downloadDocument(5)" class="text-green-600 hover:text-green-800">
+                                            <i class="fas fa-download"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="uploadDocument()" class="w-full mt-6 bg-blue-600 text-white py-3 rounded-lg hover:bg-blue-700 font-medium">
+                            <i class="fas fa-upload mr-2"></i>上传新文档
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IoT监控标签 -->
+            <div id="content-iot" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 设备状态概览 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">设备状态概览</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="iot-status-card">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">在线设备</span>
+                                    <div class="status-indicator bg-green-500"></div>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">156/168</p>
+                                <p class="text-xs text-gray-500">正常运行率 92.8%</p>
+                            </div>
+
+                            <div class="iot-status-card">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">告警数量</span>
+                                    <div class="status-indicator bg-yellow-500"></div>
+                                </div>
+                                <p class="text-2xl font-bold text-yellow-600">3</p>
+                                <p class="text-xs text-gray-500">需要关注</p>
+                            </div>
+
+                            <div class="iot-status-card">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">能耗指数</span>
+                                    <div class="status-indicator bg-blue-500"></div>
+                                </div>
+                                <p class="text-2xl font-bold text-gray-900">82.5</p>
+                                <p class="text-xs roi-positive">-5.2% vs 上月</p>
+                            </div>
+
+                            <div class="iot-status-card">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">环境质量</span>
+                                    <div class="status-indicator bg-green-500"></div>
+                                </div>
+                                <p class="text-2xl font-bold text-green-600">优</p>
+                                <p class="text-xs text-gray-500">AQI: 45</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 实时监控数据 -->
+                    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">能耗监控</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="chart-container">
+                                    <canvas id="energyChart"></canvas>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">环境监测</h3>
+                            <div class="bg-white border border-gray-200 rounded-lg p-6">
+                                <div class="space-y-4">
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-temperature-high text-red-500"></i>
+                                            <span class="text-sm text-gray-700">温度</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">23.5°C</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-tint text-blue-500"></i>
+                                            <span class="text-sm text-gray-700">湿度</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">55%</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-wind text-gray-500"></i>
+                                            <span class="text-sm text-gray-700">空气质量</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-green-600">优秀</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <div class="flex items-center space-x-3">
+                                            <i class="fas fa-lightbulb text-yellow-500"></i>
+                                            <span class="text-sm text-gray-700">照明状态</span>
+                                        </div>
+                                        <span class="text-sm font-medium text-gray-900">正常</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 设备列表 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">关键设备状态</h3>
+                        <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">设备名称</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">类型</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">位置</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">最后更新</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="divide-y divide-gray-200">
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">中央空调系统-A</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">空调</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">设备层</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center space-x-1">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span class="text-sm text-green-600">运行中</span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">2分钟前</td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="viewDeviceDetail(1)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                查看详情
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">电梯-1号</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">电梯</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">A区</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center space-x-1">
+                                                <div class="w-2 h-2 bg-yellow-500 rounded-full"></div>
+                                                <span class="text-sm text-yellow-600">维护中</span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">10分钟前</td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="viewDeviceDetail(2)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                查看详情
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <tr>
+                                        <td class="px-6 py-4 text-sm text-gray-900">消防监控系统</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">安防</td>
+                                        <td class="px-6 py-4 text-sm text-gray-900">全楼</td>
+                                        <td class="px-6 py-4">
+                                            <span class="inline-flex items-center space-x-1">
+                                                <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                                                <span class="text-sm text-green-600">正常</span>
+                                            </span>
+                                        </td>
+                                        <td class="px-6 py-4 text-sm text-gray-500">刚刚</td>
+                                        <td class="px-6 py-4">
+                                            <button onclick="viewDeviceDetail(3)" class="text-blue-600 hover:text-blue-800 text-sm">
+                                                查看详情
+                                            </button>
+                                        </td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- 维护记录 -->
+                    <div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">最近维护记录</h3>
+                        <div class="space-y-3">
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-gray-900">中央空调年度保养</p>
+                                        <p class="text-sm text-gray-600 mt-1">完成时间：2024-01-10 | 负责人：张工</p>
+                                    </div>
+                                    <span class="badge badge-success">已完成</span>
+                                </div>
+                            </div>
+                            <div class="bg-gray-50 rounded-lg p-4">
+                                <div class="flex items-center justify-between">
+                                    <div>
+                                        <p class="font-medium text-gray-900">电梯安全检查</p>
+                                        <p class="text-sm text-gray-600 mt-1">计划时间：2024-02-15 | 负责人：李工</p>
+                                    </div>
+                                    <span class="badge badge-info">计划中</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- 底部操作栏 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mt-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-600">最后更新：5分钟前</span>
+                    <span class="text-sm text-gray-600">|</span>
+                    <span class="text-sm text-gray-600">区块链同步：已完成</span>
+                </div>
+                <div class="flex items-center space-x-3">
+                    <button onclick="refreshData()" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        <i class="fas fa-sync-alt mr-1"></i>刷新数据
+                    </button>
+                    <span class="text-gray-300">|</span>
+                    <button onclick="viewBlockchain()" class="text-blue-600 hover:text-blue-800 font-medium text-sm">
+                        <i class="fas fa-link mr-1"></i>查看区块链记录
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 当前选中的标签
+        let currentTab = 'overview';
+        
+        // 图片轮播
+        const images = [
+            'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1560518883-ce09059eeffa?w=800&h=400&fit=crop'
+        ];
+        let currentImageIndex = 0;
+
+        function selectImage(index) {
+            currentImageIndex = index;
+            document.getElementById('mainImage').src = images[index];
+            
+            // 更新缩略图状态
+            document.querySelectorAll('.gallery-thumb').forEach((thumb, i) => {
+                thumb.classList.toggle('active', i === index);
+            });
+        }
+
+        function prevImage() {
+            currentImageIndex = (currentImageIndex - 1 + images.length) % images.length;
+            selectImage(currentImageIndex);
+        }
+
+        function nextImage() {
+            currentImageIndex = (currentImageIndex + 1) % images.length;
+            selectImage(currentImageIndex);
+        }
+
+        // 切换标签
+        function switchTab(tab) {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // 移除所有标签的激活状态
+            document.querySelectorAll('[id^="tab-"]').forEach(tabBtn => {
+                tabBtn.classList.remove('tab-active');
+            });
+            
+            // 显示选中的内容
+            document.getElementById(`content-${tab}`).classList.remove('hidden');
+            document.getElementById(`tab-${tab}`).classList.add('tab-active');
+            
+            currentTab = tab;
+            
+            // 初始化对应标签的图表
+            if (tab === 'overview') {
+                initRevenueChart();
+            } else if (tab === 'token') {
+                initPriceChart();
+            } else if (tab === 'finance') {
+                initFinanceCharts();
+            } else if (tab === 'iot') {
+                initEnergyChart();
+            }
+        }
+
+        // 初始化收益趋势图
+        function initRevenueChart() {
+            const ctx = document.getElementById('revenueChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月'],
+                    datasets: [{
+                        label: '月度收益',
+                        data: [198, 205, 210, 215, 220, 225, 230, 235, 238, 242, 245, 268],
+                        borderColor: '#3B82F6',
+                        backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value + '万';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化代币价格图
+        function initPriceChart() {
+            const ctx = document.getElementById('priceChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00'],
+                    datasets: [{
+                        label: '代币价格',
+                        data: [0.85, 0.86, 0.865, 0.87, 0.868, 0.87, 0.87],
+                        borderColor: '#10B981',
+                        backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: false,
+                            ticks: {
+                                callback: function(value) {
+                                    return '¥' + value;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化财务图表
+        function initFinanceCharts() {
+            // 收入构成饼图
+            const incomeCtx = document.getElementById('incomeChart').getContext('2d');
+            new Chart(incomeCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['租金收入', '停车费', '广告收入', '其他'],
+                    datasets: [{
+                        data: [245, 12, 8, 3],
+                        backgroundColor: ['#3B82F6', '#10B981', '#F59E0B', '#6B7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+
+            // 支出分析饼图
+            const expenseCtx = document.getElementById('expenseChart').getContext('2d');
+            new Chart(expenseCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: ['物业管理', '维护费用', '水电费', '税费', '其他'],
+                    datasets: [{
+                        data: [18, 8, 6, 5, 5],
+                        backgroundColor: ['#EF4444', '#F59E0B', '#3B82F6', '#8B5CF6', '#6B7280']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        }
+                    }
+                }
+            });
+        }
+
+        // 初始化能耗图表
+        function initEnergyChart() {
+            const ctx = document.getElementById('energyChart').getContext('2d');
+            new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['周一', '周二', '周三', '周四', '周五', '周六', '周日'],
+                    datasets: [{
+                        label: '电力消耗',
+                        data: [1200, 1350, 1300, 1400, 1450, 800, 600],
+                        backgroundColor: '#3B82F6'
+                    }, {
+                        label: '水消耗',
+                        data: [200, 220, 210, 230, 240, 150, 120],
+                        backgroundColor: '#10B981'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                callback: function(value) {
+                                    return value + 'kWh';
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+
+        // 页面加载时初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initRevenueChart();
+        });
+
+        // 其他功能函数
+        function editAsset() {
+            alert('编辑资产信息');
+        }
+
+        function exportReport() {
+            alert('导出资产报告');
+        }
+
+        function shareAsset() {
+            alert('分享资产信息');
+        }
+
+        function scheduleDividend() {
+            alert('管理分红计划');
+        }
+
+        function viewAllTransactions() {
+            alert('查看所有交易记录');
+        }
+
+        function mintTokens() {
+            alert('增发代币');
+        }
+
+        function burnTokens() {
+            alert('销毁代币');
+        }
+
+        function updateTokenInfo() {
+            alert('更新代币信息');
+        }
+
+        function renewLease(id) {
+            alert(`续签租约 ${id}`);
+        }
+
+        function contactTenant(id) {
+            alert(`联系租户 ${id}`);
+        }
+
+        function publishListing() {
+            alert('发布招租信息');
+        }
+
+        function filterDocuments(type) {
+            alert(`筛选文档类型: ${type}`);
+        }
+
+        function viewDocument(id) {
+            alert(`查看文档 ${id}`);
+        }
+
+        function downloadDocument(id) {
+            alert(`下载文档 ${id}`);
+        }
+
+        function uploadDocument() {
+            alert('上传新文档');
+        }
+
+        function viewDeviceDetail(id) {
+            alert(`查看设备详情 ${id}`);
+        }
+
+        function refreshData() {
+            alert('刷新数据');
+        }
+
+        function viewBlockchain() {
+            alert('查看区块链记录');
+        }
+    </script>
+</body>
+</html>

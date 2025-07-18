@@ -1,0 +1,1414 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增资产 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        .step-indicator {
+            transition: all 0.3s ease;
+        }
+        .step-active {
+            background: #3b82f6;
+            color: white;
+        }
+        .step-completed {
+            background: #10b981;
+            color: white;
+        }
+        .step-pending {
+            background: #e5e7eb;
+            color: #6b7280;
+        }
+        .form-section {
+            display: none;
+        }
+        .form-section.active {
+            display: block;
+        }
+        .file-upload-zone {
+            border: 2px dashed #d1d5db;
+            transition: all 0.3s ease;
+        }
+        .file-upload-zone:hover {
+            border-color: #3b82f6;
+            background-color: #f8fafc;
+        }
+        .file-upload-zone.dragover {
+            border-color: #3b82f6;
+            background-color: #eff6ff;
+        }
+        .validation-error {
+            border-color: #ef4444 !important;
+        }
+        .validation-success {
+            border-color: #10b981 !important;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- 导航栏 -->
+    <nav class="bg-white border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex items-center justify-between h-16">
+                <!-- Logo -->
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 flex items-center">
+                        <div class="w-8 h-8 gradient-bg rounded-lg flex items-center justify-center mr-3">
+                            <i class="fas fa-building text-white text-sm"></i>
+                        </div>
+                        <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">仪表盘</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">我的资产</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">代币化</a>
+                    <a href="#" class="text-gray-600 hover:text-gray-900 pb-4">文档管理</a>
+                    <a href="#" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">新增资产</a>
+                </div>
+
+                <!-- 用户信息 -->
+                <div class="flex items-center space-x-4">
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">万科地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?ixlib=rb-1.2.1&ixid=eyJhcHBfaWQiOjEyMDd9&auto=format&fit=facearea&facepad=2&w=256&h=256&q=80" alt="用户头像" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <h1 class="text-3xl font-bold text-gray-900">新增资产</h1>
+            <p class="text-gray-600 mt-2">完整录入资产信息，开启代币化进程</p>
+        </div>
+
+        <!-- 进度指示器 -->
+        <div class="mb-8">
+            <div class="flex items-center justify-between">
+                <div class="flex items-center space-x-4">
+                    <div class="step-indicator step-active w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium" data-step="1">
+                        1
+                    </div>
+                    <div class="w-16 h-1 bg-gray-200"></div>
+                    <div class="step-indicator step-pending w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium" data-step="2">
+                        2
+                    </div>
+                    <div class="w-16 h-1 bg-gray-200"></div>
+                    <div class="step-indicator step-pending w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium" data-step="3">
+                        3
+                    </div>
+                    <div class="w-16 h-1 bg-gray-200"></div>
+                    <div class="step-indicator step-pending w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium" data-step="4">
+                        4
+                    </div>
+                    <div class="w-16 h-1 bg-gray-200"></div>
+                    <div class="step-indicator step-pending w-10 h-10 rounded-full flex items-center justify-center text-sm font-medium" data-step="5">
+                        5
+                    </div>
+                </div>
+                <div class="text-sm text-gray-500">
+                    步骤 <span id="currentStep">1</span> / 5
+                </div>
+            </div>
+            <div class="mt-4 flex justify-between text-sm text-gray-600">
+                <span>基本信息</span>
+                <span>合规文件</span>
+                <span>托管协议</span>
+                <span>代币化设置</span>
+                <span>确认提交</span>
+            </div>
+        </div>
+
+        <!-- 表单内容 -->
+        <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+            <!-- 步骤1: 基本信息 -->
+            <div class="form-section active" id="step1">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-building mr-2 text-blue-600"></i>
+                        资产基本信息
+                    </h3>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- 资产名称 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                资产名称 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="assetName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：上海陆家嘴写字楼">
+                        </div>
+
+                        <!-- 资产类型 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                资产类型 <span class="text-red-500">*</span>
+                            </label>
+                            <select id="assetType" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                <option value="">请选择资产类型</option>
+                                <option value="office">写字楼</option>
+                                <option value="retail">购物中心</option>
+                                <option value="warehouse">仓储物流</option>
+                                <option value="hotel">酒店</option>
+                                <option value="residential">住宅</option>
+                            </select>
+                        </div>
+
+                        <!-- 物业地址 -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                物业地址 <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text" id="assetAddress" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="详细地址">
+                        </div>
+
+                        <!-- 建筑面积 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                建筑面积 (平方米) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="buildingArea" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：5000">
+                        </div>
+
+                        <!-- 当前估值 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                当前估值 (万元) <span class="text-red-500">*</span>
+                            </label>
+                            <input type="number" id="currentValuation" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：50000">
+                        </div>
+
+                        <!-- 市场租金率 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                市场租金率 (元/平方米/月)
+                            </label>
+                            <input type="number" id="marketRent" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：120">
+                        </div>
+
+                        <!-- 空置率 -->
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                空置率 (%)
+                            </label>
+                            <input type="number" id="vacancyRate" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：5" min="0" max="100">
+                        </div>
+
+                        <!-- 资产描述 -->
+                        <div class="md:col-span-2">
+                            <label class="block text-sm font-medium text-gray-700 mb-2">
+                                资产描述
+                            </label>
+                            <textarea id="assetDescription" rows="4" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="详细描述资产特点、位置优势、租户情况等"></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 估值报告上传 -->
+                <div class="p-6">
+                    <h4 class="text-md font-medium text-gray-900 mb-4">
+                        <i class="fas fa-chart-line mr-2 text-green-600"></i>
+                        第三方估值报告
+                    </h4>
+                    <div class="file-upload-zone rounded-lg p-8 text-center cursor-pointer" id="valuationUpload">
+                        <i class="fas fa-cloud-upload-alt text-4xl text-gray-400 mb-4"></i>
+                        <p class="text-lg text-gray-600 mb-2">点击上传或拖拽文件到此处</p>
+                        <p class="text-sm text-gray-500">支持 PDF、DOC、DOCX 格式，最大 10MB</p>
+                        <input type="file" class="hidden" id="valuationFile" accept=".pdf,.doc,.docx">
+                    </div>
+                    <div id="valuationFileList" class="mt-4 space-y-2"></div>
+                </div>
+            </div>
+
+            <!-- 步骤2: 合规文件 -->
+            <div class="form-section" id="step2">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-file-contract mr-2 text-blue-600"></i>
+                        合规文件管理
+                    </h3>
+                    
+                    <!-- 产权证明 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-certificate mr-2 text-yellow-600"></i>
+                            产权证明文件
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    房产证 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="propertyDeed">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传房产证</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    土地证 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="landCertificate">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传土地证</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    商业租赁协议
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="leaseAgreement">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传租赁协议</p>
+                                    <input type="file" class="hidden" accept=".pdf,.doc,.docx">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    规划许可证
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="planningPermit">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传规划许可</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- SPV结构 -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-sitemap mr-2 text-purple-600"></i>
+                            SPV结构文件
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    SPV注册证书 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="spvRegistration">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传SPV注册文件</p>
+                                    <input type="file" class="hidden" accept=".pdf,.doc,.docx">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    股权结构图 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="ownershipStructure">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传股权结构图</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤3: 托管协议 -->
+            <div class="form-section" id="step3">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-shield-alt mr-2 text-blue-600"></i>
+                        托管协议与监控
+                    </h3>
+
+                    <!-- 托管服务商信息 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-handshake mr-2 text-green-600"></i>
+                            托管服务商信息
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    托管服务商 <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="custodianName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：第一太平戴维斯">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    服务商资质等级
+                                </label>
+                                <select id="custodianLevel" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="">请选择资质等级</option>
+                                    <option value="A">A级</option>
+                                    <option value="B">B级</option>
+                                    <option value="C">C级</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    联系人
+                                </label>
+                                <input type="text" id="custodianContact" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="联系人姓名">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    联系电话
+                                </label>
+                                <input type="tel" id="custodianPhone" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="联系电话">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 保险与储备金 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-piggy-bank mr-2 text-blue-600"></i>
+                            保险与储备金
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    保险公司
+                                </label>
+                                <input type="text" id="insuranceCompany" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：中国平安">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    保险金额 (万元)
+                                </label>
+                                <input type="number" id="insuranceAmount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：5000">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    维护储备金 (万元)
+                                </label>
+                                <input type="number" id="maintenanceReserve" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：500">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    储备金账户
+                                </label>
+                                <input type="text" id="reserveAccount" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="银行账户信息">
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文件上传 -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-file-alt mr-2 text-orange-600"></i>
+                            相关文件上传
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    托管协议 <span class="text-red-500">*</span>
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="custodyAgreement">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传托管协议</p>
+                                    <input type="file" class="hidden" accept=".pdf,.doc,.docx">
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    保险单
+                                </label>
+                                <div class="file-upload-zone rounded-lg p-4 text-center cursor-pointer" data-upload="insurancePolicy">
+                                    <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                                    <p class="text-sm text-gray-600">上传保险单</p>
+                                    <input type="file" class="hidden" accept=".pdf,.jpg,.jpeg,.png">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤4: 代币化设置 -->
+            <div class="form-section" id="step4">
+                <div class="p-6 border-b border-gray-200">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4">
+                        <i class="fas fa-coins mr-2 text-blue-600"></i>
+                        代币化参数设置
+                    </h3>
+
+                    <!-- 代币基本参数 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-cog mr-2 text-purple-600"></i>
+                            代币基本参数
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    代币名称 <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="tokenName" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：上海陆家嘴代币">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    代币符号 <span class="text-red-500">*</span>
+                                </label>
+                                <input type="text" id="tokenSymbol" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：RH-SH001" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    发行总量 <span class="text-red-500">*</span>
+                                </label>
+                                <input type="number" id="totalSupply" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="自动计算：面积×10000" readonly>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    单价 (元/代币)
+                                </label>
+                                <input type="number" id="tokenPrice" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="自动计算：估值÷总量" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 经济模型 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-chart-pie mr-2 text-green-600"></i>
+                            经济模型设置
+                        </h4>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    管理费率 (%)
+                                </label>
+                                <input type="number" id="managementFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：2" min="0" max="10" step="0.1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                                                <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    平台服务费率 (%)
+                                </label>
+                                <input type="number" id="platformFee" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：1" min="0" max="5" step="0.1">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    分红频率
+                                </label>
+                                <select id="dividendFrequency" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                                    <option value="monthly">月度分红</option>
+                                    <option value="quarterly">季度分红</option>
+                                    <option value="annually">年度分红</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    预期年化收益率 (%)
+                                </label>
+                                <input type="number" id="expectedYield" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="自动计算" readonly>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 智能合约设置 -->
+                    <div class="mb-8">
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-code mr-2 text-blue-600"></i>
+                            智能合约配置
+                        </h4>
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-4">
+                                <div>
+                                    <h5 class="font-medium text-gray-900">ERC-1400标准合约</h5>
+                                    <p class="text-sm text-gray-600">符合证券化代币标准，支持分批转让和合规控制</p>
+                                </div>
+                                <div class="flex items-center space-x-2">
+                                    <span class="text-sm text-green-600 font-medium">已验证</span>
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        最小交易单位
+                                    </label>
+                                    <input type="number" id="minTransactionUnit" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：100" value="100">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        锁定期 (天)
+                                    </label>
+                                    <input type="number" id="lockupPeriod" class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" placeholder="例：90" value="90">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 收益分配预览 -->
+                    <div>
+                        <h4 class="text-md font-medium text-gray-900 mb-4">
+                            <i class="fas fa-calculator mr-2 text-orange-600"></i>
+                            收益分配预览
+                        </h4>
+                        <div class="bg-blue-50 rounded-lg p-6">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-blue-600" id="monthlyIncome">¥0</div>
+                                    <div class="text-sm text-gray-600">月度租金收入</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-green-600" id="monthlyDividend">¥0</div>
+                                    <div class="text-sm text-gray-600">月度分红总额</div>
+                                </div>
+                                <div class="text-center">
+                                    <div class="text-2xl font-bold text-purple-600" id="dividendPerToken">¥0</div>
+                                    <div class="text-sm text-gray-600">每代币分红</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 步骤5: 确认提交 -->
+            <div class="form-section" id="step5">
+                <div class="p-6">
+                    <h3 class="text-lg font-medium text-gray-900 mb-6">
+                        <i class="fas fa-check-circle mr-2 text-blue-600"></i>
+                        信息确认与提交
+                    </h3>
+
+                    <!-- 信息汇总 -->
+                    <div class="space-y-6">
+                        <!-- 基本信息汇总 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">基本信息</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-600">资产名称：</span><span id="summaryAssetName">-</span></div>
+                                <div><span class="text-gray-600">资产类型：</span><span id="summaryAssetType">-</span></div>
+                                <div><span class="text-gray-600">建筑面积：</span><span id="summaryBuildingArea">-</span> 平方米</div>
+                                <div><span class="text-gray-600">当前估值：</span><span id="summaryValuation">-</span> 万元</div>
+                            </div>
+                        </div>
+
+                        <!-- 代币化信息汇总 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">代币化信息</h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+                                <div><span class="text-gray-600">代币名称：</span><span id="summaryTokenName">-</span></div>
+                                <div><span class="text-gray-600">代币符号：</span><span id="summaryTokenSymbol">-</span></div>
+                                <div><span class="text-gray-600">发行总量：</span><span id="summaryTotalSupply">-</span> 枚</div>
+                                <div><span class="text-gray-600">单价：</span><span id="summaryTokenPrice">-</span> 元</div>
+                            </div>
+                        </div>
+
+                        <!-- 文件上传状态 -->
+                        <div class="bg-gray-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">文件上传状态</h4>
+                            <div class="space-y-2" id="fileUploadStatus">
+                                <!-- 动态生成文件状态 -->
+                            </div>
+                        </div>
+
+                        <!-- 合规声明 -->
+                        <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                            <div class="flex items-start">
+                                <i class="fas fa-exclamation-triangle text-yellow-600 mt-1 mr-3"></i>
+                                <div>
+                                    <h4 class="font-medium text-yellow-800 mb-2">重要声明</h4>
+                                    <div class="space-y-2 text-sm text-yellow-700">
+                                        <label class="flex items-start">
+                                            <input type="checkbox" class="mt-1 mr-2" id="declaration1" required>
+                                            <span>我确认所提供的所有信息真实、准确、完整，如有虚假信息愿承担法律责任</span>
+                                        </label>
+                                        <label class="flex items-start">
+                                            <input type="checkbox" class="mt-1 mr-2" id="declaration2" required>
+                                            <span>我理解并同意资产代币化过程中的相关风险，包括但不限于市场风险、流动性风险等</span>
+                                        </label>
+                                        <label class="flex items-start">
+                                            <input type="checkbox" class="mt-1 mr-2" id="declaration3" required>
+                                            <span>我同意遵守平台的相关协议和监管要求，配合第三方审计和监管检查</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 预计时间线 -->
+                        <div class="bg-blue-50 rounded-lg p-4">
+                            <h4 class="font-medium text-gray-900 mb-3">预计处理时间线</h4>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">文件审核</span>
+                                    <span class="text-sm font-medium text-blue-600">3-5个工作日</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">第三方评估</span>
+                                    <span class="text-sm font-medium text-blue-600">7-10个工作日</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">智能合约部署</span>
+                                    <span class="text-sm font-medium text-blue-600">2-3个工作日</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <span class="text-sm text-gray-600">上线交易</span>
+                                    <span class="text-sm font-medium text-green-600">15-20个工作日</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 底部操作按钮 -->
+            <div class="px-6 py-4 bg-gray-50 border-t border-gray-200 flex items-center justify-between">
+                <button type="button" id="prevBtn" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed" disabled>
+                    <i class="fas fa-arrow-left mr-2"></i>
+                    上一步
+                </button>
+                
+                <div class="flex items-center space-x-4">
+                    <button type="button" id="saveBtn" class="px-6 py-2 border border-gray-300 rounded-md text-gray-700 hover:bg-gray-50">
+                        <i class="fas fa-save mr-2"></i>
+                        保存草稿
+                    </button>
+                    <button type="button" id="nextBtn" class="px-6 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700">
+                        下一步
+                        <i class="fas fa-arrow-right ml-2"></i>
+                    </button>
+                    <button type="button" id="submitBtn" class="px-6 py-2 bg-green-600 text-white rounded-md hover:bg-green-700 hidden">
+                        <i class="fas fa-paper-plane mr-2"></i>
+                        提交审核
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 文件预览模态框 -->
+    <div id="filePreviewModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen p-4">
+            <div class="bg-white rounded-lg max-w-4xl w-full max-h-full overflow-auto">
+                <div class="flex items-center justify-between p-4 border-b">
+                    <h3 class="text-lg font-medium">文件预览</h3>
+                    <button class="text-gray-500 hover:text-gray-700" onclick="closeFilePreview()">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+                <div class="p-4" id="filePreviewContent">
+                    <!-- 文件预览内容 -->
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 进度提示模态框 -->
+    <div id="progressModal" class="fixed inset-0 bg-black bg-opacity-50 hidden z-50">
+        <div class="flex items-center justify-center min-h-screen">
+            <div class="bg-white rounded-lg p-6 max-w-sm w-full mx-4">
+                <div class="text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto mb-4"></div>
+                    <h3 class="text-lg font-medium text-gray-900 mb-2">正在处理</h3>
+                    <p class="text-sm text-gray-600" id="progressText">请稍候...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentStep = 1;
+        const totalSteps = 5;
+        let uploadedFiles = {};
+        let formData = {};
+
+        // 页面初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeForm();
+            setupEventListeners();
+            updateTokenSymbol();
+            calculateTokenMetrics();
+        });
+
+        // 初始化表单
+        function initializeForm() {
+            // 设置默认值
+            document.getElementById('managementFee').value = '2';
+            document.getElementById('platformFee').value = '1';
+            document.getElementById('dividendFrequency').value = 'monthly';
+            document.getElementById('minTransactionUnit').value = '100';
+            document.getElementById('lockupPeriod').value = '90';
+            
+            // 更新步骤指示器
+            updateStepIndicator();
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 导航按钮
+            document.getElementById('nextBtn').addEventListener('click', nextStep);
+            document.getElementById('prevBtn').addEventListener('click', prevStep);
+            document.getElementById('saveBtn').addEventListener('click', saveDraft);
+            document.getElementById('submitBtn').addEventListener('click', submitForm);
+
+            // 表单字段变化监听
+            document.getElementById('assetName').addEventListener('input', updateTokenSymbol);
+            document.getElementById('buildingArea').addEventListener('input', calculateTokenMetrics);
+            document.getElementById('currentValuation').addEventListener('input', calculateTokenMetrics);
+            document.getElementById('marketRent').addEventListener('input', calculateRevenue);
+            document.getElementById('vacancyRate').addEventListener('input', calculateRevenue);
+
+            // 文件上传
+            setupFileUpload();
+
+            // 实时验证
+            setupFormValidation();
+        }
+
+        // 步骤导航
+        function nextStep() {
+            if (validateCurrentStep()) {
+                if (currentStep < totalSteps) {
+                    currentStep++;
+                    showStep(currentStep);
+                    updateStepIndicator();
+                    updateNavigationButtons();
+                    updateSummary();
+                }
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                currentStep--;
+                showStep(currentStep);
+                updateStepIndicator();
+                updateNavigationButtons();
+            }
+        }
+
+        function showStep(step) {
+            // 隐藏所有步骤
+            document.querySelectorAll('.form-section').forEach(section => {
+                section.classList.remove('active');
+            });
+            
+            // 显示当前步骤
+            document.getElementById(`step${step}`).classList.add('active');
+            document.getElementById('currentStep').textContent = step;
+        }
+
+        function updateStepIndicator() {
+            document.querySelectorAll('.step-indicator').forEach((indicator, index) => {
+                const stepNum = index + 1;
+                indicator.classList.remove('step-active', 'step-completed', 'step-pending');
+                
+                if (stepNum < currentStep) {
+                    indicator.classList.add('step-completed');
+                    indicator.innerHTML = '<i class="fas fa-check"></i>';
+                } else if (stepNum === currentStep) {
+                    indicator.classList.add('step-active');
+                    indicator.textContent = stepNum;
+                } else {
+                    indicator.classList.add('step-pending');
+                    indicator.textContent = stepNum;
+                }
+            });
+        }
+
+        function updateNavigationButtons() {
+            const prevBtn = document.getElementById('prevBtn');
+            const nextBtn = document.getElementById('nextBtn');
+            const submitBtn = document.getElementById('submitBtn');
+
+            prevBtn.disabled = currentStep === 1;
+            
+            if (currentStep === totalSteps) {
+                nextBtn.classList.add('hidden');
+                submitBtn.classList.remove('hidden');
+            } else {
+                nextBtn.classList.remove('hidden');
+                submitBtn.classList.add('hidden');
+            }
+        }
+
+        // 表单验证
+        function validateCurrentStep() {
+            let isValid = true;
+            const currentSection = document.getElementById(`step${currentStep}`);
+            
+            // 清除之前的验证状态
+            currentSection.querySelectorAll('.validation-error').forEach(el => {
+                el.classList.remove('validation-error');
+            });
+
+            // 验证必填字段
+            const requiredFields = currentSection.querySelectorAll('input[required], select[required]');
+            requiredFields.forEach(field => {
+                if (!field.value.trim()) {
+                    field.classList.add('validation-error');
+                    isValid = false;
+                }
+            });
+
+            // 步骤特定验证
+            switch(currentStep) {
+                case 1:
+                    isValid = validateStep1() && isValid;
+                    break;
+                case 2:
+                    isValid = validateStep2() && isValid;
+                    break;
+                case 3:
+                    isValid = validateStep3() && isValid;
+                    break;
+                case 4:
+                    isValid = validateStep4() && isValid;
+                    break;
+                case 5:
+                    isValid = validateStep5() && isValid;
+                    break;
+            }
+
+            if (!isValid) {
+                showNotification('请完善必填信息', 'error');
+            }
+
+            return isValid;
+        }
+
+        function validateStep1() {
+            const name = document.getElementById('assetName').value;
+            const type = document.getElementById('assetType').value;
+            const address = document.getElementById('assetAddress').value;
+            const area = document.getElementById('buildingArea').value;
+            const valuation = document.getElementById('currentValuation').value;
+
+            return name && type && address && area && valuation;
+        }
+
+        function validateStep2() {
+            // 检查关键文件是否上传
+            const requiredFiles = ['propertyDeed', 'landCertificate', 'spvRegistration', 'ownershipStructure'];
+            return requiredFiles.every(fileType => uploadedFiles[fileType]);
+        }
+
+        function validateStep3() {
+            const custodianName = document.getElementById('custodianName').value;
+            return custodianName && uploadedFiles['custodyAgreement'];
+        }
+
+        function validateStep4() {
+            const tokenName = document.getElementById('tokenName').value;
+            const tokenSymbol = document.getElementById('tokenSymbol').value;
+            return tokenName && tokenSymbol;
+        }
+
+        function validateStep5() {
+            const declarations = ['declaration1', 'declaration2', 'declaration3'];
+            return declarations.every(id => document.getElementById(id).checked);
+        }
+
+        // 代币符号生成
+        function updateTokenSymbol() {
+            const assetName = document.getElementById('assetName').value;
+            if (assetName) {
+                // 简单的符号生成逻辑
+                const symbol = 'RH-' + assetName.substring(0, 3).toUpperCase() + '001';
+                document.getElementById('tokenSymbol').value = symbol;
+            }
+        }
+
+        // 代币指标计算
+        function calculateTokenMetrics() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 0;
+            const valuation = parseFloat(document.getElementById('currentValuation').value) || 0;
+            
+            // 发行总量 = 面积 × 10000
+            const totalSupply = area * 10000;
+            document.getElementById('totalSupply').value = totalSupply;
+            
+            // 单价 = 估值(万元) × 10000 ÷ 总量
+            if (totalSupply > 0) {
+                const tokenPrice = (valuation * 10000 / totalSupply).toFixed(4);
+                document.getElementById('tokenPrice').value = tokenPrice;
+            }
+            
+            calculateRevenue();
+        }
+
+        // 收益计算
+        function calculateRevenue() {
+            const area = parseFloat(document.getElementById('buildingArea').value) || 0;
+            const marketRent = parseFloat(document.getElementById('marketRent').value) || 0;
+            const vacancyRate = parseFloat(document.getElementById('vacancyRate').value) || 0;
+            const managementFee = parseFloat(document.getElementById('managementFee').value) || 0;
+            const platformFee = parseFloat(document.getElementById('platformFee').value) || 0;
+            const totalSupply = parseFloat(document.getElementById('totalSupply').value) || 0;
+            
+            // 月度租金收入 = 面积 × 租金 × (1 - 空置率)
+            const monthlyIncome = area * marketRent * (1 - vacancyRate / 100);
+            
+            // 扣除管理费和平台费
+            const totalFeeRate = (managementFee + platformFee) / 100;
+            const monthlyDividend = monthlyIncome * (1 - totalFeeRate);
+            
+            // 每代币分红
+            const dividendPerToken = totalSupply > 0 ? (monthlyDividend / totalSupply).toFixed(6) : 0;
+            
+            // 年化收益率
+            const annualDividend = monthlyDividend * 12;
+            const valuation = parseFloat(document.getElementById('currentValuation').value) || 0;
+            const expectedYield = valuation > 0 ? ((annualDividend / (valuation * 10000)) * 100).toFixed(2) : 0;
+            
+            // 更新显示
+            document.getElementById('monthlyIncome').textContent = `¥${monthlyIncome.toLocaleString()}`;
+            document.getElementById('monthlyDividend').textContent = `¥${monthlyDividend.toLocaleString()}`;
+            document.getElementById('dividendPerToken').textContent = `¥${dividendPerToken}`;
+            document.getElementById('expectedYield').value = expectedYield;
+        }
+
+        // 文件上传处理
+        function setupFileUpload() {
+            // 处理所有文件上传区域
+            document.querySelectorAll('.file-upload-zone').forEach(zone => {
+                const input = zone.querySelector('input[type="file"]');
+                const uploadType = zone.dataset.upload;
+                
+                // 点击上传
+                zone.addEventListener('click', () => {
+                    if (input) input.click();
+                });
+                
+                // 文件选择
+                if (input) {
+                    input.addEventListener('change', (e) => {
+                        handleFileUpload(e.target.files[0], uploadType, zone);
+                    });
+                }
+                
+                // 拖拽上传
+                zone.addEventListener('dragover', (e) => {
+                    e.preventDefault();
+                    zone.classList.add('dragover');
+                });
+                
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('dragover');
+                });
+                
+                zone.addEventListener('drop', (e) => {
+                    e.preventDefault();
+                    zone.classList.remove('dragover');
+                    const files = e.dataTransfer.files;
+                    if (files.length > 0) {
+                        handleFileUpload(files[0], uploadType, zone);
+                    }
+                });
+            });
+        }
+
+        function handleFileUpload(file, uploadType, zone) {
+            if (!file) return;
+            
+            // 文件大小检查 (10MB)
+            if (file.size > 10 * 1024 * 1024) {
+                showNotification('文件大小不能超过10MB', 'error');
+                return;
+            }
+            
+            // 显示上传进度
+            showProgress(`正在上传 ${file.name}...`);
+            
+            // 模拟文件上传
+            setTimeout(() => {
+                uploadedFiles[uploadType] = {
+                    name: file.name,
+                    size: file.size,
+                    type: file.type,
+                    uploadTime: new Date()
+                };
+                
+                // 更新UI
+                updateFileUploadUI(zone, file, uploadType);
+                hideProgress();
+                showNotification('文件上传成功', 'success');
+                
+            }, 1500);
+        }
+
+        function updateFileUploadUI(zone, file, uploadType) {
+            zone.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center space-x-2">
+                        <i class="fas fa-file-check text-green-600 text-xl"></i>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">${file.name}</p>
+                            <p class="text-xs text-gray-500">${formatFileSize(file.size)}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <button type="button" onclick="previewFile('${uploadType}')" class="text-blue-600 hover:text-blue-800">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button type="button" onclick="removeFile('${uploadType}')" class="text-red-600 hover:text-red-800">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            `;
+            zone.classList.add('validation-success');
+        }
+
+        // 汇总信息更新
+        function updateSummary() {
+            if (currentStep === 5) {
+                // 基本信息
+                document.getElementById('summaryAssetName').textContent = 
+                    document.getElementById('assetName').value || '-';
+                document.getElementById('summaryAssetType').textContent = 
+                    document.getElementById('assetType').selectedOptions[0]?.text || '-';
+                document.getElementById('summaryBuildingArea').textContent = 
+                    document.getElementById('buildingArea').value || '-';
+                document.getElementById('summaryValuation').textContent = 
+                    document.getElementById('currentValuation').value || '-';
+                
+                // 代币信息
+                document.getElementById('summaryTokenName').textContent = 
+                    document.getElementById('tokenName').value || '-';
+                document.getElementById('summaryTokenSymbol').textContent = 
+                    document.getElementById('tokenSymbol').value || '-';
+                document.getElementById('summaryTotalSupply').textContent = 
+                    document.getElementById('totalSupply').value || '-';
+                document.getElementById('summaryTokenPrice').textContent = 
+                    document.getElementById('tokenPrice').value || '-';
+                
+                // 文件状态
+                updateFileUploadStatus();
+            }
+        }
+
+        function updateFileUploadStatus() {
+            const statusContainer = document.getElementById('fileUploadStatus');
+            const fileTypes = {
+                'propertyDeed': '房产证',
+                'landCertificate': '土地证',
+                'spvRegistration': 'SPV注册证书',
+                'ownershipStructure': '股权结构图',
+                'custodyAgreement': '托管协议',
+                'valuationFile': '估值报告'
+            };
+            
+            let statusHTML = '';
+            Object.entries(fileTypes).forEach(([key, name]) => {
+                const uploaded = uploadedFiles[key];
+                const status = uploaded ? 
+                    `<i class="fas fa-check-circle text-green-600 mr-2"></i>${name} - 已上传` :
+                    `<i class="fas fa-times-circle text-red-600 mr-2"></i>${name} - 未上传`;
+                statusHTML += `<div class="text-sm">${status}</div>`;
+            });
+            
+            statusContainer.innerHTML = statusHTML;
+        }
+
+        // 表单提交
+        function submitForm() {
+            if (!validateCurrentStep()) return;
+            
+            showProgress('正在提交审核申请...');
+            
+            // 收集所有表单数据
+            const formData = collectFormData();
+            
+            // 模拟提交
+            setTimeout(() => {
+                hideProgress();
+                showSubmitSuccess();
+            }, 2000);
+        }
+
+        function collectFormData() {
+            // 收集所有表单字段的数据
+            const data = {
+                basicInfo: {
+                    assetName: document.getElementById('assetName').value,
+                    assetType: document.getElementById('assetType').value,
+                    assetAddress: document.getElementById('assetAddress').value,
+                    buildingArea: document.getElementById('buildingArea').value,
+                    currentValuation: document.getElementById('currentValuation').value,
+                    marketRent: document.getElementById('marketRent').value,
+                    vacancyRate: document.getElementById('vacancyRate').value,
+                    assetDescription: document.getElementById('assetDescription').value
+                },
+                custodyInfo: {
+                    custodianName: document.getElementById('custodianName').value,
+                    custodianLevel: document.getElementById('custodianLevel').value,
+                    custodianContact: document.getElementById('custodianContact').value,
+                    custodianPhone: document.getElementById('custodianPhone').value,
+                    insuranceCompany: document.getElementById('insuranceCompany').value,
+                    insuranceAmount: document.getElementById('insuranceAmount').value,
+                    maintenanceReserve: document.getElementById('maintenanceReserve').value,
+                    reserveAccount: document.getElementById('reserveAccount').value
+                },
+                tokenization: {
+                    tokenName: document.getElementById('tokenName').value,
+                    tokenSymbol: document.getElementById('tokenSymbol').value,
+                    totalSupply: document.getElementById('totalSupply').value,
+                    tokenPrice: document.getElementById('tokenPrice').value,
+                    managementFee: document.getElementById('managementFee').value,
+                    platformFee: document.getElementById('platformFee').value,
+                    dividendFrequency: document.getElementById('dividendFrequency').value,
+                    expectedYield: document.getElementById('expectedYield').value,
+                    minTransactionUnit: document.getElementById('minTransactionUnit').value,
+                    lockupPeriod: document.getElementById('lockupPeriod').value
+                },
+                uploadedFiles: uploadedFiles,
+                submitTime: new Date().toISOString()
+            };
+            
+            return data;
+        }
+
+        function saveDraft() {
+            const data = collectFormData();
+            localStorage.setItem('assetDraft', JSON.stringify(data));
+            showNotification('草稿已保存', 'success');
+        }
+
+        function showSubmitSuccess() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center';
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-8 max-w-md mx-4 text-center">
+                    <div class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                        <i class="fas fa-check text-green-600 text-2xl"></i>
+                    </div>
+                    <h3 class="text-xl font-semibold text-gray-900 mb-2">提交成功</h3>
+                    <p class="text-gray-600 mb-6">您的资产信息已提交审核，我们将在3-5个工作日内完成初步审核。</p>
+                    <div class="space-y-3">
+                        <button onclick="window.location.href='asset-list.html'" class="w-full px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            返回资产列表
+                        </button>
+                        <button onclick="window.location.href='asset-manager-dashboard.html'" class="w-full px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50">
+                            查看仪表盘
+                        </button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(modal);
+        }
+
+        // 辅助函数
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.createElement('div');
+            const colors = {
+                success: 'bg-green-500',
+                error: 'bg-red-500',
+                info: 'bg-blue-500'
+            };
+            
+            notification.className = `fixed top-4 right-4 ${colors[type]} text-white px-6 py-3 rounded-lg shadow-lg z-50 transform translate-x-full transition-transform duration-300`;
+            notification.textContent = message;
+            
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.classList.remove('translate-x-full');
+            }, 100);
+            
+            setTimeout(() => {
+                notification.classList.add('translate-x-full');
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+
+        function showProgress(message) {
+            const modal = document.getElementById('progressModal');
+            document.getElementById('progressText').textContent = message;
+            modal.classList.remove('hidden');
+        }
+
+        function hideProgress() {
+            document.getElementById('progressModal').classList.add('hidden');
+        }
+
+        function previewFile(uploadType) {
+            const file = uploadedFiles[uploadType];
+            if (!file) return;
+            
+            const modal = document.getElementById('filePreviewModal');
+            const content = document.getElementById('filePreviewContent');
+            
+            if (file.type.includes('image')) {
+                content.innerHTML = `<img src="#" alt="预览图" class="max-w-full h-auto">`;
+            } else {
+                content.innerHTML = `
+                    <div class="text-center py-8">
+                        <i class="fas fa-file-alt text-6xl text-gray-400 mb-4"></i>
+                        <p class="text-lg font-medium text-gray-900">${file.name}</p>
+                        <p class="text-sm text-gray-500">${formatFileSize(file.size)}</p>
+                        <p class="text-sm text-gray-500 mt-2">此文件类型暂不支持预览</p>
+                    </div>
+                `;
+            }
+            
+            modal.classList.remove('hidden');
+        }
+
+        function closeFilePreview() {
+            document.getElementById('filePreviewModal').classList.add('hidden');
+        }
+
+        function removeFile(uploadType) {
+            if (confirm('确定要删除此文件吗？')) {
+                delete uploadedFiles[uploadType];
+                // 重置对应的上传区域
+                const zone = document.querySelector(`[data-upload="${uploadType}"]`);
+                if (zone) {
+                    zone.innerHTML = `
+                        <i class="fas fa-file-upload text-2xl text-gray-400 mb-2"></i>
+                        <p class="text-sm text-gray-600">重新上传文件</p>
+                    `;
+                    zone.classList.remove('validation-success');
+                }
+                showNotification('文件已删除', 'success');
+            }
+        }
+
+        function setupFormValidation() {
+            // 实时验证表单字段
+            document.querySelectorAll('input, select, textarea').forEach(field => {
+                field.addEventListener('blur', function() {
+                    validateField(this);
+                });
+                
+                field.addEventListener('input', function() {
+                    if (this.classList.contains('validation-error')) {
+                        validateField(this);
+                    }
+                });
+            });
+        }
+
+        function validateField(field) {
+            field.classList.remove('validation-error', 'validation-success');
+            
+            if (field.hasAttribute('required') && !field.value.trim()) {
+                field.classList.add('validation-error');
+                return false;
+            }
+            
+            // 特定字段验证
+            if (field.type === 'email' && field.value) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value)) {
+                    field.classList.add('validation-error');
+                    return false;
+                }
+            }
+            
+            if (field.type === 'tel' && field.value) {
+                const phoneRegex = /^1[3-9]\d{9}$/;
+                if (!phoneRegex.test(field.value)) {
+                    field.classList.add('validation-error');
+                    return false;
+                }
+            }
+            
+            if (field.type === 'number' && field.value) {
+                const num = parseFloat(field.value);
+                const min = parseFloat(field.min);
+                const max = parseFloat(field.max);
+                
+                if ((field.min && num < min) || (field.max && num > max)) {
+                    field.classList.add('validation-error');
+                    return false;
+                }
+            }
+            
+            if (field.value.trim()) {
+                field.classList.add('validation-success');
+            }
+            
+            return true;
+        }
+
+        // 键盘快捷键
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveDraft();
+                        break;
+                    case 'Enter':
+                        if (currentStep < totalSteps) {
+                            e.preventDefault();
+                            nextStep();
+                        }
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                closeFilePreview();
+                hideProgress();
+            }
+        });
+
+        // 页面离开提醒
+        window.addEventListener('beforeunload', function(e) {
+            const hasUnsavedData = document.querySelector('input:not([readonly]), select, textarea').value;
+            if (hasUnsavedData) {
+                e.preventDefault();
+                e.returnValue = '您有未保存的数据，确定要离开吗？';
+                return e.returnValue;
+            }
+        });
+
+        // 自动保存草稿
+        setInterval(() => {
+            const hasData = document.getElementById('assetName').value.trim();
+            if (hasData) {
+                saveDraft();
+            }
+        }, 300000); // 5分钟自动保存一次
+    </script>
+
+    <!-- 页脚 -->
+    <footer class="bg-gray-800 text-white py-6 mt-12">
+        <div class="max-w-7xl mx-auto px-6 text-center">
+            <p class="text-sm">© 2024 PropertyChain RWA平台. 保留所有权利.</p>
+            <div class="flex justify-center space-x-4 mt-2">
+                <a href="#" class="text-gray-400 hover:text-white">隐私政策</a>
+                <a href="#" class="text-gray-400 hover:text-white">服务条款</a>
+                <a href="#" class="text-gray-400 hover:text-white">技术支持</a>
+            </div>
+        </div>
+    </footer>
+</body>
+</html>
+
