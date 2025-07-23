@@ -1,0 +1,1521 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>上海静安嘉里中心 - 资产详情 - PropertyChain</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 统一设计系统 */
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #1D4ED8;
+            --secondary-color: #667eea;
+            --secondary-dark: #764ba2;
+            --success-color: #10B981;
+            --success-bg: #DCFCE7;
+            --warning-color: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --error-color: #EF4444;
+            --error-bg: #FEE2E2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .gradient-bg { 
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%); 
+        }
+        
+        .card-hover { 
+            transition: var(--transition);
+        }
+        
+        .card-hover:hover { 
+            transform: translateY(-2px); 
+            box-shadow: var(--shadow-md);
+        }
+
+        .status-active { background: var(--success-color); color: white; }
+        .status-pending { background: var(--warning-color); color: white; }
+        .status-inactive { background: var(--error-color); color: white; }
+        
+        .tab-container {
+            background: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            border: 1px solid var(--gray-200);
+            border-bottom: none;
+        }
+        
+        .tab-content-container {
+            background: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .tab-active { 
+            border-bottom: 3px solid var(--primary-color); 
+            color: var(--primary-color); 
+            background: white;
+        }
+        
+        .tab-inactive {
+            color: var(--gray-600);
+            background: var(--gray-50);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-inactive:hover {
+            color: var(--gray-900);
+            background: var(--gray-100);
+        }
+        
+        .gallery-thumb { 
+            cursor: pointer; 
+            transition: var(--transition);
+            border: 2px solid transparent;
+        }
+        
+        .gallery-thumb:hover { 
+            transform: scale(1.05); 
+            border-color: var(--gray-300);
+        }
+        
+        .gallery-thumb.active { 
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.2);
+        }
+        
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+        
+        .document-card {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            transition: var(--transition);
+        }
+        
+        .document-card:hover {
+            background: white;
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
+        }
+        
+        .timeline-item {
+            position: relative;
+            padding-left: 40px;
+            margin-bottom: 24px;
+        }
+        
+        .timeline-item::before {
+            content: '';
+            position: absolute;
+            left: 9px;
+            top: 24px;
+            bottom: -24px;
+            width: 2px;
+            background: var(--gray-200);
+        }
+        
+        .timeline-item:last-child::before {
+            display: none;
+        }
+        
+        .timeline-dot {
+            position: absolute;
+            left: 0;
+            top: 4px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: white;
+            border: 3px solid var(--primary-color);
+        }
+        
+        .timeline-dot.completed {
+            background: var(--primary-color);
+        }
+        
+        .blockchain-info {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: var(--gray-100);
+            padding: 8px 12px;
+            border-radius: var(--border-radius-sm);
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .iot-device {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            padding: 16px;
+            transition: var(--transition);
+        }
+
+        .iot-device:hover {
+            box-shadow: var(--shadow);
+            border-color: var(--primary-color);
+        }
+
+        .device-status-online {
+            color: var(--success-color);
+        }
+
+        .device-status-offline {
+            color: var(--error-color);
+        }
+
+        .device-status-maintenance {
+            color: var(--warning-color);
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            padding: 16px 20px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--error-color); }
+        .toast.warning { border-left-color: var(--warning-color); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .action-button {
+            transition: var(--transition);
+            border-radius: var(--border-radius-sm);
+            padding: 8px 16px;
+            font-weight: 500;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .action-button.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-button.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .action-button.secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .action-button.secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--primary-color);
+        }
+
+        .action-button.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .action-button.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .action-button.danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .metric-card {
+                padding: 16px;
+            }
+            
+            .tab-container {
+                border-radius: var(--border-radius-sm);
+            }
+            
+            .tab-content-container {
+                border-radius: var(--border-radius-sm);
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 统一导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo区域 -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>仪表盘
+                    </a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4 flex items-center">
+                        <i class="fas fa-building mr-2"></i>资产管理
+                    </a>
+                    <a href="asset-tokenization.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-coins mr-2"></i>代币化
+                    </a>
+                    <a href="#" onclick="showDocumentCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>文档管理
+                    </a>
+                    <a href="#" onclick="showReportsCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i>收益报告
+                    </a>
+                </div>
+
+                <!-- 右侧操作区 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors" onclick="showUserProfile()">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">XX地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 页面标题和操作 -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <div class="flex items-center space-x-3 mb-2">
+                    <button onclick="window.location.href='asset-list.html'" class="text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fas fa-arrow-left text-lg"></i>
+                    </button>
+                    <h1 class="text-3xl font-bold text-gray-900">上海静安嘉里中心</h1>
+                    <span class="status-active px-3 py-1 rounded-full text-sm font-medium">运营中</span>
+                </div>
+                <p class="text-gray-600">上海市静安区南京西路1539号 • 甲级写字楼</p>
+                <div class="flex items-center space-x-4 mt-2">
+                    <span class="text-sm text-gray-500">资产编号：PA202312001</span>
+                    <span class="text-sm text-gray-500">最后更新：<span id="lastUpdate">2小时前</span></span>
+                    <button onclick="refreshAssetData()" class="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-1" id="refreshIcon"></i>刷新数据
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="generateReport()" class="action-button secondary">
+                    <i class="fas fa-file-pdf"></i>生成报告
+                </button>
+                <button onclick="editAsset()" class="action-button secondary">
+                    <i class="fas fa-edit"></i>编辑资产
+                </button>
+                <button onclick="startTokenization()" class="action-button success">
+                    <i class="fas fa-coins"></i>启动代币化
+                </button>
+            </div>
+        </div>
+
+        <!-- 核心指标卡片 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">资产估值</h3>
+                    <i class="fas fa-chart-line text-blue-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">¥15.8亿</span>
+                    <span class="text-sm text-green-600">+5.2%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">较上次评估增长 ¥7,800万</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">月度收益</h3>
+                    <i class="fas fa-money-bill-wave text-green-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">¥850万</span>
+                    <span class="text-sm text-green-600">+3.1%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">租金收入 + 增值服务</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">出租率</h3>
+                    <i class="fas fa-percentage text-purple-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">95%</span>
+                    <span class="text-sm text-green-600">+2%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">42,750㎡ 已出租面积</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">年化收益率</h3>
+                    <i class="fas fa-trending-up text-orange-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">6.4%</span>
+                    <span class="text-sm text-green-600">+0.3%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">净收益率</p>
+            </div>
+        </div>
+
+        <!-- 选项卡导航 -->
+        <div class="tab-container">
+            <div class="flex border-b border-gray-200">
+                <button onclick="switchTab('overview')" id="tab-overview" class="flex-1 py-3 px-4 text-sm font-medium tab-active transition-colors">
+                    <i class="fas fa-chart-pie mr-2"></i>概览
+                </button>
+                <button onclick="switchTab('financial')" id="tab-financial" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-dollar-sign mr-2"></i>财务数据
+                </button>
+                <button onclick="switchTab('lease')" id="tab-lease" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-home mr-2"></i>租赁管理
+                </button>
+                <button onclick="switchTab('document')" id="tab-document" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-file-alt mr-2"></i>文档中心
+                </button>
+                <button onclick="switchTab('iot')" id="tab-iot" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-wifi mr-2"></i>IoT监控
+                </button>
+            </div>
+        </div>
+
+        <!-- 选项卡内容 -->
+        <div class="tab-content-container p-6">
+            <!-- 概览标签 -->
+            <div id="content-overview" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左侧内容 -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- 资产图片轮播 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">资产图片</h3>
+                            <div class="relative">
+                                <img id="mainImage" src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=400&fit=crop" 
+                                     alt="主图" class="w-full h-96 object-cover rounded-lg border border-gray-200">
+                                <button onclick="prevImage()" class="absolute left-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all">
+                                    <i class="fas fa-chevron-left"></i>
+                                </button>
+                                <button onclick="nextImage()" class="absolute right-4 top-1/2 -translate-y-1/2 bg-black bg-opacity-50 text-white p-2 rounded-full hover:bg-opacity-70 transition-all">
+                                    <i class="fas fa-chevron-right"></i>
+                                </button>
+                            </div>
+                            <div class="flex space-x-2 mt-4">
+                                <img src="https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=100&h=100&fit=crop" 
+                                     alt="缩略图1" class="gallery-thumb active w-20 h-20 object-cover rounded-lg" onclick="selectImage(0)">
+                                <img src="https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=100&h=100&fit=crop" 
+                                     alt="缩略图2" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(1)">
+                                <img src="https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=100&h=100&fit=crop" 
+                                     alt="缩略图3" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(2)">
+                                <img src="https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=100&h=100&fit=crop" 
+                                     alt="缩略图4" class="gallery-thumb w-20 h-20 object-cover rounded-lg" onclick="selectImage(3)">
+                            </div>
+                        </div>
+
+                        <!-- 位置信息 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">位置信息</h3>
+                            <div class="bg-gray-100 rounded-lg h-64 flex items-center justify-center border border-gray-200">
+                                <div class="text-center text-gray-500">
+                                    <i class="fas fa-map-marker-alt text-3xl mb-2"></i>
+                                    <p>地图集成 (百度地图/高德地图)</p>
+                                    <p class="text-sm">上海市静安区南京西路1539号</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 收益趋势图 -->
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">收益趋势</h3>
+                            <div id="revenueChart" class="h-80 bg-white border border-gray-200 rounded-lg"></div>
+                        </div>
+                    </div>
+                    
+                    <!-- 右侧信息 -->
+                    <div class="space-y-6">
+                        <!-- 基本信息 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">基本信息</h3>
+                            <div class="space-y-3">
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">资产类型:</span>
+                                    <span class="font-medium">甲级写字楼</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">建筑面积:</span>
+                                    <span class="font-medium">45,000㎡</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">建成年份:</span>
+                                    <span class="font-medium">2018年</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">建筑层数:</span>
+                                    <span class="font-medium">45层</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">电梯数量:</span>
+                                    <span class="font-medium">12部</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">停车位:</span>
+                                    <span class="font-medium">500个</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 设施配套 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">设施配套</h3>
+                            <div class="grid grid-cols-2 gap-3">
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    中央空调
+                                </div>
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    24小时保安
+                                </div>
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    会议室
+                                </div>
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    地铁直达
+                                </div>
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    商业配套
+                                </div>
+                                <div class="flex items-center text-sm text-gray-700">
+                                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                                    绿化花园
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 代币化状态 -->
+                        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">代币化状态</h3>
+                            <div class="space-y-3">
+                                <div class="flex items-center justify-between">
+                                    <span class="text-gray-600">状态:</span>
+                                    <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                        已代币化
+                                    </span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">代币符号:</span>
+                                    <span class="font-medium font-mono">SHJA-001</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">发行总量:</span>
+                                    <span class="font-medium">450,000,000</span>
+                                </div>
+                                <div class="flex justify-between">
+                                    <span class="text-gray-600">当前价格:</span>
+                                    <span class="font-medium">¥0.351</span>
+                                </div>
+                                <div class="blockchain-info mt-4">
+                                    <div class="text-xs text-gray-600 mb-1">合约地址:</div>
+                                    <div class="break-all">0x742d35Cc6634C0532925a3b8D9f9f</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 财务数据标签 -->
+            <div id="content-financial" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 收益分析 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">收益分析</h3>
+                        <div id="financialChart" class="h-64"></div>
+                    </div>
+
+                    <!-- 财务指标 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">关键财务指标</h3>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">总投资收益率 (ROI)</span>
+                                <span class="text-xl font-bold text-green-600">8.2%</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">净现金流</span>
+                                <span class="text-xl font-bold text-blue-600">¥7,320万/年</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">资本化率</span>
+                                <span class="text-xl font-bold text-purple-600">5.8%</span>
+                            </div>
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-600">债务服务覆盖率</span>
+                                <span class="text-xl font-bold text-orange-600">2.1x</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 成本结构 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">成本结构</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">物业管理费:</span>
+                                <span class="font-medium">¥180万/年</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">维护保养费:</span>
+                                <span class="font-medium">¥120万/年</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">保险费用:</span>
+                                <span class="font-medium">¥45万/年</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">税费支出:</span>
+                                <span class="font-medium">¥280万/年</span>
+                            </div>
+                            <div class="border-t pt-2 mt-2">
+                                <div class="flex justify-between font-semibold">
+                                    <span class="text-gray-900">总运营成本:</span>
+                                    <span class="text-red-600">¥625万/年</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 租金收入明细 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">租金收入明细</h3>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">办公租金:</span>
+                                <span class="font-medium">¥780万/月</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">停车费收入:</span>
+                                <span class="font-medium">¥35万/月</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">配套服务费:</span>
+                                <span class="font-medium">¥28万/月</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">其他收入:</span>
+                                <span class="font-medium">¥7万/月</span>
+                            </div>
+                            <div class="border-t pt-2 mt-2">
+                                <div class="flex justify-between font-semibold">
+                                    <span class="text-gray-900">月度总收入:</span>
+                                    <span class="text-green-600">¥850万/月</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 租赁管理标签 -->
+            <div id="content-lease" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 租户列表 -->
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200 flex items-center justify-between">
+                            <h3 class="text-lg font-semibold text-gray-900">租户管理</h3>
+                            <button onclick="addTenant()" class="action-button primary">
+                                <i class="fas fa-plus"></i>新增租户
+                            </button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">租户信息</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">楼层区域</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">租赁面积</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">租金</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">租期</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="tenantTableBody">
+                                    <!-- 租户数据将通过JavaScript填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 文档中心标签 -->
+            <div id="content-document" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 文档分类 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="document-card">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">法律文档</h4>
+                                <i class="fas fa-gavel text-red-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">产权证书、合同等法律相关文档</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">12个文件</span>
+                                <button onclick="viewDocuments('legal')" class="text-blue-600 hover:text-blue-700 text-sm">
+                                    查看详情
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="document-card">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">财务文档</h4>
+                                <i class="fas fa-chart-bar text-green-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">财务报表、审计报告等</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">8个文件</span>
+                                <button onclick="viewDocuments('financial')" class="text-blue-600 hover:text-blue-700 text-sm">
+                                    查看详情
+                                </button>
+                            </div>
+                        </div>
+
+                        <div class="document-card">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">技术文档</h4>
+                                <i class="fas fa-tools text-blue-600"></i>
+                            </div>
+                            <p class="text-sm text-gray-600 mb-3">建筑图纸、设备资料等</p>
+                            <div class="flex justify-between items-center">
+                                <span class="text-xs text-gray-500">15个文件</span>
+                                <button onclick="viewDocuments('technical')" class="text-blue-600 hover:text-blue-700 text-sm">
+                                    查看详情
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 最新文档 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">最新文档</h3>
+                        <div class="space-y-3" id="recentDocuments">
+                            <!-- 文档列表将通过JavaScript填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- IoT监控标签 -->
+            <div id="content-iot" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 设备概览 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">在线设备</h4>
+                                <i class="fas fa-wifi text-green-600"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-green-600 mb-1">85</div>
+                            <p class="text-sm text-gray-600">设备正常运行</p>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">维护中</h4>
+                                <i class="fas fa-tools text-yellow-600"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-yellow-600 mb-1">3</div>
+                            <p class="text-sm text-gray-600">设备维护中</p>
+                        </div>
+
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-3">
+                                <h4 class="font-medium text-gray-900">故障设备</h4>
+                                <i class="fas fa-exclamation-triangle text-red-600"></i>
+                            </div>
+                            <div class="text-2xl font-bold text-red-600 mb-1">2</div>
+                            <p class="text-sm text-gray-600">需要维修</p>
+                        </div>
+                    </div>
+
+                    <!-- 设备列表 -->
+                    <div class="bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">设备监控</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">设备名称</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">位置</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">状态</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">最后更新</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">操作</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="deviceTableBody">
+                                    <!-- 设备数据将通过JavaScript填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        // ========================================
+        // 全局变量和状态管理
+        // ========================================
+        let currentTab = 'overview';
+        let currentImageIndex = 0;
+        let isDataLoading = false;
+
+        const assetImages = [
+            'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=800&h=400&fit=crop',
+            'https://images.unsplash.com/photo-1441986300917-64674bd600d8?w=800&h=400&fit=crop'
+        ];
+
+        // 模拟数据
+        const mockTenants = [
+            {
+                id: 1,
+                name: '腾讯科技',
+                contact: '李总监',
+                floor: '15-18层',
+                area: '4,500㎡',
+                rent: '¥45万/月',
+                period: '2023.1-2026.1',
+                status: 'active'
+            },
+            {
+                id: 2,
+                name: '字节跳动',
+                contact: '王经理',
+                floor: '25-28层',
+                area: '5,200㎡',
+                rent: '¥52万/月',
+                period: '2023.6-2026.6',
+                status: 'active'
+            },
+            {
+                id: 3,
+                name: '美团',
+                contact: '张主管',
+                floor: '8-10层',
+                area: '3,800㎡',
+                rent: '¥38万/月',
+                period: '2022.3-2025.3',
+                status: 'expiring'
+            }
+        ];
+
+        const mockDevices = [
+            {
+                id: 1,
+                name: '中央空调系统-A',
+                type: '空调',
+                location: '设备层',
+                status: 'online',
+                lastUpdate: '2分钟前'
+            },
+            {
+                id: 2,
+                name: '电梯-1号',
+                type: '电梯',
+                location: 'A区',
+                status: 'maintenance',
+                lastUpdate: '10分钟前'
+            },
+            {
+                id: 3,
+                name: '消防监控系统',
+                type: '安防',
+                location: '全楼',
+                status: 'online',
+                lastUpdate: '1分钟前'
+            }
+        ];
+
+        const mockDocuments = [
+            {
+                id: 1,
+                name: '产权证书.pdf',
+                type: 'legal',
+                size: '2.3MB',
+                date: '2023-12-01',
+                status: 'verified'
+            },
+            {
+                id: 2,
+                name: '2023年度财务报告.pdf',
+                type: 'financial',
+                size: '5.1MB',
+                date: '2023-12-15',
+                status: 'pending'
+            },
+            {
+                id: 3,
+                name: '建筑结构图.dwg',
+                type: 'technical',
+                size: '15.7MB',
+                date: '2023-11-20',
+                status: 'verified'
+            }
+        ];
+
+        // ========================================
+        // 页面初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            renderTenantTable();
+            renderDeviceTable();
+            renderRecentDocuments();
+            
+            showToast('资产详情加载完成', 'success', 2000);
+        });
+
+        // ========================================
+        // 标签切换功能
+        // ========================================
+        function switchTab(tabName) {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // 更新标签样式
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.className = 'flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors';
+            });
+            
+            // 显示当前内容
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).className = 'flex-1 py-3 px-4 text-sm font-medium tab-active transition-colors';
+            
+            currentTab = tabName;
+            
+            // 特殊处理某些标签
+            if (tabName === 'financial') {
+                setTimeout(() => initializeFinancialChart(), 100);
+            }
+        }
+
+        // ========================================
+        // 图表初始化
+        // ========================================
+        function initializeCharts() {
+            initializeRevenueChart();
+        }
+
+        function initializeRevenueChart() {
+            const chartDom = document.getElementById('revenueChart');
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: ['租金收入', '其他收入', '总收入']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月', '7月', '8月', '9月', '10月', '11月', '12月']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '{value}万'
+                    }
+                },
+                series: [
+                    {
+                        name: '租金收入',
+                        type: 'line',
+                        smooth: true,
+                        areaStyle: {
+                            opacity: 0.3
+                        },
+                        data: [780, 790, 800, 810, 820, 830, 840, 845, 850, 855, 850, 850]
+                    },
+                    {
+                        name: '其他收入',
+                        type: 'line',
+                        smooth: true,
+                        areaStyle: {
+                            opacity: 0.3
+                        },
+                        data: [65, 68, 70, 72, 70, 68, 70, 75, 70, 72, 70, 70]
+                    },
+                    {
+                        name: '总收入',
+                        type: 'line',
+                        smooth: true,
+                        emphasis: {
+                            focus: 'series'
+                        },
+                        data: [845, 858, 870, 882, 890, 898, 910, 920, 920, 927, 920, 920]
+                    }
+                ]
+            };
+
+            myChart.setOption(option);
+            
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        function initializeFinancialChart() {
+            const chartDom = document.getElementById('financialChart');
+            if (!chartDom) return;
+            
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'item'
+                },
+                legend: {
+                    top: '5%',
+                    left: 'center'
+                },
+                series: [
+                    {
+                        name: '收益构成',
+                        type: 'pie',
+                        radius: ['40%', '70%'],
+                        avoidLabelOverlap: false,
+                        itemStyle: {
+                            borderRadius: 10,
+                            borderColor: '#fff',
+                            borderWidth: 2
+                        },
+                        label: {
+                            show: false,
+                            position: 'center'
+                        },
+                        emphasis: {
+                            label: {
+                                show: true,
+                                fontSize: '40',
+                                fontWeight: 'bold'
+                            }
+                        },
+                        labelLine: {
+                            show: false
+                        },
+                        data: [
+                            { value: 780, name: '办公租金' },
+                            { value: 35, name: '停车费' },
+                            { value: 28, name: '配套服务' },
+                            { value: 7, name: '其他收入' }
+                        ]
+                    }
+                ]
+            };
+
+            myChart.setOption(option);
+        }
+
+        // ========================================
+        // 图片轮播功能
+        // ========================================
+        function selectImage(index) {
+            currentImageIndex = index;
+            document.getElementById('mainImage').src = assetImages[index];
+            
+            // 更新缩略图状态
+            document.querySelectorAll('.gallery-thumb').forEach((thumb, i) => {
+                if (i === index) {
+                    thumb.classList.add('active');
+                } else {
+                    thumb.classList.remove('active');
+                }
+            });
+        }
+
+        function prevImage() {
+            currentImageIndex = (currentImageIndex - 1 + assetImages.length) % assetImages.length;
+            selectImage(currentImageIndex);
+        }
+
+        function nextImage() {
+            currentImageIndex = (currentImageIndex + 1) % assetImages.length;
+            selectImage(currentImageIndex);
+        }
+
+        // ========================================
+        // 数据渲染函数
+        // ========================================
+        function renderTenantTable() {
+            const tbody = document.getElementById('tenantTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = mockTenants.map(tenant => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <div>
+                            <div class="text-sm font-medium text-gray-900">${tenant.name}</div>
+                            <div class="text-sm text-gray-500">${tenant.contact}</div>
+                        </div>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${tenant.floor}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${tenant.area}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${tenant.rent}</td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">${tenant.period}</td>
+                    <td class="px-6 py-4 whitespace-nowrap">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${getTenantStatusClass(tenant.status)}">
+                            ${getTenantStatusText(tenant.status)}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                        <button onclick="viewTenantDetail(${tenant.id})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            查看
+                        </button>
+                        <button onclick="editTenant(${tenant.id})" class="text-indigo-600 hover:text-indigo-900">
+                            编辑
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderDeviceTable() {
+            const tbody = document.getElementById('deviceTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = mockDevices.map(device => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">${device.name}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${device.type}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${device.location}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center space-x-1">
+                            <div class="w-2 h-2 ${getDeviceStatusColor(device.status)} rounded-full"></div>
+                            <span class="text-sm ${getDeviceStatusTextColor(device.status)}">${getDeviceStatusText(device.status)}</span>
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-500">${device.lastUpdate}</td>
+                    <td class="px-6 py-4">
+                        <button onclick="viewDeviceDetail(${device.id})" class="text-blue-600 hover:text-blue-800 text-sm">
+                            查看详情
+                        </button>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderRecentDocuments() {
+            const container = document.getElementById('recentDocuments');
+            if (!container) return;
+
+            container.innerHTML = mockDocuments.map(doc => `
+                <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 ${getFileIconBg(doc.name)} rounded-lg flex items-center justify-center">
+                            <i class="fas ${getFileIcon(doc.name)} ${getFileIconColor(doc.name)}"></i>
+                        </div>
+                        <div>
+                            <h4 class="text-sm font-medium text-gray-900">${doc.name}</h4>
+                            <p class="text-xs text-gray-500">${doc.size} • ${doc.date}</p>
+                        </div>
+                    </div>
+                    <div class="flex items-center space-x-2">
+                        <span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${getDocStatusClass(doc.status)}">
+                            ${getDocStatusText(doc.status)}
+                        </span>
+                        <button onclick="downloadDocument(${doc.id})" class="text-blue-600 hover:text-blue-800 text-sm">
+                            <i class="fas fa-download"></i>
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========================================
+        // 辅助函数
+        // ========================================
+        function getTenantStatusClass(status) {
+            const classes = {
+                active: 'bg-green-100 text-green-800',
+                expiring: 'bg-yellow-100 text-yellow-800',
+                expired: 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getTenantStatusText(status) {
+            const texts = {
+                active: '正常',
+                expiring: '即将到期',
+                expired: '已到期'
+            };
+            return texts[status] || '未知';
+        }
+
+        function getDeviceStatusColor(status) {
+            const colors = {
+                online: 'bg-green-500',
+                offline: 'bg-red-500',
+                maintenance: 'bg-yellow-500'
+            };
+            return colors[status] || 'bg-gray-500';
+        }
+
+        function getDeviceStatusTextColor(status) {
+            const colors = {
+                online: 'device-status-online',
+                offline: 'device-status-offline',
+                maintenance: 'device-status-maintenance'
+            };
+            return colors[status] || 'text-gray-600';
+        }
+
+        function getDeviceStatusText(status) {
+            const texts = {
+                online: '运行中',
+                offline: '离线',
+                maintenance: '维护中'
+            };
+            return texts[status] || '未知';
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf': return 'fa-file-pdf';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'fa-file-image';
+                case 'doc':
+                case 'docx': return 'fa-file-word';
+                case 'dwg': return 'fa-file-alt';
+                default: return 'fa-file';
+            }
+        }
+
+        function getFileIconBg(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf': return 'bg-red-100';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'bg-blue-100';
+                case 'doc':
+                case 'docx': return 'bg-blue-100';
+                case 'dwg': return 'bg-purple-100';
+                default: return 'bg-gray-100';
+            }
+        }
+
+        function getFileIconColor(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf': return 'text-red-600';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'text-blue-600';
+                case 'doc':
+                case 'docx': return 'text-blue-600';
+                case 'dwg': return 'text-purple-600';
+                default: return 'text-gray-600';
+            }
+        }
+
+        function getDocStatusClass(status) {
+            const classes = {
+                verified: 'bg-green-100 text-green-800',
+                pending: 'bg-yellow-100 text-yellow-800',
+                rejected: 'bg-red-100 text-red-800'
+            };
+            return classes[status] || 'bg-gray-100 text-gray-800';
+        }
+
+        function getDocStatusText(status) {
+            const texts = {
+                verified: '已验证',
+                pending: '审核中',
+                rejected: '被拒绝'
+            };
+            return texts[status] || '未知';
+        }
+
+        // ========================================
+        // 操作函数
+        // ========================================
+        function refreshAssetData() {
+            if (isDataLoading) return;
+            
+            isDataLoading = true;
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+            
+            showToast('正在刷新资产数据...', 'info');
+            
+            setTimeout(() => {
+                refreshIcon.classList.remove('fa-spin');
+                isDataLoading = false;
+                document.getElementById('lastUpdate').textContent = '刚刚';
+                showToast('资产数据刷新完成', 'success');
+            }, 2000);
+        }
+
+        function generateReport() {
+            showToast('正在生成资产报告...', 'info');
+            setTimeout(() => {
+                showToast('报告生成完成，已发送到您的邮箱', 'success');
+            }, 3000);
+        }
+
+        function editAsset() {
+            showToast('正在跳转到编辑页面...', 'info');
+            setTimeout(() => {
+                window.location.href = 'asset-create.html?id=1&mode=edit';
+            }, 1000);
+        }
+
+        function startTokenization() {
+            showToast('正在跳转到代币化页面...', 'info');
+            setTimeout(() => {
+                window.location.href = 'asset-tokenization.html?id=1';
+            }, 1000);
+        }
+
+        function addTenant() {
+            showToast('新增租户功能开发中...', 'info');
+        }
+
+        function viewTenantDetail(tenantId) {
+            showToast(`查看租户${tenantId}详情功能开发中...`, 'info');
+        }
+
+        function editTenant(tenantId) {
+            showToast(`编辑租户${tenantId}功能开发中...`, 'info');
+        }
+
+        function viewDeviceDetail(deviceId) {
+            showToast(`查看设备${deviceId}详情功能开发中...`, 'info');
+        }
+
+        function viewDocuments(type) {
+            showToast(`查看${type}类型文档功能开发中...`, 'info');
+        }
+
+        function downloadDocument(docId) {
+            showToast(`下载文档${docId}功能开发中...`, 'info');
+        }
+
+        function showNotifications() {
+            showToast('您有3条未读通知', 'info');
+        }
+
+        function showUserProfile() {
+            showToast('用户资料功能开发中...', 'info');
+        }
+
+        function showDocumentCenter() {
+            showToast('文档管理中心功能开发中...', 'info');
+        }
+
+        function showReportsCenter() {
+            showToast('收益报告中心功能开发中...', 'info');
+        }
+
+        // ========================================
+        // Toast通知系统
+        // ========================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icons = {
+                success: 'fas fa-check-circle text-green-600',
+                error: 'fas fa-exclamation-circle text-red-600',
+                warning: 'fas fa-exclamation-triangle text-yellow-600',
+                info: 'fas fa-info-circle text-blue-600'
+            };
+            
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <i class="${icons[type]}"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, duration);
+        }
+
+        // ========================================
+        // 键盘快捷键
+        // ========================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshAssetData();
+                        break;
+                    case 'e':
+                        e.preventDefault();
+                        editAsset();
+                        break;
+                }
+            }
+            
+            // 标签切换快捷键
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        switchTab('overview');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        switchTab('financial');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        switchTab('lease');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        switchTab('document');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        switchTab('iot');
+                        break;
+                }
+            }
+        });
+    </script>
+</body>
+</html>

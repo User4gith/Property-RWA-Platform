@@ -1,0 +1,1809 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>资产管理 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 设计系统 - 统一色彩和变量 */
+        :root {
+            --primary-color: #3B82F6;
+            --primary-hover: #2563EB;
+            --success-color: #10B981;
+            --warning-color: #F59E0B;
+            --error-color: #EF4444;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --border-radius: 12px;
+            --border-radius-lg: 16px;
+            --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+            --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1);
+            --shadow-xl: 0 20px 25px -5px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 基础样式优化 */
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            line-height: 1.6;
+            color: var(--gray-900);
+            background: #FAFBFC;
+        }
+
+        /* 渐变背景 */
+        .gradient-bg {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        /* 卡片悬停效果 */
+        .card-hover {
+            transition: var(--transition);
+        }
+        .card-hover:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-xl);
+        }
+
+        /* 资产卡片样式 - 保持原有设计 */
+        .asset-card {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+            transition: var(--transition);
+            box-shadow: var(--shadow-sm);
+            display: flex;
+            flex-direction: column;
+            height: 100%;
+            position: relative;
+        }
+
+        .asset-card:hover {
+            transform: translateY(-6px);
+            box-shadow: var(--shadow-xl);
+            border-color: var(--primary-color);
+        }
+
+        .asset-card-content {
+            padding: 24px;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .asset-card-info {
+            flex: 1;
+            margin-bottom: 16px;
+        }
+
+        /* 图片样式 */
+        .property-image {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            transition: var(--transition);
+        }
+
+        .asset-card:hover .property-image {
+            transform: scale(1.05);
+        }
+
+        /* 状态标签 */
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            backdrop-filter: blur(8px);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .status-tokenized {
+            background: rgba(220, 252, 231, 0.95);
+            color: #15803D;
+            border: 1px solid rgba(21, 128, 61, 0.2);
+        }
+
+        .status-in-progress {
+            background: rgba(254, 243, 199, 0.95);
+            color: #B45309;
+            border: 1px solid rgba(180, 83, 9, 0.2);
+        }
+
+        .status-pending {
+            background: rgba(254, 226, 226, 0.95);
+            color: #DC2626;
+            border: 1px solid rgba(220, 38, 38, 0.2);
+        }
+
+        .status-draft {
+            background: rgba(243, 244, 246, 0.95);
+            color: #6B7280;
+            border: 1px solid rgba(107, 114, 128, 0.2);
+        }
+
+        .status-processing {
+            background: rgba(219, 234, 254, 0.95);
+            color: #1E40AF;
+            border: 1px solid rgba(30, 64, 175, 0.2);
+        }
+
+        /* 筛选和搜索样式 */
+        .filter-chip {
+            padding: 10px 18px;
+            border-radius: 25px;
+            border: 1px solid var(--gray-200);
+            background: white;
+            cursor: pointer;
+            transition: var(--transition);
+            height: 44px;
+            display: flex;
+            align-items: center;
+            font-size: 14px;
+            font-weight: 500;
+            white-space: nowrap;
+        }
+
+        .filter-chip:hover {
+            border-color: var(--primary-color);
+            background: #EFF6FF;
+            transform: translateY(-1px);
+        }
+
+        .filter-chip.active {
+            background: var(--primary-color);
+            color: white;
+            border-color: var(--primary-color);
+            box-shadow: 0 2px 8px rgba(59, 130, 246, 0.3);
+        }
+
+        /* 视图切换 */
+        .view-toggle {
+            display: flex;
+            background: var(--gray-100);
+            border-radius: 8px;
+            padding: 4px;
+            gap: 4px;
+        }
+
+        .view-toggle button {
+            padding: 10px 16px;
+            border-radius: 6px;
+            border: none;
+            background: transparent;
+            color: var(--gray-600);
+            font-weight: 500;
+            transition: var(--transition);
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .view-toggle button.active {
+            background: white;
+            color: var(--primary-color);
+            box-shadow: var(--shadow-sm);
+        }
+
+        /* 搜索框 */
+        .search-input {
+            padding: 12px 16px 12px 44px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            font-size: 14px;
+            transition: var(--transition);
+            background: white;
+        }
+
+        .search-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .search-dropdown {
+            max-height: 200px;
+            overflow-y: auto;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            background: white;
+            box-shadow: var(--shadow-lg);
+        }
+
+        /* 选择框样式 */
+        .select-input {
+            padding: 10px 14px;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            background: white;
+            font-size: 14px;
+            cursor: pointer;
+            transition: var(--transition);
+        }
+
+        .select-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        /* 按钮样式 */
+        .btn-primary {
+            background: var(--primary-color);
+            color: white;
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-hover);
+            transform: translateY(-1px);
+            box-shadow: var(--shadow-lg);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--gray-700);
+            padding: 12px 20px;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            text-decoration: none;
+        }
+
+        .btn-secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--gray-300);
+            transform: translateY(-1px);
+        }
+
+        /* 操作按钮 */
+        .card-action-btn {
+            width: 36px;
+            height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: var(--transition);
+            border: 1px solid transparent;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(4px);
+        }
+
+        .card-action-btn:hover {
+            transform: scale(1.1);
+            border-color: currentColor;
+            background: currentColor;
+            color: white !important;
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 资产卡片按钮 */
+        .asset-card-buttons {
+            display: flex;
+            gap: 10px;
+            margin-top: auto;
+        }
+
+        .asset-card-buttons button {
+            flex: 1;
+            height: 44px;
+            border-radius: var(--border-radius);
+            font-size: 13px;
+            font-weight: 600;
+            transition: var(--transition);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .asset-card-buttons button:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 进度条 */
+        .progress-bar {
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            background: var(--gray-200);
+        }
+
+        .progress-fill {
+            height: 100%;
+            border-radius: 4px;
+            transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        /* 表格样式 */
+        .table-view {
+            background: white;
+            border-radius: var(--border-radius-lg);
+            border: 1px solid var(--gray-200);
+            overflow: hidden;
+        }
+
+        .table-row {
+            transition: background-color 0.2s ease;
+            border-bottom: 1px solid var(--gray-200);
+        }
+
+        .table-row:hover {
+            background-color: var(--gray-50);
+        }
+
+        .table-row:last-child {
+            border-bottom: none;
+        }
+
+        /* 空状态 */
+        .empty-state {
+            text-align: center;
+            padding: 80px 20px;
+            color: var(--gray-600);
+        }
+
+        .empty-state-icon {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 24px;
+            background: var(--gray-100);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: var(--gray-400);
+            font-size: 32px;
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            border: 3px solid var(--gray-200);
+            border-top: 3px solid var(--primary-color);
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        /* 动画效果 */
+        .animate-fade-in {
+            animation: fadeIn 0.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { 
+                opacity: 0; 
+                transform: translateY(20px); 
+            }
+            to { 
+                opacity: 1; 
+                transform: translateY(0); 
+            }
+        }
+
+        /* 模态框 */
+        .modal {
+            backdrop-filter: blur(12px);
+            animation: modalFadeIn 0.3s ease-out;
+        }
+
+        @keyframes modalFadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            animation: modalSlideIn 0.3s ease-out;
+        }
+
+        @keyframes modalSlideIn {
+            from { 
+                opacity: 0;
+                transform: translateY(-20px) scale(0.95);
+            }
+            to { 
+                opacity: 1;
+                transform: translateY(0) scale(1);
+            }
+        }
+
+        /* 响应式设计优化 */
+        @media (max-width: 768px) {
+            .asset-card-content {
+                padding: 20px;
+            }
+
+            .filter-chip {
+                font-size: 13px;
+                padding: 8px 14px;
+                height: 40px;
+            }
+
+            .search-input {
+                padding: 10px 14px 10px 40px;
+            }
+
+            .btn-primary, .btn-secondary {
+                padding: 10px 16px;
+                font-size: 14px;
+            }
+
+            .view-toggle button {
+                padding: 8px 12px;
+                font-size: 13px;
+            }
+
+            .asset-card-buttons button {
+                height: 40px;
+                font-size: 12px;
+                gap: 4px;
+            }
+
+            .property-image {
+                height: 160px;
+            }
+        }
+
+        @media (max-width: 640px) {
+            .asset-card-content {
+                padding: 16px;
+            }
+
+            .property-image {
+                height: 140px;
+            }
+
+            .status-badge {
+                padding: 4px 10px;
+                font-size: 11px;
+            }
+
+            .card-action-btn {
+                width: 32px;
+                height: 32px;
+            }
+        }
+
+        /* 性能优化 */
+        .asset-card {
+            contain: layout style paint;
+        }
+
+        .property-image {
+            will-change: transform;
+        }
+
+        /* 辅助功能 */
+        .sr-only {
+            position: absolute;
+            width: 1px;
+            height: 1px;
+            padding: 0;
+            margin: -1px;
+            overflow: hidden;
+            clip: rect(0, 0, 0, 0);
+            white-space: nowrap;
+            border: 0;
+        }
+
+        /* 通知样式 */
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 16px 20px;
+            border-radius: var(--border-radius);
+            color: white;
+            font-weight: 500;
+            z-index: 1000;
+            animation: notificationSlideIn 0.3s ease-out;
+        }
+
+        .notification.success {
+            background: var(--success-color);
+        }
+
+        .notification.error {
+            background: var(--error-color);
+        }
+
+        .notification.warning {
+            background: var(--warning-color);
+        }
+
+        @keyframes notificationSlideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 特殊状态卡片内容 - 保持原设计 */
+        .tokenization-progress {
+            background: #F8FAFC;
+            border: 1px solid #E2E8F0;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .missing-files-warning {
+            background: #FEF3C7;
+            border: 1px solid #F59E0B;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        .draft-completion {
+            background: #F3F4F6;
+            border: 1px solid #D1D5DB;
+            border-radius: 8px;
+            padding: 16px;
+            margin: 16px 0;
+        }
+
+        /* 骨架屏 */
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: loading 1.5s infinite;
+        }
+
+        @keyframes loading {
+            0% { background-position: 200% 0; }
+            100% { background-position: -200% 0; }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 顶部导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors">仪表盘</a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4">资产管理</a>
+                    <a href="asset-tokenization.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors">代币化</a>
+                </div>
+
+                <div class="flex items-center space-x-4">
+                    <!-- 通知 -->
+                    <button class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">XX地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-8">
+        <!-- 页面标题和操作区域 -->
+        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">资产管理</h1>
+                <p class="text-gray-600 mt-2">管理您的房地产资产组合，跟踪代币化进展和收益表现</p>
+            </div>
+            <div class="flex flex-col sm:flex-row items-stretch sm:items-center space-y-3 sm:space-y-0 sm:space-x-3">
+                <button onclick="exportData()" class="btn-secondary">
+                    <i class="fas fa-download"></i>
+                    <span>导出数据</span>
+                </button>
+                <a href="asset-create.html" class="btn-primary">
+                    <i class="fas fa-plus"></i>
+                    <span>新增资产</span>
+                </a>
+            </div>
+        </div>
+
+        <!-- 资产统计卡片 -->
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <!-- 资产总数 -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-building text-blue-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-blue-100 text-blue-800 px-2 py-1 rounded-full">总计</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">资产总数</h3>
+                <p class="text-2xl font-bold text-gray-900">23</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-green-600">+3个</span>
+                    <span class="text-xs text-gray-500">本月新增</span>
+                </div>
+            </div>
+
+            <!-- 已代币化 -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-coins text-green-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">已完成</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">已代币化</h3>
+                <p class="text-2xl font-bold text-gray-900">15</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-green-600">65.2%</span>
+                    <span class="text-xs text-gray-500">完成率</span>
+                </div>
+            </div>
+
+            <!-- 处理中 -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full">进行中</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">处理中</h3>
+                <p class="text-2xl font-bold text-gray-900">5</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-yellow-600">平均7天</span>
+                    <span class="text-xs text-gray-500">完成时间</span>
+                </div>
+            </div>
+
+            <!-- 总价值 -->
+            <div class="bg-white rounded-xl p-6 border border-gray-200 card-hover">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-chart-line text-purple-600 text-xl"></i>
+                    </div>
+                    <span class="text-xs bg-purple-100 text-purple-800 px-2 py-1 rounded-full">价值</span>
+                </div>
+                <h3 class="text-sm font-medium text-gray-600 mb-1">资产总价值</h3>
+                <p class="text-2xl font-bold text-gray-900">¥35.8亿</p>
+                <div class="flex items-center mt-2 space-x-2">
+                    <span class="text-xs text-green-600">+12.5%</span>
+                    <span class="text-xs text-gray-500">同比增长</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- 搜索和筛选区域 -->
+        <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-8">
+            <!-- 第一行：搜索框和视图切换 -->
+            <div class="flex flex-col lg:flex-row lg:items-center lg:justify-between space-y-4 lg:space-y-0 mb-6">
+                <!-- 搜索框 -->
+                <div class="relative flex-1 max-w-md">
+                    <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                        <i class="fas fa-search text-gray-400"></i>
+                    </div>
+                    <input type="text" id="searchInput" 
+                           class="w-full search-input"
+                           placeholder="搜索资产名称、地址或代币符号..."
+                           onkeyup="searchAssets()">
+                    <div id="searchSuggestions" class="absolute top-full left-0 right-0 mt-1 search-dropdown hidden z-10">
+                        <!-- 搜索建议将在这里显示 -->
+                    </div>
+                </div>
+
+                <!-- 视图切换按钮 -->
+                <div class="view-toggle">
+                    <button id="cardViewBtn" class="active" onclick="switchView('card')">
+                        <i class="fas fa-th-large"></i>
+                        <span class="hidden sm:inline">卡片视图</span>
+                    </button>
+                    <button id="tableViewBtn" onclick="switchView('table')">
+                        <i class="fas fa-list"></i>
+                        <span class="hidden sm:inline">列表视图</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 第二行：筛选按钮 -->
+            <div class="flex flex-col space-y-4 lg:space-y-0 lg:flex-row lg:items-center lg:justify-between">
+                <!-- 状态筛选 -->
+                <div class="flex flex-wrap items-center gap-3 overflow-x-auto pb-2 lg:pb-0">
+                    <button class="filter-chip active" data-filter="all" onclick="filterAssets('all')">
+                        <i class="fas fa-list mr-2"></i>全部资产
+                    </button>
+                    <button class="filter-chip" data-filter="tokenized" onclick="filterAssets('tokenized')">
+                        <i class="fas fa-coins mr-2"></i>已代币化
+                    </button>
+                    <button class="filter-chip" data-filter="in-progress" onclick="filterAssets('in-progress')">
+                        <i class="fas fa-clock mr-2"></i>处理中
+                    </button>
+                    <button class="filter-chip" data-filter="pending" onclick="filterAssets('pending')">
+                        <i class="fas fa-hourglass-half mr-2"></i>待审核
+                    </button>
+                    <button class="filter-chip" data-filter="draft" onclick="filterAssets('draft')">
+                        <i class="fas fa-edit mr-2"></i>草稿
+                    </button>
+                </div>
+
+                <!-- 高级筛选 -->
+                <div class="flex flex-wrap items-center space-x-3 gap-y-3">
+                    <select id="cityFilter" class="select-input" onchange="applyFilters()">
+                        <option value="">所有城市</option>
+                        <option value="shanghai">上海</option>
+                        <option value="beijing">北京</option>
+                        <option value="shenzhen">深圳</option>
+                        <option value="guangzhou">广州</option>
+                        <option value="hangzhou">杭州</option>
+                    </select>
+                    <select id="typeFilter" class="select-input" onchange="applyFilters()">
+                        <option value="">所有类型</option>
+                        <option value="office">写字楼</option>
+                        <option value="retail">零售商业</option>
+                        <option value="residential">住宅</option>
+                        <option value="mixed">综合体</option>
+                    </select>
+                    <button onclick="resetFilters()" class="btn-secondary">
+                        <i class="fas fa-undo"></i>
+                        <span class="hidden sm:inline">重置</span>
+                    </button>
+                    <button onclick="refreshData()" class="btn-secondary">
+                        <i class="fas fa-sync-alt"></i>
+                        <span class="hidden sm:inline">刷新</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <!-- 资产列表 -->
+        <div id="assetsContainer">
+            <!-- 卡片视图 -->
+            <div id="cardView" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6" style="grid-auto-rows: 1fr;">
+                <!-- 资产卡片1 - 已代币化 -->
+                <div class="asset-card animate-fade-in" data-status="tokenized" data-city="shanghai" data-type="office" data-id="1">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=1" 
+                             alt="上海静安嘉里中心" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-tokenized">已代币化</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>上海
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">上海静安嘉里中心</h3>
+                                    <p class="text-sm text-gray-600">写字楼 · 32,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(1)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(1)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">资产价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥18.5亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">代币符号</span>
+                                    <span class="text-sm font-medium text-blue-600">JAKC</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">年化收益</span>
+                                    <span class="text-sm font-medium text-green-600">+8.2%</span>
+                                </div>
+                            </div>
+
+                            <!-- 代币流通信息 -->
+                            <div class="tokenization-progress">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">代币流通</span>
+                                    <span class="text-sm font-medium text-gray-900">5,000万/5,000万</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200">
+                                    <div class="progress-fill bg-green-500" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="manageTokens(1)" class="bg-blue-600 text-white hover:bg-blue-700">
+                                <i class="fas fa-coins"></i>管理代币
+                            </button>
+                            <button onclick="viewRevenue(1)" class="bg-green-600 text-white hover:bg-green-700">
+                                <i class="fas fa-chart-line"></i>查看收益
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资产卡片2 - 处理中 -->
+                <div class="asset-card animate-fade-in" data-status="in-progress" data-city="beijing" data-type="office" data-id="2">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=2" 
+                             alt="北京财富金融中心" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-processing">处理中</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>北京
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">北京财富金融中心</h3>
+                                    <p class="text-sm text-gray-600">写字楼 · 28,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(2)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(2)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预估价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥15.2亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预期收益</span>
+                                    <span class="text-sm font-medium text-green-600">+7.8%</span>
+                                </div>
+                            </div>
+
+                            <!-- 代币化进度 -->
+                            <div class="tokenization-progress">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">代币化进度</span>
+                                    <span class="text-sm font-medium text-gray-900">65%</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200">
+                                    <div class="progress-fill bg-blue-500" style="width: 65%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-clock mr-1"></i>预计完成时间：5个工作日
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="viewProgress(2)" class="bg-blue-600 text-white hover:bg-blue-700">
+                                <i class="fas fa-chart-pie"></i>查看进度
+                            </button>
+                            <button onclick="contactSupport(2)" class="bg-gray-600 text-white hover:bg-gray-700">
+                                <i class="fas fa-headset"></i>联系客服
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资产卡片3 - 待审核 -->
+                <div class="asset-card animate-fade-in" data-status="pending" data-city="shenzhen" data-type="office" data-id="3">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=3" 
+                             alt="深圳平安金融中心" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-pending">待审核</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>深圳
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">深圳平安金融中心</h3>
+                                    <p class="text-sm text-gray-600">写字楼 · 45,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(3)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(3)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预估价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥22.8亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">审核状态</span>
+                                    <span class="text-sm font-medium text-yellow-600">文件审核中</span>
+                                </div>
+                            </div>
+
+                            <!-- 缺失文件提醒 -->
+                            <div class="missing-files-warning">
+                                <div class="flex items-center space-x-2 mb-2">
+                                    <i class="fas fa-exclamation-triangle text-yellow-600"></i>
+                                    <span class="text-sm font-medium text-yellow-800">缺少以下文件</span>
+                                </div>
+                                <ul class="text-sm text-yellow-700 list-disc list-inside">
+                                    <li>土地使用证</li>
+                                    <li>建设工程规划许可证</li>
+                                </ul>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="uploadDocuments(3)" class="bg-red-600 text-white hover:bg-red-700">
+                                <i class="fas fa-upload"></i>补充文件
+                            </button>
+                            <button onclick="contactSupport(3)" class="bg-gray-600 text-white hover:bg-gray-700">
+                                <i class="fas fa-headset"></i>联系客服
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 资产卡片4 - 草稿 -->
+                <div class="asset-card animate-fade-in" data-status="draft" data-city="guangzhou" data-type="retail" data-id="4">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=4" 
+                             alt="广州天河城" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-draft">草稿</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>广州
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">广州天河城</h3>
+                                    <p class="text-sm text-gray-600">购物中心 · 35,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(4)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(4)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                    <button onclick="deleteAsset(4)" class="card-action-btn text-red-600 hover:text-red-600" title="删除资产">
+                                        <i class="fas fa-trash text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预估价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥12.5亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">完成度</span>
+                                    <span class="text-sm font-medium text-yellow-600">35%</span>
+                                </div>
+                            </div>
+
+                            <!-- 完成进度 */
+                            <div class="status-info">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">资料完成度</span>
+                                    <span class="text-sm font-medium text-gray-900">35%</span>
+                                </div>
+                                <div class="progress-bar">
+                                    <div class="progress-fill bg-gray-400" style="width: 35%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-info-circle mr-1"></i>请完善基础信息和上传文件
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="editAsset(4)" class="bg-blue-600 text-white hover:bg-blue-700">
+                                <i class="fas fa-edit"></i>继续编辑
+                            </button>
+                            <button onclick="deleteAsset(4)" class="bg-red-600 text-white hover:bg-red-700">
+                                <i class="fas fa-trash"></i>删除草稿
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 更多资产卡片... -->
+                <div class="asset-card animate-fade-in" data-status="tokenized" data-city="hangzhou" data-type="mixed" data-id="5">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=5" 
+                             alt="杭州万象城" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-tokenized">已代币化</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>杭州
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">杭州万象城</h3>
+                                    <p class="text-sm text-gray-600">综合体 · 68,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(5)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(5)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">资产价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥28.6亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">代币符号</span>
+                                    <span class="text-sm font-medium text-blue-600">HZMX</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">年化收益</span>
+                                    <span class="text-sm font-medium text-green-600">+9.1%</span>
+                                </div>
+                            </div>
+
+                            <div class="tokenization-progress">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">代币流通</span>
+                                    <span class="text-sm font-medium text-gray-900">8,000万/8,000万</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200">
+                                    <div class="progress-fill bg-green-500" style="width: 100%"></div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="manageTokens(5)" class="bg-blue-600 text-white hover:bg-blue-700">
+                                <i class="fas fa-coins"></i>管理代币
+                            </button>
+                            <button onclick="viewRevenue(5)" class="bg-green-600 text-white hover:bg-green-700">
+                                <i class="fas fa-chart-line"></i>查看收益
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="asset-card animate-fade-in" data-status="in-progress" data-city="shanghai" data-type="residential" data-id="6">
+                    <div class="relative">
+                        <img src="https://picsum.photos/400/200?random=6" 
+                             alt="上海汤臣一品" class="property-image" loading="lazy">
+                        <div class="absolute top-4 right-4">
+                            <span class="status-badge status-in-progress">处理中</span>
+                        </div>
+                        <div class="absolute bottom-4 left-4">
+                            <span class="bg-black bg-opacity-60 text-white px-3 py-1 rounded-lg text-sm font-medium">
+                                <i class="fas fa-map-marker-alt mr-1"></i>上海
+                            </span>
+                        </div>
+                    </div>
+                    <div class="asset-card-content">
+                        <div class="asset-card-info">
+                            <div class="flex items-start justify-between mb-4">
+                                <div class="flex-1">
+                                    <h3 class="text-lg font-bold text-gray-900 mb-1">上海汤臣一品</h3>
+                                    <p class="text-sm text-gray-600">豪宅住宅 · 25,000㎡</p>
+                                </div>
+                                <div class="flex items-center space-x-1 ml-3">
+                                    <button onclick="viewAsset(6)" class="card-action-btn text-blue-600 hover:text-blue-600" title="查看详情">
+                                        <i class="fas fa-eye text-sm"></i>
+                                    </button>
+                                    <button onclick="editAsset(6)" class="card-action-btn text-green-600 hover:text-green-600" title="编辑资产">
+                                        <i class="fas fa-edit text-sm"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            <div class="space-y-3 mb-5">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预估价值</span>
+                                    <span class="text-sm font-semibold text-gray-900">¥42.1亿</span>
+                                </div>
+                                <div class="flex justify-between items-center">
+                                    <span class="text-sm text-gray-600">预期收益</span>
+                                    <span class="text-sm font-medium text-green-600">+6.5%</span>
+                                </div>
+                            </div>
+
+                            <div class="tokenization-progress">
+                                <div class="flex items-center justify-between mb-2">
+                                    <span class="text-sm text-gray-600">代币化进度</span>
+                                    <span class="text-sm font-medium text-gray-900">45%</span>
+                                </div>
+                                <div class="progress-bar bg-gray-200">
+                                    <div class="progress-fill bg-blue-500" style="width: 45%"></div>
+                                </div>
+                                <p class="text-xs text-gray-500 mt-2">
+                                    <i class="fas fa-clock mr-1"></i>预计完成时间：10个工作日
+                                </p>
+                            </div>
+                        </div>
+
+                        <div class="asset-card-buttons">
+                            <button onclick="viewProgress(6)" class="bg-blue-600 text-white hover:bg-blue-700">
+                                <i class="fas fa-chart-pie"></i>查看进度
+                            </button>
+                            <button onclick="contactSupport(6)" class="bg-gray-600 text-white hover:bg-gray-700">
+                                <i class="fas fa-headset"></i>联系客服
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 表格视图 -->
+            <div id="tableView" class="table-view hidden">
+                <div class="overflow-x-auto">
+                    <table class="w-full">
+                        <thead class="bg-gray-50 border-b border-gray-200">
+                            <tr>
+                                <th class="text-left py-4 px-6 font-medium text-gray-900">资产信息</th>
+                                <th class="text-left py-4 px-6 font-medium text-gray-900">类型/城市</th>
+                                <th class="text-left py-4 px-6 font-medium text-gray-900">状态</th>
+                                <th class="text-right py-4 px-6 font-medium text-gray-900">估值</th>
+                                <th class="text-right py-4 px-6 font-medium text-gray-900">收益率</th>
+                                <th class="text-center py-4 px-6 font-medium text-gray-900">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody class="divide-y divide-gray-200">
+                            <tr class="table-row" data-status="tokenized" data-city="shanghai" data-type="office" data-id="1">
+                                <td class="py-4 px-6">
+                                    <div class="flex items-center space-x-4">
+                                        <img src="https://picsum.photos/60/60?random=1" alt="上海静安嘉里中心" class="w-12 h-12 rounded-lg object-cover">
+                                        <div>
+                                            <div class="font-medium text-gray-900">上海静安嘉里中心</div>
+                                            <div class="text-sm text-gray-500">32,000㎡</div>
+                                        </div>
+                                    </div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <div class="text-sm text-gray-900">写字楼</div>
+                                    <div class="text-sm text-gray-500">上海</div>
+                                </td>
+                                <td class="py-4 px-6">
+                                    <span class="status-badge status-tokenized">已代币化</span>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <div class="font-medium text-gray-900">¥18.5亿</div>
+                                    <div class="text-sm text-gray-500">JAKC</div>
+                                </td>
+                                <td class="py-4 px-6 text-right">
+                                    <span class="text-green-600 font-medium">+8.2%</span>
+                                </td>
+                                <td class="py-4 px-6 text-center">
+                                    <div class="flex items-center justify-center space-x-2">
+                                        <button onclick="viewAsset(1)" class="text-blue-600 hover:text-blue-700">
+                                            <i class="fas fa-eye"></i>
+                                        </button>
+                                        <button onclick="editAsset(1)" class="text-green-600 hover:text-green-700">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button onclick="manageTokens(1)" class="text-purple-600 hover:text-purple-700">
+                                            <i class="fas fa-coins"></i>
+                                        </button>
+                                    </div>
+                                </td>
+                            </tr>
+                            <!-- 更多表格行... -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+
+            <!-- 空状态 -->
+            <div id="emptyState" class="empty-state hidden">
+                <div class="empty-state-icon">
+                    <i class="fas fa-building"></i>
+                </div>
+                <h3 class="text-lg font-medium text-gray-900 mb-2">暂无匹配的资产</h3>
+                <p class="text-gray-500 mb-6">请尝试调整筛选条件或搜索关键词</p>
+                <button onclick="resetFilters()" class="btn-primary">
+                    <i class="fas fa-undo mr-2"></i>重置筛选条件
+                </button>
+            </div>
+
+            <!-- 加载状态 -->
+            <div id="loadingState" class="hidden flex justify-center items-center py-20">
+                <div class="loading-spinner mr-3"></div>
+                <span class="text-gray-600">加载中...</span>
+            </div>
+        </div>
+
+        <!-- 分页 -->
+        <div class="flex flex-col sm:flex-row items-center justify-between mt-8 gap-4">
+            <div class="text-sm text-gray-500">
+                显示 1-6 条，共 23 条记录
+            </div>
+            <nav class="flex space-x-2">
+                <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed transition-colors" disabled>
+                    上一页
+                </button>
+                <button class="px-4 py-2 text-sm bg-blue-600 text-white rounded-lg">1</button>
+                <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">2</button>
+                <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">3</button>
+                <button class="px-4 py-2 text-sm border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors">
+                    下一页
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- 模态框 -->
+    <!-- 查看资产详情模态框 -->
+    <div id="viewAssetModal" class="fixed inset-0 bg-black bg-opacity-50 hidden items-center justify-center z-50 modal">
+        <div class="modal-content bg-white rounded-xl p-6 m-6 max-w-4xl w-full max-h-[90vh] overflow-y-auto">
+            <div class="flex items-center justify-between mb-6">
+                <h3 class="text-xl font-semibold text-gray-900">
+                    <i class="fas fa-building text-blue-600 mr-2"></i>资产详情
+                </h3>
+                <button onclick="closeViewAssetModal()" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="assetDetailsContent">
+                <!-- 动态内容将在这里插入 -->
+            </div>
+        </div>
+    </div>
+
+    <!-- 通知组件 -->
+    <div id="notification" class="notification hidden">
+        <span id="notificationMessage"></span>
+    </div>
+
+    <script>
+        // 全局变量
+        let currentView = 'card';
+        let currentFilter = 'all';
+        let assetsData = {}; // 资产数据缓存
+        let isLoading = false;
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeAssets();
+            setupEventListeners();
+        });
+
+        // 初始化资产数据
+        function initializeAssets() {
+            // 模拟资产数据
+            assetsData = {
+                1: {
+                    id: 1,
+                    name: '上海静安嘉里中心',
+                    type: 'office',
+                    city: 'shanghai',
+                    area: 32000,
+                    value: '18.5亿',
+                    tokenSymbol: 'JAKC',
+                    status: 'tokenized',
+                    roi: 8.2,
+                    tokenProgress: 100,
+                    image: 'https://picsum.photos/400/200?random=1'
+                },
+                2: {
+                    id: 2,
+                    name: '北京财富金融中心',
+                    type: 'office',
+                    city: 'beijing',
+                    area: 28000,
+                    value: '15.2亿',
+                    status: 'in-progress',
+                    roi: 7.8,
+                    tokenProgress: 65,
+                    image: 'https://picsum.photos/400/200?random=2'
+                },
+                3: {
+                    id: 3,
+                    name: '深圳平安金融中心',
+                    type: 'office',
+                    city: 'shenzhen',
+                    area: 45000,
+                    value: '22.8亿',
+                    status: 'pending',
+                    missingFiles: ['土地使用证', '建设工程规划许可证'],
+                    image: 'https://picsum.photos/400/200?random=3'
+                },
+                4: {
+                    id: 4,
+                    name: '广州天河城',
+                    type: 'retail',
+                    city: 'guangzhou',
+                    area: 35000,
+                    value: '12.5亿',
+                    status: 'draft',
+                    completionRate: 35,
+                    image: 'https://picsum.photos/400/200?random=4'
+                },
+                5: {
+                    id: 5,
+                    name: '杭州万象城',
+                    type: 'mixed',
+                    city: 'hangzhou',
+                    area: 68000,
+                    value: '28.6亿',
+                    tokenSymbol: 'HZMX',
+                    status: 'tokenized',
+                    roi: 9.1,
+                    tokenProgress: 100,
+                    image: 'https://picsum.photos/400/200?random=5'
+                },
+                6: {
+                    id: 6,
+                    name: '上海汤臣一品',
+                    type: 'residential',
+                    city: 'shanghai',
+                    area: 25000,
+                    value: '42.1亿',
+                    status: 'in-progress',
+                    roi: 6.5,
+                    tokenProgress: 45,
+                    image: 'https://picsum.photos/400/200?random=6'
+                }
+            };
+        }
+
+        // 设置事件监听器
+        function setupEventListeners() {
+            // 搜索防抖
+            const searchInput = document.getElementById('searchInput');
+            let searchTimeout;
+            searchInput.addEventListener('input', function() {
+                clearTimeout(searchTimeout);
+                searchTimeout = setTimeout(searchAssets, 300);
+            });
+
+            // 筛选器变化
+            document.getElementById('cityFilter').addEventListener('change', applyFilters);
+            document.getElementById('typeFilter').addEventListener('change', applyFilters);
+
+            // 键盘导航支持
+            document.addEventListener('keydown', function(e) {
+                if (e.key === 'Escape') {
+                    closeAllModals();
+                }
+            });
+
+            // 响应式处理
+            window.addEventListener('resize', handleResize);
+            handleResize(); // 初始调用
+        }
+
+        // 响应式处理
+        function handleResize() {
+            const isMobile = window.innerWidth < 768;
+            const cardView = document.getElementById('cardView');
+            
+            if (isMobile && currentView === 'table') {
+                // 在小屏幕上自动切换到卡片视图
+                switchView('card');
+            }
+        }
+
+        // 视图切换
+        function switchView(view) {
+            currentView = view;
+            
+            const cardView = document.getElementById('cardView');
+            const tableView = document.getElementById('tableView');
+            const cardViewBtn = document.getElementById('cardViewBtn');
+            const tableViewBtn = document.getElementById('tableViewBtn');
+
+            if (view === 'card') {
+                cardView.classList.remove('hidden');
+                tableView.classList.add('hidden');
+                cardViewBtn.classList.add('active');
+                tableViewBtn.classList.remove('active');
+            } else {
+                cardView.classList.add('hidden');
+                tableView.classList.remove('hidden');
+                tableViewBtn.classList.add('active');
+                cardViewBtn.classList.remove('active');
+            }
+
+            // 保存用户偏好
+            localStorage.setItem('preferredView', view);
+        }
+
+        // 筛选资产
+        function filterAssets(filter) {
+            currentFilter = filter;
+            
+            // 更新筛选按钮状态
+            document.querySelectorAll('.filter-chip').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            document.querySelector(`[data-filter="${filter}"]`).classList.add('active');
+
+            applyFilters();
+        }
+
+        // 应用筛选
+        function applyFilters() {
+            showLoading(true);
+            
+            setTimeout(() => {
+                const cityFilter = document.getElementById('cityFilter').value;
+                const typeFilter = document.getElementById('typeFilter').value;
+                
+                const cardElements = document.querySelectorAll('.asset-card');
+                const tableRows = document.querySelectorAll('.table-row');
+                
+                let visibleCount = 0;
+
+                [...cardElements, ...tableRows].forEach(element => {
+                    let shouldShow = true;
+                    
+                    // 状态筛选
+                    if (currentFilter !== 'all' && element.dataset.status !== currentFilter) {
+                        shouldShow = false;
+                    }
+                    
+                    // 城市筛选
+                    if (cityFilter && element.dataset.city !== cityFilter) {
+                        shouldShow = false;
+                    }
+                    
+                    // 类型筛选
+                    if (typeFilter && element.dataset.type !== typeFilter) {
+                        shouldShow = false;
+                    }
+                    
+                    if (element.classList.contains('asset-card')) {
+                        element.style.display = shouldShow ? 'block' : 'none';
+                    } else {
+                        element.style.display = shouldShow ? 'table-row' : 'none';
+                    }
+                    
+                    if (shouldShow) visibleCount++;
+                });
+
+                // 显示/隐藏空状态
+                const emptyState = document.getElementById('emptyState');
+                if (visibleCount === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+                
+                showLoading(false);
+            }, 300);
+        }
+
+        // 搜索资产
+        function searchAssets() {
+            const searchTerm = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (searchTerm === '') {
+                applyFilters();
+                return;
+            }
+
+            showLoading(true);
+            
+            setTimeout(() => {
+                const elements = [...document.querySelectorAll('.asset-card'), ...document.querySelectorAll('.table-row')];
+                let visibleCount = 0;
+                
+                elements.forEach(element => {
+                    const assetId = element.dataset.id;
+                    const asset = assetsData[assetId];
+                    
+                    if (asset) {
+                        const searchableText = `${asset.name} ${asset.city} ${asset.tokenSymbol || ''}`.toLowerCase();
+                        const shouldShow = searchableText.includes(searchTerm);
+                        
+                        if (element.classList.contains('asset-card')) {
+                            element.style.display = shouldShow ? 'block' : 'none';
+                        } else {
+                            element.style.display = shouldShow ? 'table-row' : 'none';
+                        }
+                        
+                        if (shouldShow) visibleCount++;
+                    }
+                });
+
+                // 显示/隐藏空状态
+                const emptyState = document.getElementById('emptyState');
+                if (visibleCount === 0) {
+                    emptyState.classList.remove('hidden');
+                } else {
+                    emptyState.classList.add('hidden');
+                }
+                
+                showLoading(false);
+            }, 300);
+        }
+
+        // 重置筛选
+        function resetFilters() {
+            document.getElementById('searchInput').value = '';
+            document.getElementById('cityFilter').value = '';
+            document.getElementById('typeFilter').value = '';
+            filterAssets('all');
+            showNotification('筛选条件已重置', 'success');
+        }
+
+        // 刷新数据
+        function refreshData() {
+            showLoading(true);
+            
+            // 模拟API调用
+            setTimeout(() => {
+                showLoading(false);
+                showNotification('数据已刷新', 'success');
+            }, 1500);
+        }
+
+        // 显示加载状态
+        function showLoading(show) {
+            isLoading = show;
+            const loadingState = document.getElementById('loadingState');
+            const assetsContainer = document.getElementById('cardView');
+            
+            if (show) {
+                loadingState.classList.remove('hidden');
+            } else {
+                loadingState.classList.add('hidden');
+            }
+        }
+
+        // 资产操作函数
+        function viewAsset(id) {
+            const asset = assetsData[id];
+            if (!asset) return;
+            
+            // 显示资产详情模态框
+            const modal = document.getElementById('viewAssetModal');
+            const content = document.getElementById('assetDetailsContent');
+            
+            content.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div>
+                        <img src="${asset.image}" alt="${asset.name}" class="w-full h-64 object-cover rounded-lg mb-4">
+                        <h4 class="font-semibold text-lg mb-2">${asset.name}</h4>
+                        <p class="text-gray-600 mb-4">${asset.area?.toLocaleString()}㎡</p>
+                    </div>
+                    <div class="space-y-4">
+                        <div class="grid grid-cols-2 gap-4">
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-600">估值</div>
+                                <div class="text-lg font-semibold">¥${asset.value}</div>
+                            </div>
+                            ${asset.roi ? `
+                            <div class="bg-gray-50 p-4 rounded-lg">
+                                <div class="text-sm text-gray-600">年化收益</div>
+                                <div class="text-lg font-semibold text-green-600">+${asset.roi}%</div>
+                            </div>
+                            ` : ''}
+                        </div>
+                        ${asset.tokenSymbol ? `
+                        <div class="bg-blue-50 p-4 rounded-lg">
+                            <div class="text-sm text-gray-600">代币信息</div>
+                            <div class="text-lg font-semibold text-blue-600">${asset.tokenSymbol}</div>
+                            <div class="text-sm text-gray-500">流通率: ${asset.tokenProgress}%</div>
+                        </div>
+                        ` : ''}
+                    </div>
+                </div>
+            `;
+            
+            modal.classList.remove('hidden');
+            modal.classList.add('flex');
+        }
+
+        function editAsset(id) {
+            showNotification('跳转到编辑页面...', 'success');
+            // 实际应用中这里会跳转到编辑页面
+            setTimeout(() => {
+                window.location.href = `asset-edit.html?id=${id}`;
+            }, 1000);
+        }
+
+        function deleteAsset(id) {
+            if (confirm('确定要删除这个资产吗？此操作不可撤销。')) {
+                showLoading(true);
+                
+                // 模拟删除操作
+                setTimeout(() => {
+                    const element = document.querySelector(`[data-id="${id}"]`);
+                    if (element) {
+                        element.remove();
+                    }
+                    delete assetsData[id];
+                    showLoading(false);
+                    showNotification('资产已删除', 'success');
+                }, 1000);
+            }
+        }
+
+        function manageTokens(id) {
+            showNotification('跳转到代币管理页面...', 'success');
+            setTimeout(() => {
+                window.location.href = `token-manage.html?id=${id}`;
+            }, 1000);
+        }
+
+        function viewRevenue(id) {
+            showNotification('跳转到收益报告页面...', 'success');
+            setTimeout(() => {
+                window.location.href = `revenue-report.html?id=${id}`;
+            }, 1000);
+        }
+
+        function viewProgress(id) {
+            showNotification('查看代币化进度详情...', 'success');
+        }
+
+        function uploadDocuments(id) {
+            showNotification('跳转到文件上传页面...', 'success');
+            setTimeout(() => {
+                window.location.href = `document-upload.html?id=${id}`;
+            }, 1000);
+        }
+
+        function contactSupport(id) {
+            showNotification('正在联系客服...', 'success');
+        }
+
+        function exportData() {
+            showNotification('正在导出数据...', 'success');
+            // 模拟导出
+            setTimeout(() => {
+                showNotification('数据导出成功', 'success');
+            }, 2000);
+        }
+
+        // 关闭模态框
+        function closeViewAssetModal() {
+            const modal = document.getElementById('viewAssetModal');
+            modal.classList.add('hidden');
+            modal.classList.remove('flex');
+        }
+
+        function closeAllModals() {
+            closeViewAssetModal();
+        }
+
+        // 显示通知
+        function showNotification(message, type = 'success') {
+            const notification = document.getElementById('notification');
+            const messageEl = document.getElementById('notificationMessage');
+            
+            messageEl.textContent = message;
+            notification.className = `notification ${type}`;
+            notification.classList.remove('hidden');
+            
+            setTimeout(() => {
+                notification.classList.add('hidden');
+            }, 3000);
+        }
+
+        // 图片懒加载优化
+        function setupLazyLoading() {
+            const images = document.querySelectorAll('img[loading="lazy"]');
+            
+            if ('IntersectionObserver' in window) {
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src || img.src;
+                            img.classList.remove('skeleton');
+                            observer.unobserve(img);
+                        }
+                    });
+                });
+                
+                images.forEach(img => imageObserver.observe(img));
+            }
+        }
+
+        // 在页面加载完成后设置懒加载
+        window.addEventListener('load', setupLazyLoading);
+
+        // 性能监控
+        function trackPerformance() {
+            if ('performance' in window) {
+                window.addEventListener('load', () => {
+                    setTimeout(() => {
+                        const perfData = performance.getEntriesByType('navigation')[0];
+                        console.log('页面加载时间:', perfData.loadEventEnd - perfData.fetchStart, 'ms');
+                    }, 0);
+                });
+            }
+        }
+
+        trackPerformance();
+    </script>
+</body>
+</html>

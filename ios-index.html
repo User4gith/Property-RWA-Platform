@@ -1,0 +1,2693 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PropertyChain Pro - 地产RWA管理平台</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', system-ui, sans-serif;
+            background: linear-gradient(135deg, #0f0f23 0%, #1a1a2e 50%, #16213e 100%);
+            overflow-x: auto;
+            padding: 40px 20px;
+            min-height: 100vh;
+            min-width: 1200px;
+            position: relative;
+        }
+
+        body::before {
+            content: '';
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 20% 80%, rgba(120, 119, 198, 0.1) 0%, transparent 50%),
+                        radial-gradient(circle at 80% 20%, rgba(255, 119, 198, 0.1) 0%, transparent 50%);
+            pointer-events: none;
+            z-index: -1;
+        }
+
+        .prototype-container {
+            display: flex;
+            gap: 60px;
+            align-items: flex-start;
+            justify-content: center;
+            min-width: 1200px;
+        }
+
+        .phone-frame {
+            width: 390px;
+            height: 844px;
+            background: linear-gradient(145deg, #2c2c54 0%, #40407a 100%);
+            border-radius: 50px;
+            padding: 6px;
+            box-shadow: 
+                0 0 0 3px rgba(255,255,255,0.1),
+                0 30px 80px rgba(0,0,0,0.4),
+                inset 0 0 0 1px rgba(255,255,255,0.15),
+                0 0 50px rgba(120, 119, 198, 0.2);
+            position: relative;
+            flex-shrink: 0;
+        }
+
+        .phone-screen {
+            width: 100%;
+            height: 100%;
+            background: #0a0a0a;
+            border-radius: 44px;
+            overflow: hidden;
+            position: relative;
+            box-shadow: inset 0 0 50px rgba(0,0,0,0.5);
+        }
+
+        .dynamic-island {
+            position: absolute;
+            top: 12px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 126px;
+            height: 37px;
+            background: #000;
+            border-radius: 19px;
+            z-index: 100;
+            box-shadow: inset 0 0 0 1px rgba(255,255,255,0.1);
+        }
+
+        .status-bar {
+            height: 54px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 24px;
+            color: #ffffff;
+            font-size: 17px;
+            font-weight: 600;
+            background: transparent;
+            position: relative;
+            z-index: 10;
+        }
+
+        .screen-content {
+            height: calc(100% - 54px - 110px);
+            background: linear-gradient(180deg, #0f1419 0%, #1a1f2e 100%);
+            overflow-y: auto;
+            position: relative;
+        }
+
+        .tab-bar {
+            height: 110px;
+            background: linear-gradient(180deg, rgba(21, 24, 36, 0.95) 0%, rgba(15, 20, 25, 0.95) 100%);
+            backdrop-filter: blur(40px);
+            border-top: 0.5px solid rgba(120, 119, 198, 0.3);
+            display: flex;
+            align-items: center;
+            justify-content: space-around;
+            padding: 8px 0 34px 0;
+            position: relative;
+        }
+
+        .tab-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 4px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            padding: 12px 16px;
+            border-radius: 16px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .tab-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, rgba(120, 119, 198, 0.2) 0%, rgba(255, 119, 198, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .tab-item.active::before {
+            opacity: 1;
+        }
+
+        .tab-item.active {
+            color: #7877c6;
+        }
+
+        .tab-item:not(.active) {
+            color: rgba(255, 255, 255, 0.6);
+        }
+
+        .tab-item:active {
+            transform: scale(0.95);
+        }
+
+        .tab-icon {
+            font-size: 20px;
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .tab-text {
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: -0.08px;
+            position: relative;
+            z-index: 2;
+        }
+
+        /* 专业仪表盘样式 */
+        .dashboard {
+            background: transparent;
+            min-height: 100%;
+            padding: 20px;
+        }
+
+        .greeting-section {
+            margin-bottom: 32px;
+        }
+
+        .greeting-card {
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.9) 0%, 
+                rgba(255, 119, 198, 0.8) 50%,
+                rgba(120, 119, 198, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px 28px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 40px rgba(120, 119, 198, 0.3),
+                0 8px 32px rgba(0, 0, 0, 0.2),
+                inset 0 1px 0 rgba(255, 255, 255, 0.1);
+        }
+
+        .greeting-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: 
+                radial-gradient(circle at 20% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+        }
+
+        .greeting-content {
+            position: relative;
+            z-index: 2;
+        }
+
+        .greeting-text {
+            font-size: 28px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.6px;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+        }
+
+        .greeting-subtitle {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.9);
+            line-height: 1.4;
+            font-weight: 500;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+
+        .stat-card {
+            background: linear-gradient(145deg, 
+                rgba(21, 24, 36, 0.8) 0%, 
+                rgba(26, 31, 46, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(120, 119, 198, 0.2);
+            border-radius: 20px;
+            padding: 24px 20px;
+            position: relative;
+            overflow: hidden;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .stat-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.1) 0%, 
+                rgba(255, 119, 198, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .stat-card:hover::before {
+            opacity: 1;
+        }
+
+        .stat-card:active {
+            transform: scale(0.98);
+        }
+
+        .stat-icon {
+            width: 36px;
+            height: 36px;
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #ffffff;
+            margin-bottom: 16px;
+            box-shadow: 0 4px 20px rgba(120, 119, 198, 0.4);
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-value {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.5px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 12px;
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-change {
+            font-size: 13px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .stat-change.positive {
+            color: #00ff88;
+        }
+
+        .stat-change.negative {
+            color: #ff6b6b;
+        }
+
+        .section-container {
+            background: linear-gradient(145deg, 
+                rgba(21, 24, 36, 0.8) 0%, 
+                rgba(26, 31, 46, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(120, 119, 198, 0.2);
+            border-radius: 24px;
+            padding: 28px 24px;
+            margin-bottom: 24px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .section-container::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.05) 0%, 
+                rgba(255, 119, 198, 0.05) 100%);
+            opacity: 0.7;
+        }
+
+        .section-title {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 24px;
+            letter-spacing: -0.4px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .action-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 16px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .action-item {
+            background: linear-gradient(145deg, 
+                rgba(26, 31, 46, 0.8) 0%, 
+                rgba(21, 24, 36, 0.9) 100%);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 18px;
+            padding: 24px 20px;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .action-item::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.2) 0%, 
+                rgba(255, 119, 198, 0.2) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .action-item:hover::before {
+            opacity: 1;
+        }
+
+        .action-item:active {
+            transform: scale(0.95);
+        }
+
+        .action-icon {
+            width: 48px;
+            height: 48px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            color: #ffffff;
+            margin: 0 auto 16px;
+            position: relative;
+            z-index: 2;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .action-icon.blue { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        .action-icon.green { 
+            background: linear-gradient(135deg, #00ff88 0%, #00d4aa 100%); 
+        }
+        .action-icon.purple { 
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%); 
+        }
+        .action-icon.orange { 
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%); 
+        }
+
+        .action-text {
+            font-size: 15px;
+            font-weight: 700;
+            color: #ffffff;
+            text-align: center;
+            position: relative;
+            z-index: 2;
+            letter-spacing: -0.2px;
+        }
+
+        /* 任务样式 */
+        .task-item {
+            background: linear-gradient(145deg, 
+                rgba(26, 31, 46, 0.6) 0%, 
+                rgba(21, 24, 36, 0.8) 100%);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 18px;
+            padding: 20px;
+            margin-bottom: 12px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .task-item:hover {
+            background: linear-gradient(145deg, 
+                rgba(26, 31, 46, 0.8) 0%, 
+                rgba(21, 24, 36, 0.9) 100%);
+            border-color: rgba(120, 119, 198, 0.5);
+        }
+
+        .task-item:active {
+            transform: scale(0.98);
+        }
+
+        .task-icon {
+            width: 40px;
+            height: 40px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            color: #ffffff;
+            flex-shrink: 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+        }
+
+        .task-icon.warning { 
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%); 
+        }
+        .task-icon.success { 
+            background: linear-gradient(135deg, #00ff88 0%, #00d4aa 100%); 
+        }
+        .task-icon.error { 
+            background: linear-gradient(135deg, #ff6b6b 0%, #ff5722 100%); 
+        }
+
+        .task-content {
+            flex: 1;
+        }
+
+        .task-title {
+            font-size: 16px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+        }
+
+        .task-subtitle {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.3;
+        }
+
+        /* 资产列表样式 */
+        .asset-list, .tokenization, .notifications, .profile {
+            background: transparent;
+            min-height: 100%;
+            padding: 20px;
+        }
+
+        .search-container {
+            margin-bottom: 24px;
+        }
+
+        .search-bar {
+            background: linear-gradient(145deg, 
+                rgba(26, 31, 46, 0.8) 0%, 
+                rgba(21, 24, 36, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 18px;
+            padding: 16px 20px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            transition: all 0.4s ease;
+        }
+
+        .search-bar:focus-within {
+            border-color: rgba(120, 119, 198, 0.6);
+            box-shadow: 0 0 25px rgba(120, 119, 198, 0.2);
+        }
+
+        .search-icon {
+            color: rgba(255, 255, 255, 0.6);
+            font-size: 18px;
+        }
+
+        .search-input {
+            border: none;
+            outline: none;
+            flex: 1;
+            font-size: 17px;
+            font-weight: 500;
+            color: #ffffff;
+            background: transparent;
+        }
+
+        .search-input::placeholder {
+            color: rgba(255, 255, 255, 0.5);
+        }
+
+        .asset-card, .token-list, .notification-container, .menu-section {
+            background: linear-gradient(145deg, 
+                rgba(21, 24, 36, 0.8) 0%, 
+                rgba(26, 31, 46, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(120, 119, 198, 0.2);
+            border-radius: 24px;
+            margin-bottom: 20px;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            cursor: pointer;
+            position: relative;
+        }
+
+        .asset-card::before, .notification-container::before, .menu-section::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.1) 0%, 
+                rgba(255, 119, 198, 0.1) 100%);
+            opacity: 0;
+            transition: opacity 0.4s ease;
+        }
+
+        .asset-card:hover::before, .notification-container:hover::before, .menu-section:hover::before {
+            opacity: 1;
+        }
+
+        .asset-card:active {
+            transform: scale(0.98);
+        }
+
+        .asset-image {
+            height: 180px;
+            background-size: cover;
+            background-position: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .asset-image::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(180deg, transparent 0%, rgba(0,0,0,0.4) 100%);
+        }
+
+        .asset-badge {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: linear-gradient(135deg, rgba(120, 119, 198, 0.9) 0%, rgba(255, 119, 198, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            color: #ffffff;
+            padding: 8px 16px;
+            border-radius: 16px;
+            font-size: 12px;
+            font-weight: 700;
+            z-index: 10;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .asset-badge.tokenized { 
+            background: linear-gradient(135deg, rgba(0, 255, 136, 0.9) 0%, rgba(0, 212, 170, 0.9) 100%); 
+        }
+        .asset-badge.tokenizing { 
+            background: linear-gradient(135deg, rgba(255, 154, 86, 0.9) 0%, rgba(255, 107, 157, 0.9) 100%); 
+        }
+        .asset-badge.operating { 
+            background: linear-gradient(135deg, rgba(103, 126, 234, 0.9) 0%, rgba(118, 75, 162, 0.9) 100%); 
+        }
+
+        .asset-info {
+            padding: 24px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .asset-name {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+        }
+
+        .asset-location {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            margin-bottom: 20px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-weight: 500;
+        }
+
+        .asset-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .asset-value {
+            font-size: 24px;
+            font-weight: 800;
+            color: #00ff88;
+            letter-spacing: -0.3px;
+        }
+
+        .asset-return {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.6);
+            margin-top: 4px;
+            font-weight: 600;
+        }
+
+        /* 代币化样式 */
+        .token-overview {
+            background: linear-gradient(135deg, 
+                rgba(255, 107, 107, 0.9) 0%, 
+                rgba(78, 205, 196, 0.9) 100%);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-radius: 24px;
+            padding: 32px 28px;
+            margin-bottom: 32px;
+            position: relative;
+            overflow: hidden;
+            box-shadow: 
+                0 20px 40px rgba(255, 107, 107, 0.3),
+                0 8px 32px rgba(78, 205, 196, 0.2);
+        }
+
+        .token-overview::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: radial-gradient(circle at 80% 20%, rgba(255,255,255,0.15) 0%, transparent 50%);
+        }
+
+        .token-title {
+            font-size: 24px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 20px;
+            letter-spacing: -0.3px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .token-stats {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            position: relative;
+            z-index: 2;
+        }
+
+        .token-stat {
+            text-align: center;
+            flex: 1;
+        }
+
+        .token-stat-value {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.3px;
+        }
+
+        .token-stat-label {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.9);
+            font-weight: 600;
+        }
+
+        .token-item {
+            padding: 24px;
+            border-bottom: 1px solid rgba(120, 119, 198, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .token-item:last-child {
+            border-bottom: none;
+        }
+
+        .token-item:hover {
+            background: rgba(120, 119, 198, 0.1);
+        }
+
+        .token-item:active {
+            transform: scale(0.98);
+        }
+
+        .token-logo {
+            width: 52px;
+            height: 52px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .token-details {
+            flex: 1;
+        }
+
+        .token-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+
+        .token-symbol {
+            font-size: 14px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+        }
+
+        .token-price {
+            text-align: right;
+        }
+
+        .token-current-price {
+            font-size: 20px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 4px;
+            letter-spacing: -0.2px;
+        }
+
+        .token-price-change {
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            justify-content: flex-end;
+        }
+
+        .token-price-change.positive {
+            color: #00ff88;
+        }
+
+        .token-price-change.negative {
+            color: #ff6b6b;
+        }
+
+        /* 通知样式 */
+        .notification-item {
+            background: transparent;
+            border-bottom: 1px solid rgba(120, 119, 198, 0.2);
+            padding: 24px;
+            display: flex;
+            align-items: flex-start;
+            gap: 20px;
+            transition: all 0.4s ease;
+            cursor: pointer;
+            position: relative;
+            z-index: 2;
+        }
+
+        .notification-item:last-child {
+            border-bottom: none;
+        }
+
+        .notification-item:hover {
+            background: rgba(120, 119, 198, 0.1);
+        }
+
+        .notification-item:active {
+            transform: scale(0.98);
+        }
+
+        .notification-icon {
+            width: 44px;
+            height: 44px;
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #ffffff;
+            flex-shrink: 0;
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.3);
+        }
+
+        .notification-icon.blue { 
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); 
+        }
+        .notification-icon.green { 
+            background: linear-gradient(135deg, #00ff88 0%, #00d4aa 100%); 
+        }
+        .notification-icon.orange { 
+            background: linear-gradient(135deg, #ff9a56 0%, #ff6b9d 100%); 
+        }
+        .notification-icon.purple { 
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%); 
+        }
+
+        .notification-content {
+            flex: 1;
+        }
+
+        .notification-title {
+            font-size: 17px;
+            font-weight: 700;
+            color: #ffffff;
+            margin-bottom: 6px;
+            letter-spacing: -0.2px;
+        }
+
+        .notification-text {
+            font-size: 15px;
+            color: rgba(255, 255, 255, 0.7);
+            line-height: 1.4;
+            margin-bottom: 8px;
+            font-weight: 500;
+        }
+
+        .notification-time {
+            font-size: 13px;
+            color: rgba(255, 255, 255, 0.5);
+            font-weight: 600;
+        }
+
+        .unread-indicator {
+            width: 10px;
+            height: 10px;
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%);
+            border-radius: 50%;
+            margin-top: 8px;
+            flex-shrink: 0;
+            box-shadow: 0 0 15px rgba(120, 119, 198, 0.6);
+        }
+
+        /* 个人中心样式 */
+        .profile-header {
+            background: linear-gradient(145deg, 
+                rgba(21, 24, 36, 0.8) 0%, 
+                rgba(26, 31, 46, 0.9) 100%);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(120, 119, 198, 0.2);
+            border-radius: 24px;
+            padding: 40px 24px;
+            margin-bottom: 24px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .profile-header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: linear-gradient(135deg, 
+                rgba(120, 119, 198, 0.1) 0%, 
+                rgba(255, 119, 198, 0.1) 100%);
+            opacity: 0.7;
+        }
+
+        .profile-avatar {
+            width: 96px;
+            height: 96px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            border-radius: 48px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 40px;
+            font-weight: 800;
+            color: #ffffff;
+            margin: 0 auto 20px;
+            box-shadow: 
+                0 15px 40px rgba(102, 126, 234, 0.4),
+                0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .profile-name {
+            font-size: 26px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 8px;
+            letter-spacing: -0.3px;
+            position: relative;
+            z-index: 2;
+        }
+
+        .profile-role {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.7);
+            font-weight: 600;
+            position: relative;
+            z-index: 2;
+        }
+
+        .menu-item {
+            padding: 20px 24px;
+            border-bottom: 1px solid rgba(120, 119, 198, 0.2);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            cursor: pointer;
+            transition: all 0.4s ease;
+            position: relative;
+            z-index: 2;
+        }
+
+        .menu-item:last-child {
+            border-bottom: none;
+        }
+
+        .menu-item:hover {
+            background: rgba(120, 119, 198, 0.1);
+        }
+
+        .menu-item:active {
+            transform: scale(0.98);
+        }
+
+        .menu-icon {
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            color: #7877c6;
+        }
+
+        .menu-text {
+            flex: 1;
+            font-size: 18px;
+            color: #ffffff;
+            font-weight: 600;
+            letter-spacing: -0.2px;
+        }
+
+        .menu-arrow {
+            color: rgba(255, 255, 255, 0.4);
+            font-size: 16px;
+        }
+
+        /* 浮动操作按钮 */
+        .fab {
+            position: fixed;
+            bottom: 140px;
+            right: 40px;
+            width: 64px;
+            height: 64px;
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%);
+            border: none;
+            border-radius: 32px;
+            color: #ffffff;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 
+                0 15px 40px rgba(120, 119, 198, 0.5),
+                0 8px 25px rgba(0, 0, 0, 0.3);
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            z-index: 100;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+        }
+
+        .fab:active {
+            transform: scale(0.9);
+        }
+
+        .primary-button {
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%);
+            color: #ffffff;
+            border: 2px solid rgba(255, 255, 255, 0.1);
+            border-radius: 18px;
+            padding: 18px 28px;
+            font-size: 17px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+            margin: 0 20px 20px;
+            box-shadow: 
+                0 15px 40px rgba(120, 119, 198, 0.4),
+                0 8px 25px rgba(0, 0, 0, 0.3);
+            position: relative;
+            z-index: 2;
+        }
+
+        .primary-button:active {
+            transform: scale(0.96);
+        }
+
+        /* 模态框样式 */
+        .modal {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.8);
+            backdrop-filter: blur(10px);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s ease;
+        }
+
+        .modal.show {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        .modal-content {
+            background: linear-gradient(145deg, 
+                rgba(21, 24, 36, 0.95) 0%, 
+                rgba(26, 31, 46, 0.95) 100%);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 24px;
+            padding: 32px 28px;
+            margin: 20px;
+            max-width: 340px;
+            width: 100%;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 30px 80px rgba(0, 0, 0, 0.5),
+                0 15px 40px rgba(120, 119, 198, 0.3);
+            transform: scale(0.9);
+            transition: transform 0.4s ease;
+        }
+
+        .modal.show .modal-content {
+            transform: scale(1);
+        }
+
+        .modal-header {
+            font-size: 22px;
+            font-weight: 800;
+            color: #ffffff;
+            margin-bottom: 16px;
+            text-align: center;
+        }
+
+        .modal-body {
+            font-size: 16px;
+            color: rgba(255, 255, 255, 0.8);
+            line-height: 1.5;
+            text-align: center;
+            margin-bottom: 24px;
+        }
+
+        .modal-buttons {
+            display: flex;
+            gap: 12px;
+        }
+
+        .modal-button {
+            flex: 1;
+            padding: 14px 20px;
+            border: none;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .modal-button.primary {
+            background: linear-gradient(135deg, #7877c6 0%, #ff77c6 100%);
+            color: #ffffff;
+        }
+
+        .modal-button.secondary {
+            background: rgba(120, 119, 198, 0.2);
+            color: rgba(255, 255, 255, 0.8);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+        }
+
+        .modal-button:active {
+            transform: scale(0.95);
+        }
+
+        /* 表单样式 */
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-size: 15px;
+            font-weight: 600;
+            color: #ffffff;
+            margin-bottom: 8px;
+        }
+
+        .form-input, .form-select, .form-textarea {
+            width: 100%;
+            background: linear-gradient(145deg, 
+                rgba(26, 31, 46, 0.8) 0%, 
+                rgba(21, 24, 36, 0.9) 100%);
+            border: 1px solid rgba(120, 119, 198, 0.3);
+            border-radius: 12px;
+            padding: 14px 16px;
+            font-size: 16px;
+            color: #ffffff;
+            transition: all 0.3s ease;
+        }
+
+        .form-input:focus, .form-select:focus, .form-textarea:focus {
+            outline: none;
+            border-color: rgba(120, 119, 198, 0.6);
+            box-shadow: 0 0 20px rgba(120, 119, 198, 0.2);
+        }
+
+        .form-textarea {
+            resize: vertical;
+            min-height: 80px;
+        }
+
+        /* 屏幕状态管理 */
+        .active-screen {
+            display: block;
+        }
+
+        .hidden-screen {
+            display: none;
+        }
+
+        .phone-title {
+            text-align: center;
+            margin-bottom: 32px;
+            color: #ffffff;
+            font-size: 24px;
+            font-weight: 800;
+            letter-spacing: -0.4px;
+            text-shadow: 0 4px 20px rgba(120, 119, 198, 0.4);
+        }
+
+        /* 动画效果 */
+        .fade-in {
+            animation: fadeIn 0.8s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* 交互提示 */
+        .toast {
+            position: fixed;
+            top: 80px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, 
+                rgba(21, 24, 36, 0.95) 0%, 
+                rgba(26, 31, 46, 0.95) 100%);
+            border: 1px solid rgba(120, 119, 198, 0.4);
+            color: #ffffff;
+            padding: 16px 24px;
+            border-radius: 16px;
+            font-size: 15px;
+            font-weight: 600;
+            backdrop-filter: blur(20px);
+            box-shadow: 
+                0 15px 40px rgba(0, 0, 0, 0.3),
+                0 8px 25px rgba(120, 119, 198, 0.2);
+            z-index: 2000;
+            opacity: 0;
+            visibility: hidden;
+            transition: all 0.4s cubic-bezier(0.25, 0.46, 0.45, 0.94);
+        }
+
+        .toast.show {
+            opacity: 1;
+            visibility: visible;
+            transform: translateX(-50%) translateY(0);
+        }
+
+        /* 滚动条样式 */
+        .screen-content::-webkit-scrollbar {
+            width: 0;
+        }
+
+        /* 响应式适配 */
+        @media (max-width: 1200px) {
+            .prototype-container {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="prototype-container">
+        <div>
+            <h2 class="phone-title">PropertyChain Pro</h2>
+            <div class="phone-frame">
+                <div class="phone-screen">
+                    <div class="dynamic-island"></div>
+                    
+                    <div class="status-bar">
+                        <span>9:41</span>
+                        <span></span>
+                        <div style="display: flex; align-items: center; gap: 4px;">
+                            <i class="fas fa-signal" style="font-size: 14px;"></i>
+                            <i class="fas fa-wifi" style="font-size: 14px;"></i>
+                            <i class="fas fa-battery-three-quarters" style="font-size: 14px;"></i>
+                        </div>
+                    </div>
+
+                    <div class="screen-content">
+                        <!-- 仪表盘 -->
+                        <div id="dashboard" class="active-screen">
+                            <div class="dashboard fade-in">
+                                <div class="greeting-section">
+                                    <div class="greeting-card">
+                                        <div class="greeting-content">
+                                            <div class="greeting-text">早安，张总</div>
+                                            <div class="greeting-subtitle">今日共有 3 个重要任务需要处理</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="stats-grid">
+                                    <div class="stat-card" onclick="openAssetDetails()">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="stat-value">¥4.2亿</div>
+                                        <div class="stat-label">资产总值</div>
+                                        <div class="stat-change positive">
+                                            <i class="fas fa-arrow-up"></i>
+                                            +8.5%
+                                        </div>
+                                    </div>
+                                    <div class="stat-card" onclick="switchTab('assets', event)">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-layer-group"></i>
+                                        </div>
+                                        <div class="stat-value">23</div>
+                                        <div class="stat-label">管理资产</div>
+                                        <div class="stat-change positive">
+                                            <i class="fas fa-arrow-up"></i>
+                                            +2
+                                        </div>
+                                    </div>
+                                    <div class="stat-card" onclick="openRevenueDetails()">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-coins"></i>
+                                        </div>
+                                        <div class="stat-value">¥268万</div>
+                                        <div class="stat-label">本月收益</div>
+                                        <div class="stat-change positive">
+                                            <i class="fas fa-arrow-up"></i>
+                                            +15.2%
+                                        </div>
+                                    </div>
+                                    <div class="stat-card" onclick="switchTab('tokenization', event)">
+                                        <div class="stat-icon">
+                                            <i class="fas fa-atom"></i>
+                                        </div>
+                                        <div class="stat-value">18</div>
+                                        <div class="stat-label">代币化项目</div>
+                                        <div class="stat-change positive">
+                                            <i class="fas fa-arrow-up"></i>
+                                            +3
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section-container">
+                                    <div class="section-title">快速操作</div>
+                                    <div class="action-grid">
+                                        <div class="action-item" onclick="openAddAssetForm()">
+                                            <div class="action-icon blue">
+                                                <i class="fas fa-plus"></i>
+                                            </div>
+                                            <div class="action-text">新增资产</div>
+                                        </div>
+                                        <div class="action-item" onclick="openRevenueDetails()">
+                                            <div class="action-icon green">
+                                                <i class="fas fa-hand-holding-usd"></i>
+                                            </div>
+                                            <div class="action-text">收益分配</div>
+                                        </div>
+                                        <div class="action-item" onclick="openTokenizationForm()">
+                                            <div class="action-icon purple">
+                                                <i class="fas fa-coins"></i>
+                                            </div>
+                                            <div class="action-text">代币化</div>
+                                        </div>
+                                        <div class="action-item" onclick="generateReport()">
+                                            <div class="action-icon orange">
+                                                <i class="fas fa-chart-bar"></i>
+                                            </div>
+                                            <div class="action-text">数据报告</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="section-container">
+                                    <div class="section-title">待处理任务</div>
+                                    <div class="task-item" onclick="openDocumentReview()">
+                                        <div class="task-icon warning">
+                                            <i class="fas fa-file-contract"></i>
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">文档审核</div>
+                                            <div class="task-subtitle">深圳前海中心 - 产权证书待验证</div>
+                                        </div>
+                                    </div>
+                                    <div class="task-item" onclick="openTokenizationStatus()">
+                                        <div class="task-icon success">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">代币化完成</div>
+                                            <div class="task-subtitle">上海陆家嘴写字楼 - 已成功发行</div>
+                                        </div>
+                                    </div>
+                                    <div class="task-item" onclick="openMaintenanceAlert()">
+                                        <div class="task-icon error">
+                                            <i class="fas fa-exclamation-triangle"></i>
+                                        </div>
+                                        <div class="task-content">
+                                            <div class="task-title">设备异常</div>
+                                            <div class="task-subtitle">北京国贸大厦 - 电梯维护中</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 资产列表 -->
+                        <div id="assets" class="hidden-screen">
+                            <div class="asset-list fade-in">
+                                <div class="search-container">
+                                    <div class="search-bar">
+                                        <i class="fas fa-search search-icon"></i>
+                                        <input type="text" class="search-input" placeholder="搜索资产名称、位置或类型" oninput="searchAssets(this.value)">
+                                    </div>
+                                </div>
+
+                                <div id="assets-container">
+                                    <div class="asset-card" onclick="openAssetDetail('深圳前海中心')">
+                                        <div class="asset-image" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400');">
+                                            <div class="asset-badge tokenized">已代币化</div>
+                                        </div>
+                                        <div class="asset-info">
+                                            <div class="asset-name">深圳前海中心</div>
+                                            <div class="asset-location">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                深圳市前海深港合作区
+                                            </div>
+                                            <div class="asset-stats">
+                                                <div>
+                                                    <div class="asset-value">¥2.8亿</div>
+                                                    <div class="asset-return">年化收益 8.5%</div>
+                                                </div>
+                                                <div class="asset-occupancy">
+                                                    <div class="occupancy-value">95%</div>
+                                                    <div class="occupancy-label">出租率</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="asset-card" onclick="openAssetDetail('上海陆家嘴写字楼')">
+                                        <div class="asset-image" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400');">
+                                            <div class="asset-badge tokenizing">代币化中</div>
+                                        </div>
+                                        <div class="asset-info">
+                                            <div class="asset-name">上海陆家嘴写字楼</div>
+                                            <div class="asset-location">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                上海市浦东新区陆家嘴
+                                            </div>
+                                            <div class="asset-stats">
+                                                <div>
+                                                    <div class="asset-value">¥1.5亿</div>
+                                                    <div class="asset-return">年化收益 7.2%</div>
+                                                </div>
+                                                <div class="asset-occupancy">
+                                                    <div class="occupancy-value">88%</div>
+                                                    <div class="occupancy-label">出租率</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="asset-card" onclick="openAssetDetail('北京国贸大厦')">
+                                        <div class="asset-image" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400');">
+                                            <div class="asset-badge operating">运营中</div>
+                                        </div>
+                                        <div class="asset-info">
+                                            <div class="asset-name">北京国贸大厦</div>
+                                            <div class="asset-location">
+                                                <i class="fas fa-map-marker-alt"></i>
+                                                北京市朝阳区国贸商圈
+                                            </div>
+                                            <div class="asset-stats">
+                                                <div>
+                                                    <div class="asset-value">¥3.2亿</div>
+                                                    <div class="asset-return">年化收益 9.1%</div>
+                                                </div>
+                                                <div class="asset-occupancy">
+                                                    <div class="occupancy-value">100%</div>
+                                                    <div class="occupancy-label">出租率</div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 代币化 -->
+                        <div id="tokenization" class="hidden-screen">
+                            <div class="tokenization fade-in">
+                                <div class="token-overview">
+                                    <div class="token-title">代币化概览</div>
+                                    <div class="token-stats">
+                                        <div class="token-stat">
+                                            <div class="token-stat-value">18</div>
+                                            <div class="token-stat-label">活跃代币</div>
+                                        </div>
+                                        <div class="token-stat">
+                                            <div class="token-stat-value">¥856万</div>
+                                            <div class="token-stat-label">24H交易额</div>
+                                        </div>
+                                        <div class="token-stat">
+                                            <div class="token-stat-value">3,856</div>
+                                            <div class="token-stat-label">总投资者</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="token-list">
+                                    <div class="token-item" onclick="openTokenDetail('SZQH-001')">
+                                        <div class="token-logo">S</div>
+                                        <div class="token-details">
+                                            <div class="token-name">深圳前海中心</div>
+                                            <div class="token-symbol">SZQH-001</div>
+                                        </div>
+                                        <div class="token-price">
+                                            <div class="token-current-price">¥0.87</div>
+                                            <div class="token-price-change positive">
+                                                <i class="fas fa-arrow-up"></i>
+                                                +2.5%
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="token-item" onclick="openTokenDetail('SHLJZ-001')">
+                                        <div class="token-logo" style="background: linear-gradient(135deg, #FF6B6B 0%, #4ECDC4 100%);">S</div>
+                                        <div class="token-details">
+                                            <div class="token-name">上海陆家嘴写字楼</div>
+                                            <div class="token-symbol">SHLJZ-001</div>
+                                        </div>
+                                        <div class="token-price">
+                                            <div class="token-current-price">¥1.23</div>
+                                            <div class="token-price-change negative">
+                                                <i class="fas fa-arrow-down"></i>
+                                                -1.2%
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="token-item" onclick="openTokenDetail('BJGM-001')">
+                                        <div class="token-logo" style="background: linear-gradient(135deg, #FFD93D 0%, #FF6B6B 100%);">B</div>
+                                        <div class="token-details">
+                                            <div class="token-name">北京国贸大厦</div>
+                                            <div class="token-symbol">BJGM-001</div>
+                                        </div>
+                                        <div class="token-price">
+                                            <div class="token-current-price">¥2.15</div>
+                                            <div class="token-price-change positive">
+                                                <i class="fas fa-arrow-up"></i>
+                                                +4.8%
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    <div class="token-item" onclick="openTokenizationProgress('GZZJ-001')">
+                                        <div class="token-logo" style="background: linear-gradient(135deg, #8E8E93 0%, #636366 100%);">G</div>
+                                        <div class="token-details">
+                                            <div class="token-name">广州珠江新城</div>
+                                            <div class="token-symbol">GZZJ-001</div>
+                                        </div>
+                                        <div class="token-price">
+                                            <div style="font-size: 14px; color: rgba(255, 255, 255, 0.7);">代币化中</div>
+                                            <div style="font-size: 12px; color: #ff9a56; margin-top: 2px;">预计3天完成</div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <button class="primary-button" onclick="openTokenizationForm()">
+                                    <i class="fas fa-rocket" style="margin-right: 8px;"></i>
+                                    启动新的代币化项目
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 通知 -->
+                        <div id="notifications" class="hidden-screen">
+                            <div class="notifications fade-in">
+                                <div class="notification-container">
+                                    <div class="notification-item" onclick="openNotificationDetail('收益分配')">
+                                        <div class="notification-icon blue">
+                                            <i class="fas fa-hand-holding-usd"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">收益分配完成</div>
+                                            <div class="notification-text">深圳前海中心本月收益已自动分配给所有代币持有者</div>
+                                            <div class="notification-time">2小时前</div>
+                                        </div>
+                                        <div class="unread-indicator"></div>
+                                    </div>
+
+                                    <div class="notification-item" onclick="openNotificationDetail('审核通过')">
+                                        <div class="notification-icon green">
+                                            <i class="fas fa-check-circle"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">代币化审核通过</div>
+                                            <div class="notification-text">上海陆家嘴写字楼已完成合规审核，即将开启代币发行</div>
+                                            <div class="notification-time">4小时前</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notification-item" onclick="openNotificationDetail('设备维护')">
+                                        <div class="notification-icon orange">
+                                            <i class="fas fa-tools"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">设备维护提醒</div>
+                                            <div class="notification-text">北京国贸大厦电梯系统将于明天进行例行维护</div>
+                                            <div class="notification-time">6小时前</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notification-item" onclick="openNotificationDetail('月度报告')">
+                                        <div class="notification-icon purple">
+                                            <i class="fas fa-file-alt"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">月度报告已生成</div>
+                                            <div class="notification-text">您的1月份资产管理报告已准备就绪，请查收</div>
+                                            <div class="notification-time">1天前</div>
+                                        </div>
+                                    </div>
+
+                                    <div class="notification-item" onclick="openNotificationDetail('新租户')">
+                                        <div class="notification-icon blue">
+                                            <i class="fas fa-building"></i>
+                                        </div>
+                                        <div class="notification-content">
+                                            <div class="notification-title">新租户入驻</div>
+                                            <div class="notification-text">深圳前海中心迎来新的企业租户，出租率提升至95%</div>
+                                            <div class="notification-time">2天前</div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 我的 -->
+                        <div id="profile" class="hidden-screen">
+                            <div class="profile fade-in">
+                                <div class="profile-header">
+                                    <div class="profile-avatar">张</div>
+                                    <div class="profile-name">张总</div>
+                                    <div class="profile-role">XX地产 - 项目总监</div>
+                                </div>
+
+                                <div class="menu-section">
+                                    <div class="menu-item" onclick="openPortfolio()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-layer-group"></i>
+                                        </div>
+                                        <div class="menu-text">我的资产组合</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openRevenueStats()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-chart-line"></i>
+                                        </div>
+                                        <div class="menu-text">收益统计</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openTokenManagement()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-coins"></i>
+                                        </div>
+                                        <div class="menu-text">代币管理</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="menu-section">
+                                    <div class="menu-item" onclick="openDataReports()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-chart-bar"></i>
+                                        </div>
+                                        <div class="menu-text">数据报告</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openRiskAssessment()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-shield-alt"></i>
+                                        </div>
+                                        <div class="menu-text">风险评估</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openComplianceCenter()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-clipboard-check"></i>
+                                        </div>
+                                        <div class="menu-text">合规中心</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="menu-section">
+                                    <div class="menu-item" onclick="openSettings()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-cog"></i>
+                                        </div>
+                                        <div class="menu-text">应用设置</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openHelp()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-question-circle"></i>
+                                        </div>
+                                        <div class="menu-text">帮助中心</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                    <div class="menu-item" onclick="openAbout()">
+                                        <div class="menu-icon">
+                                            <i class="fas fa-info-circle"></i>
+                                        </div>
+                                        <div class="menu-text">关于PropertyChain</div>
+                                        <div class="menu-arrow">
+                                            <i class="fas fa-chevron-right"></i>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 底部导航栏 -->
+                    <div class="tab-bar">
+                        <div class="tab-item active" onclick="switchTab('dashboard', event)">
+                            <div class="tab-icon">
+                                <i class="fas fa-home"></i>
+                            </div>
+                            <div class="tab-text">仪表盘</div>
+                        </div>
+                        <div class="tab-item" onclick="switchTab('assets', event)">
+                            <div class="tab-icon">
+                                <i class="fas fa-building"></i>
+                            </div>
+                            <div class="tab-text">资产</div>
+                        </div>
+                        <div class="tab-item" onclick="switchTab('tokenization', event)">
+                            <div class="tab-icon">
+                                <i class="fas fa-coins"></i>
+                            </div>
+                            <div class="tab-text">代币化</div>
+                        </div>
+                        <div class="tab-item" onclick="switchTab('notifications', event)">
+                            <div class="tab-icon">
+                                <i class="fas fa-bell"></i>
+                            </div>
+                            <div class="tab-text">通知</div>
+                        </div>
+                        <div class="tab-item" onclick="switchTab('profile', event)">
+                            <div class="tab-icon">
+                                <i class="fas fa-user"></i>
+                            </div>
+                            <div class="tab-text">我的</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- 浮动操作按钮 -->
+            <button class="fab" onclick="openAddAssetForm()">
+                <i class="fas fa-plus"></i>
+            </button>
+        </div>
+    </div>
+
+    <!-- 通用模态框 -->
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header" id="modal-header"></div>
+            <div class="modal-body" id="modal-body"></div>
+            <div class="modal-buttons" id="modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- 表单模态框 -->
+    <div id="form-modal" class="modal">
+        <div class="modal-content" style="max-width: 380px;">
+            <div class="modal-header" id="form-modal-header"></div>
+            <div class="modal-body" id="form-modal-body"></div>
+            <div class="modal-buttons" id="form-modal-buttons"></div>
+        </div>
+    </div>
+
+    <!-- Toast提示 -->
+    <div id="toast" class="toast"></div>
+
+    <script>
+        // 全局状态
+        let currentTab = 'dashboard';
+        let assets = [
+            {
+                id: 1,
+                name: '深圳前海中心',
+                location: '深圳市前海深港合作区',
+                value: '¥2.8亿',
+                return: '8.5%',
+                occupancy: '95%',
+                status: 'tokenized',
+                image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400'
+            },
+            {
+                id: 2,
+                name: '上海陆家嘴写字楼',
+                location: '上海市浦东新区陆家嘴',
+                value: '¥1.5亿',
+                return: '7.2%',
+                occupancy: '88%',
+                status: 'tokenizing',
+                image: 'https://images.unsplash.com/photo-1486406146926-c627a92ad1ab?w=400'
+            },
+            {
+                id: 3,
+                name: '北京国贸大厦',
+                location: '北京市朝阳区国贸商圈',
+                value: '¥3.2亿',
+                return: '9.1%',
+                occupancy: '100%',
+                status: 'operating',
+                image: 'https://images.unsplash.com/photo-1555854877-bab0e564b8d5?w=400'
+            }
+        ];
+
+        // 切换标签页
+        function switchTab(tabName, event) {
+            if (event) {
+                event.preventDefault();
+            }
+
+            // 隐藏所有屏幕
+            const screens = document.querySelectorAll('.active-screen, .hidden-screen');
+            screens.forEach(screen => {
+                screen.className = 'hidden-screen';
+            });
+
+            // 显示选中的屏幕
+            document.getElementById(tabName).className = 'active-screen fade-in';
+
+            // 更新标签栏状态
+            const tabs = document.querySelectorAll('.tab-item');
+            tabs.forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            if (event && event.currentTarget) {
+                event.currentTarget.classList.add('active');
+            } else {
+                // 如果没有event，找到对应的tab项
+                const targetTab = document.querySelector(`.tab-item[onclick*="${tabName}"]`);
+                if (targetTab) {
+                    targetTab.classList.add('active');
+                }
+            }
+
+            currentTab = tabName;
+
+            // 控制浮动按钮显示
+            const fab = document.querySelector('.fab');
+            if (tabName === 'assets') {
+                fab.style.display = 'flex';
+            } else {
+                fab.style.display = 'none';
+            }
+        }
+
+        // 显示Toast提示
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            toast.textContent = message;
+            toast.classList.add('show');
+            
+            setTimeout(() => {
+                toast.classList.remove('show');
+            }, 3000);
+        }
+
+        // 显示模态框
+        function showModal(header, body, buttons = []) {
+            const modal = document.getElementById('modal');
+            const modalHeader = document.getElementById('modal-header');
+            const modalBody = document.getElementById('modal-body');
+            const modalButtons = document.getElementById('modal-buttons');
+
+            modalHeader.textContent = header;
+            modalBody.innerHTML = body;
+            
+            modalButtons.innerHTML = '';
+            buttons.forEach(button => {
+                const btn = document.createElement('button');
+                btn.className = `modal-button ${button.type || 'secondary'}`;
+                btn.textContent = button.text;
+                btn.onclick = button.action;
+                modalButtons.appendChild(btn);
+            });
+
+            modal.classList.add('show');
+        }
+
+        // 关闭模态框
+        function closeModal() {
+            const modals = document.querySelectorAll('.modal');
+            modals.forEach(modal => {
+                modal.classList.remove('show');
+            });
+        }
+
+        // 显示表单模态框
+        function showFormModal(header, formContent, onSubmit) {
+            const modal = document.getElementById('form-modal');
+            const modalHeader = document.getElementById('form-modal-header');
+            const modalBody = document.getElementById('form-modal-body');
+            const modalButtons = document.getElementById('form-modal-buttons');
+
+            modalHeader.textContent = header;
+            modalBody.innerHTML = formContent;
+            
+            modalButtons.innerHTML = `
+                <button class="modal-button secondary" onclick="closeModal()">取消</button>
+                <button class="modal-button primary" onclick="handleFormSubmit('${onSubmit}')">确认</button>
+            `;
+
+            modal.classList.add('show');
+        }
+
+        // 处理表单提交
+        function handleFormSubmit(action) {
+            const inputs = document.querySelectorAll('#form-modal input, #form-modal select, #form-modal textarea');
+            const formData = {};
+            
+            inputs.forEach(input => {
+                if (input.name) {
+                    formData[input.name] = input.value;
+                }
+            });
+
+            // 执行对应的操作
+            if (typeof window[action] === 'function') {
+                window[action](formData);
+            }
+
+            closeModal();
+        }
+
+        // 搜索资产
+        function searchAssets(keyword) {
+            const container = document.getElementById('assets-container');
+            const filteredAssets = assets.filter(asset => 
+                asset.name.includes(keyword) || 
+                asset.location.includes(keyword)
+            );
+
+            if (keyword === '') {
+                // 显示所有资产
+                renderAssets(assets);
+            } else if (filteredAssets.length > 0) {
+                renderAssets(filteredAssets);
+            } else {
+                container.innerHTML = `
+                    <div style="text-align: center; padding: 60px 20px; color: rgba(255, 255, 255, 0.6);">
+                        <i class="fas fa-search" style="font-size: 48px; margin-bottom: 16px; opacity: 0.5;"></i>
+                        <div style="font-size: 18px; margin-bottom: 8px;">未找到匹配的资产</div>
+                        <div style="font-size: 14px;">请尝试其他关键词</div>
+                    </div>
+                `;
+            }
+        }
+
+        // 渲染资产列表
+        function renderAssets(assetsToRender) {
+            const container = document.getElementById('assets-container');
+            const statusConfig = {
+                'tokenized': { text: '已代币化', class: 'tokenized' },
+                'tokenizing': { text: '代币化中', class: 'tokenizing' },
+                'operating': { text: '运营中', class: 'operating' }
+            };
+
+            container.innerHTML = assetsToRender.map(asset => `
+                <div class="asset-card" onclick="openAssetDetail('${asset.name}')">
+                    <div class="asset-image" style="background-image: linear-gradient(rgba(0,0,0,0.3), rgba(0,0,0,0.3)), url('${asset.image}');">
+                        <div class="asset-badge ${statusConfig[asset.status].class}">${statusConfig[asset.status].text}</div>
+                    </div>
+                    <div class="asset-info">
+                        <div class="asset-name">${asset.name}</div>
+                        <div class="asset-location">
+                            <i class="fas fa-map-marker-alt"></i>
+                            ${asset.location}
+                        </div>
+                        <div class="asset-stats">
+                            <div>
+                                <div class="asset-value">${asset.value}</div>
+                                <div class="asset-return">年化收益 ${asset.return}</div>
+                            </div>
+                            <div class="asset-occupancy">
+                                <div class="occupancy-value">${asset.occupancy}</div>
+                                <div class="occupancy-label">出租率</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ================ 功能实现函数 ================
+
+        // 资产相关功能
+        function openAssetDetails() {
+            showModal('资产总值详情', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>总资产价值：</strong> ¥4.2亿</p>
+                    <p><strong>资产增长：</strong> +8.5% (本月)</p>
+                    <p><strong>资产分布：</strong></p>
+                    <ul style="margin: 10px 0; padding-left: 20px;">
+                        <li>写字楼：65%</li>
+                        <li>商业综合体：25%</li>
+                        <li>住宅：10%</li>
+                    </ul>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openAssetDetail(assetName) {
+            showModal(`${assetName} - 资产详情`, 
+                `<div style="line-height: 1.6;">
+                    <p><strong>基本信息：</strong></p>
+                    <p>• 建筑面积：45,000平方米</p>
+                    <p>• 建成年份：2018年</p>
+                    <p>• 楼层：30层</p>
+                    <br>
+                    <p><strong>财务表现：</strong></p>
+                    <p>• 月租金收入：¥186万</p>
+                    <p>• 运营成本：¥45万/月</p>
+                    <p>• 净收益率：8.5%</p>
+                    <br>
+                    <p><strong>代币化状态：</strong></p>
+                    <p>• 已发行代币：1,000,000个</p>
+                    <p>• 当前价格：¥0.87/个</p>
+                    <p>• 持有者数量：1,247人</p>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openAddAssetForm() {
+            showFormModal('新增资产', `
+                <div class="form-group">
+                    <label class="form-label">资产名称</label>
+                    <input type="text" name="name" class="form-input" placeholder="请输入资产名称">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">资产类型</label>
+                    <select name="type" class="form-select">
+                        <option value="">请选择</option>
+                        <option value="office">写字楼</option>
+                        <option value="retail">商业</option>
+                        <option value="residential">住宅</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">所在城市</label>
+                    <input type="text" name="city" class="form-input" placeholder="请输入城市">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">预估价值</label>
+                    <input type="text" name="value" class="form-input" placeholder="请输入预估价值">
+                </div>
+            `, 'submitAddAsset');
+        }
+
+        function submitAddAsset(formData) {
+            if (!formData.name || !formData.type || !formData.city || !formData.value) {
+                showToast('请填写完整的资产信息');
+                return;
+            }
+
+            // 添加到资产列表（模拟）
+            const newAsset = {
+                id: assets.length + 1,
+                name: formData.name,
+                location: formData.city,
+                value: formData.value,
+                return: '7.5%',
+                occupancy: '0%',
+                status: 'operating',
+                image: 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?w=400'
+            };
+            
+            assets.push(newAsset);
+            
+            if (currentTab === 'assets') {
+                renderAssets(assets);
+            }
+            
+            showToast(`资产 "${formData.name}" 已成功添加`);
+        }
+
+        // 收益相关功能
+        function openRevenueDetails() {
+            showModal('本月收益详情', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>总收益：</strong> ¥268万</p>
+                    <p><strong>收益增长：</strong> +15.2% (环比上月)</p>
+                    <br>
+                    <p><strong>收益构成：</strong></p>
+                    <p>• 租金收入：¥245万 (91.4%)</p>
+                    <p>• 停车费收入：¥15万 (5.6%)</p>
+                    <p>• 其他收入：¥8万 (3.0%)</p>
+                    <br>
+                    <p><strong>收益分配：</strong></p>
+                    <p>• 已分配给投资者：¥215万</p>
+                    <p>• 管理费用：¥32万</p>
+                    <p>• 维护储备：¥21万</p>
+                </div>`,
+                [
+                    { text: '查看详细报告', type: 'primary', action: () => { closeModal(); generateReport(); } },
+                    { text: '关闭', action: closeModal }
+                ]
+            );
+        }
+
+        // 代币化相关功能
+        function openTokenizationForm() {
+            showFormModal('启动代币化项目', `
+                <div class="form-group">
+                    <label class="form-label">选择资产</label>
+                    <select name="asset" class="form-select">
+                        <option value="">请选择资产</option>
+                        <option value="广州珠江新城">广州珠江新城</option>
+                        <option value="成都天府新区">成都天府新区</option>
+                        <option value="杭州钱江新城">杭州钱江新城</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label">代币总量</label>
+                    <input type="number" name="tokenSupply" class="form-input" placeholder="请输入代币发行总量">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">初始价格</label>
+                    <input type="text" name="initialPrice" class="form-input" placeholder="请输入代币初始价格">
+                </div>
+                <div class="form-group">
+                    <label class="form-label">锁定期</label>
+                    <select name="lockPeriod" class="form-select">
+                        <option value="">请选择锁定期</option>
+                        <option value="3">3个月</option>
+                        <option value="6">6个月</option>
+                        <option value="12">12个月</option>
+                    </select>
+                </div>
+            `, 'submitTokenization');
+        }
+
+        function submitTokenization(formData) {
+            if (!formData.asset || !formData.tokenSupply || !formData.initialPrice) {
+                showToast('请填写完整的代币化信息');
+                return;
+            }
+
+            showToast(`${formData.asset} 的代币化项目已启动，预计3-5个工作日完成审核`);
+        }
+
+        function openTokenDetail(symbol) {
+            showModal(`${symbol} - 代币详情`, 
+                `<div style="line-height: 1.6;">
+                    <p><strong>代币信息：</strong></p>
+                    <p>• 代币代码：${symbol}</p>
+                    <p>• 总发行量：1,000,000个</p>
+                    <p>• 流通量：856,420个</p>
+                    <p>• 持有者：1,247人</p>
+                    <br>
+                    <p><strong>价格信息：</strong></p>
+                    <p>• 当前价格：¥0.87</p>
+                    <p>• 24H涨跌：+2.5%</p>
+                    <p>• 24H成交量：¥156万</p>
+                    <br>
+                    <p><strong>收益分配：</strong></p>
+                    <p>• 上次分红：¥0.025/个</p>
+                    <p>• 分红频率：每月</p>
+                    <p>• 年化收益率：8.5%</p>
+                </div>`,
+                [
+                    { text: '交易管理', type: 'primary', action: () => { closeModal(); showToast('跳转到交易管理页面'); } },
+                    { text: '关闭', action: closeModal }
+                ]
+            );
+        }
+
+        function openTokenizationProgress(symbol) {
+            showModal('代币化进度', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>项目：</strong> 广州珠江新城</p>
+                    <p><strong>代币代码：</strong> ${symbol}</p>
+                    <br>
+                    <p><strong>当前进度：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.2); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>合规审核</span>
+                            <span style="color: #00ff88;">✓ 完成</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>智能合约部署</span>
+                            <span style="color: #ff9a56;">进行中</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>代币铸造</span>
+                            <span style="color: rgba(255,255,255,0.5);">等待中</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>正式发行</span>
+                            <span style="color: rgba(255,255,255,0.5);">等待中</span>
+                        </div>
+                    </div>
+                    <p><strong>预计完成时间：</strong> 3天后</p>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        // 通知相关功能
+        function openNotificationDetail(type) {
+            const notifications = {
+                '收益分配': {
+                    title: '收益分配完成',
+                    content: `
+                        <p><strong>分配时间：</strong> 2024年1月15日 14:30</p>
+                        <p><strong>项目：</strong> 深圳前海中心</p>
+                        <p><strong>总分配金额：</strong> ¥215万</p>
+                        <p><strong>受益人数：</strong> 1,247人</p>
+                        <p><strong>单代币分红：</strong> ¥0.025</p>
+                        <br>
+                        <p>本次分红已自动转入各投资者账户，感谢您的信任与支持。</p>
+                    `
+                },
+                '审核通过': {
+                    title: '代币化审核通过',
+                    content: `
+                        <p><strong>项目：</strong> 上海陆家嘴写字楼</p>
+                        <p><strong>审核完成时间：</strong> 2024年1月15日 10:15</p>
+                        <p><strong>代币代码：</strong> SHLJZ-001</p>
+                        <p><strong>发行总量：</strong> 800,000个</p>
+                        <p><strong>初始价格：</strong> ¥1.25</p>
+                        <br>
+                        <p>恭喜！您的代币化项目已通过所有合规审核，即将开启正式发行。</p>
+                    `
+                },
+                '设备维护': {
+                    title: '设备维护提醒',
+                    content: `
+                        <p><strong>项目：</strong> 北京国贸大厦</p>
+                        <p><strong>维护设备：</strong> 电梯系统</p>
+                        <p><strong>维护时间：</strong> 2024年1月16日 02:00-06:00</p>
+                        <p><strong>维护公司：</strong> 北京电梯维保有限公司</p>
+                        <p><strong>预计影响：</strong> 暂停电梯服务4小时</p>
+                        <br>
+                        <p>请提前通知租户做好相应安排，维护期间将启用备用设施。</p>
+                    `
+                }
+            };
+
+            const notification = notifications[type] || {
+                title: '通知详情',
+                content: '<p>通知内容详情</p>'
+            };
+
+            showModal(notification.title, notification.content, [{ text: '关闭', action: closeModal }]);
+        }
+
+        // 任务相关功能
+        function openDocumentReview() {
+            showModal('文档审核详情', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>项目：</strong> 深圳前海中心</p>
+                    <p><strong>待审核文档：</strong> 产权证书</p>
+                    <p><strong>提交时间：</strong> 2024年1月10日</p>
+                    <p><strong>审核状态：</strong> 待第三方验证</p>
+                    <br>
+                    <p><strong>审核要求：</strong></p>
+                    <p>• 产权证书清晰度检查 ✓</p>
+                    <p>• 证书有效性验证 ⏳</p>
+                    <p>• 第三方权威机构确认 ⏳</p>
+                    <br>
+                    <p><strong>预计完成时间：</strong> 2-3个工作日</p>
+                </div>`,
+                [
+                    { text: '联系客服', type: 'primary', action: () => { closeModal(); showToast('正在为您接通客服...'); } },
+                    { text: '关闭', action: closeModal }
+                ]
+            );
+        }
+
+        function openTokenizationStatus() {
+            showModal('代币化完成详情', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>项目：</strong> 上海陆家嘴写字楼</p>
+                    <p><strong>完成时间：</strong> 2024年1月14日 16:30</p>
+                    <p><strong>代币代码：</strong> SHLJZ-001</p>
+                    <p><strong>发行数量：</strong> 800,000个</p>
+                    <p><strong>初始价格：</strong> ¥1.25/个</p>
+                    <br>
+                    <p><strong>发行结果：</strong></p>
+                    <p>• 首日认购率：85%</p>
+                    <p>• 认购投资者：892人</p>
+                    <p>• 募集资金：¥850万</p>
+                    <br>
+                    <p>恭喜！您的代币化项目发行成功，代币已开始正常交易。</p>
+                </div>`,
+                [
+                    { text: '查看详情', type: 'primary', action: () => { closeModal(); switchTab('tokenization'); } },
+                    { text: '关闭', action: closeModal }
+                ]
+            );
+        }
+
+        function openMaintenanceAlert() {
+            showModal('设备异常详情', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>项目：</strong> 北京国贸大厦</p>
+                    <p><strong>异常设备：</strong> 3号电梯</p>
+                    <p><strong>故障时间：</strong> 2024年1月15日 09:30</p>
+                    <p><strong>故障类型：</strong> 轻微机械故障</p>
+                    <p><strong>影响范围：</strong> 15-30层乘客出行</p>
+                    <br>
+                    <p><strong>处理进度：</strong></p>
+                    <p>• 故障上报 ✓</p>
+                    <p>• 维保公司响应 ✓</p>
+                    <p>• 现场检修 ⏳</p>
+                    <p>• 恢复运行 ⏳</p>
+                    <br>
+                    <p><strong>预计修复时间：</strong> 2小时内</p>
+                </div>`,
+                [
+                    { text: '查看监控', type: 'primary', action: () => { closeModal(); showToast('正在跳转到设备监控页面...'); } },
+                    { text: '关闭', action: closeModal }
+                ]
+            );
+        }
+
+        // 报告生成功能
+        function generateReport() {
+            showModal('生成数据报告', 
+                `<div style="line-height: 1.6;">
+                    <p>请选择要生成的报告类型：</p>
+                    <br>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在生成月度收益报告...');">
+                        <div style="font-weight: 600;">月度收益报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">包含所有资产的收益明细和分析</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在生成代币化进度报告...');">
+                        <div style="font-weight: 600;">代币化进度报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">所有代币化项目的状态和表现</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在生成风险评估报告...');">
+                        <div style="font-weight: 600;">风险评估报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">资产组合的风险分析和建议</div>
+                    </div>
+                </div>`,
+                [{ text: '取消', action: closeModal }]
+            );
+        }
+
+        // 个人中心功能
+        function openPortfolio() {
+            showModal('我的资产组合', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>组合概览：</strong></p>
+                    <p>• 管理资产：23个</p>
+                    <p>• 总价值：¥4.2亿</p>
+                    <p>• 代币化资产：18个</p>
+                    <p>• 年化收益率：8.3%</p>
+                    <br>
+                    <p><strong>资产分布：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>一线城市</span>
+                            <span>65% (¥2.73亿)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>二线城市</span>
+                            <span>28% (¥1.18亿)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>三线城市</span>
+                            <span>7% (¥0.29亿)</span>
+                        </div>
+                    </div>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openRevenueStats() {
+            showModal('收益统计', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>收益概览：</strong></p>
+                    <p>• 本月收益：¥268万 (+15.2%)</p>
+                    <p>• 本年累计：¥2,856万</p>
+                    <p>• 平均月收益：¥238万</p>
+                    <br>
+                    <p><strong>收益趋势：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span>1月</span>
+                            <span style="color: #00ff88;">¥268万</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span>12月</span>
+                            <span>¥232万</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 6px;">
+                            <span>11月</span>
+                            <span>¥245万</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>10月</span>
+                            <span>¥218万</span>
+                        </div>
+                    </div>
+                    <br>
+                    <p><strong>最佳表现资产：</strong> 北京国贸大厦 (9.1%)</p>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openTokenManagement() {
+            showModal('代币管理', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>代币概览：</strong></p>
+                    <p>• 已发行代币：18个</p>
+                    <p>• 总市值：¥1.86亿</p>
+                    <p>• 活跃投资者：3,856人</p>
+                    <p>• 平均持有期：8.5个月</p>
+                    <br>
+                    <p><strong>热门代币：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>BJGM-001</span>
+                            <span style="color: #00ff88;">¥2.15 (+4.8%)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>SZQH-001</span>
+                            <span style="color: #00ff88;">¥0.87 (+2.5%)</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>SHLJZ-001</span>
+                            <span style="color: #ff6b6b;">¥1.23 (-1.2%)</span>
+                        </div>
+                    </div>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openDataReports() {
+            showModal('数据报告', 
+                `<div style="line-height: 1.6;">
+                    <p>选择要查看的报告类型：</p>
+                    <br>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在下载综合业绩报告...');">
+                        <div style="font-weight: 600;"><i class="fas fa-chart-line" style="margin-right: 8px;"></i>综合业绩报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">资产组合整体表现分析</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在下载代币化分析报告...');">
+                        <div style="font-weight: 600;"><i class="fas fa-coins" style="margin-right: 8px;"></i>代币化分析报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">代币化项目详细数据</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在下载市场趋势报告...');">
+                        <div style="font-weight: 600;"><i class="fas fa-chart-bar" style="margin-right: 8px;"></i>市场趋势报告</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">行业趋势与竞争分析</div>
+                    </div>
+                </div>`,
+                [{ text: '取消', action: closeModal }]
+            );
+        }
+
+        function openRiskAssessment() {
+            showModal('风险评估', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>风险评级：</strong> <span style="color: #00ff88;">中低风险</span></p>
+                    <p><strong>评估时间：</strong> 2024年1月15日</p>
+                    <br>
+                    <p><strong>风险分析：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>市场风险</span>
+                            <span style="color: #00ff88;">低</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>流动性风险</span>
+                            <span style="color: #ff9a56;">中</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>政策风险</span>
+                            <span style="color: #00ff88;">低</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>运营风险</span>
+                            <span style="color: #00ff88;">低</span>
+                        </div>
+                    </div>
+                    <br>
+                    <p><strong>建议：</strong></p>
+                    <p>• 继续保持资产地域多元化</p>
+                    <p>• 适当增加一线城市配置</p>
+                    <p>• 关注政策变化影响</p>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openComplianceCenter() {
+            showModal('合规中心', 
+                `<div style="line-height: 1.6;">
+                    <p><strong>合规状态：</strong> <span style="color: #00ff88;">全部合规</span></p>
+                    <p><strong>最后检查：</strong> 2024年1月14日</p>
+                    <br>
+                    <p><strong>合规项目：</strong></p>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 10px 0;">
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>资质证照</span>
+                            <span style="color: #00ff88;">✓ 有效</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>税务合规</span>
+                            <span style="color: #00ff88;">✓ 正常</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between; margin-bottom: 8px;">
+                            <span>金融监管</span>
+                            <span style="color: #00ff88;">✓ 合规</span>
+                        </div>
+                        <div style="display: flex; justify-content: space-between;">
+                            <span>反洗钱</span>
+                            <span style="color: #00ff88;">✓ 通过</span>
+                        </div>
+                    </div>
+                    <br>
+                    <p><strong>下次检查：</strong> 2024年2月14日</p>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openSettings() {
+            showModal('应用设置', 
+                `<div style="line-height: 1.6;">
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('通知设置已打开');">
+                        <div style="font-weight: 600;"><i class="fas fa-bell" style="margin-right: 8px;"></i>通知设置</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">管理推送通知偏好</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('安全设置已打开');">
+                        <div style="font-weight: 600;"><i class="fas fa-shield-alt" style="margin-right: 8px;"></i>安全设置</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">密码、生物识别等</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('界面设置已打开');">
+                        <div style="font-weight: 600;"><i class="fas fa-paint-brush" style="margin-right: 8px;"></i>界面设置</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">主题、语言等个性化</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('隐私设置已打开');">
+                        <div style="font-weight: 600;"><i class="fas fa-user-secret" style="margin-right: 8px;"></i>隐私设置</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">数据使用权限管理</div>
+                    </div>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openHelp() {
+            showModal('帮助中心', 
+                `<div style="line-height: 1.6;">
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在打开使用指南...');">
+                        <div style="font-weight: 600;"><i class="fas fa-book" style="margin-right: 8px;"></i>使用指南</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">平台功能详细说明</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在查看常见问题...');">
+                        <div style="font-weight: 600;"><i class="fas fa-question-circle" style="margin-right: 8px;"></i>常见问题</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">FAQ和解决方案</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('正在连接在线客服...');">
+                        <div style="font-weight: 600;"><i class="fas fa-comments" style="margin-right: 8px;"></i>在线客服</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">7×24小时专业服务</div>
+                    </div>
+                    <div style="background: rgba(120, 119, 198, 0.1); border-radius: 8px; padding: 12px; margin: 8px 0; cursor: pointer;" onclick="closeModal(); showToast('意见反馈已打开');">
+                        <div style="font-weight: 600;"><i class="fas fa-comment-alt" style="margin-right: 8px;"></i>意见反馈</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7); margin-top: 4px;">帮助我们改进产品</div>
+                    </div>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        function openAbout() {
+            showModal('关于PropertyChain', 
+                `<div style="line-height: 1.6; text-align: center;">
+                    <div style="margin-bottom: 20px;">
+                        <div style="width: 60px; height: 60px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 16px; display: flex; align-items: center; justify-content: center; font-size: 24px; color: white; margin: 0 auto 12px;">
+                            <i class="fas fa-building"></i>
+                        </div>
+                        <div style="font-size: 20px; font-weight: 800; margin-bottom: 4px;">PropertyChain</div>
+                        <div style="font-size: 14px; color: rgba(255,255,255,0.7);">专业地产RWA管理平台</div>
+                    </div>
+                    
+                    <div style="text-align: left;">
+                        <p><strong>版本信息：</strong> v2.1.0</p>
+                        <p><strong>更新时间：</strong> 2024年1月15日</p>
+                        <p><strong>开发团队：</strong> PropertyChain Labs</p>
+                        <br>
+                        <p><strong>核心功能：</strong></p>
+                        <p>• 房地产资产数字化管理</p>
+                        <p>• 智能合约代币化服务</p>
+                        <p>• 实时收益分配系统</p>
+                        <p>• 专业风险评估工具</p>
+                        <br>
+                        <p><strong>技术支持：</strong> support@propertychain.com</p>
+                        <p><strong>商务合作：</strong> business@propertychain.com</p>
+                    </div>
+                </div>`,
+                [{ text: '关闭', action: closeModal }]
+            );
+        }
+
+        // 初始化
+        document.addEventListener('DOMContentLoaded', function() {
+            // 默认隐藏浮动按钮
+            const fab = document.querySelector('.fab');
+            fab.style.display = 'none';
+
+            // 点击模态框背景关闭
+            document.querySelectorAll('.modal').forEach(modal => {
+                modal.addEventListener('click', function(e) {
+                    if (e.target === modal) {
+                        closeModal();
+                    }
+                });
+            });
+
+            // 模拟实时数据更新
+            setInterval(() => {
+                const indicators = document.querySelectorAll('.unread-indicator');
+                indicators.forEach(indicator => {
+                    indicator.style.opacity = indicator.style.opacity === '0.5' ? '1' : '0.5';
+                });
+            }, 2000);
+
+            console.log('PropertyChain Pro 已加载完成 ✨');
+        });
+    </script>
+</body>
+</html>

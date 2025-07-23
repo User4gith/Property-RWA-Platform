@@ -1,0 +1,1561 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>代币化管理 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/echarts@5.4.3/dist/echarts.min.js"></script>
+    <style>
+        /* 统一设计系统 */
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #1D4ED8;
+            --secondary-color: #667eea;
+            --secondary-dark: #764ba2;
+            --success-color: #10B981;
+            --success-bg: #DCFCE7;
+            --warning-color: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --error-color: #EF4444;
+            --error-bg: #FEE2E2;
+            --purple-color: #8B5CF6;
+            --purple-bg: #F3E8FF;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .gradient-bg { 
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%); 
+        }
+        
+        .card-hover { 
+            transition: var(--transition);
+        }
+        
+        .card-hover:hover { 
+            transform: translateY(-2px); 
+            box-shadow: var(--shadow-md);
+        }
+
+        .status-badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .status-active { background: var(--success-bg); color: #15803D; }
+        .status-paused { background: var(--warning-bg); color: #B45309; }
+        .status-locked { background: var(--error-bg); color: #DC2626; }
+        .status-pending { background: #E0E7FF; color: #4338CA; }
+        .status-ready { background: var(--purple-bg); color: #7C3AED; }
+        
+        .tab-container {
+            background: white;
+            border-radius: var(--border-radius) var(--border-radius) 0 0;
+            border: 1px solid var(--gray-200);
+            border-bottom: none;
+        }
+        
+        .tab-content-container {
+            background: white;
+            border-radius: 0 0 var(--border-radius) var(--border-radius);
+            border: 1px solid var(--gray-200);
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .tab-active { 
+            border-bottom: 3px solid var(--primary-color); 
+            color: var(--primary-color); 
+            background: white;
+        }
+        
+        .tab-inactive {
+            color: var(--gray-600);
+            background: var(--gray-50);
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab-inactive:hover {
+            color: var(--gray-900);
+            background: var(--gray-100);
+        }
+        
+        .price-up { color: var(--success-color); }
+        .price-down { color: var(--error-color); }
+        .price-unchanged { color: var(--gray-500); }
+        
+        .metric-card {
+            background: white;
+            border-radius: var(--border-radius);
+            padding: 20px;
+            border: 1px solid var(--gray-200);
+            transition: var(--transition);
+        }
+        
+        .metric-card:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+        
+        .token-card {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            overflow: hidden;
+            transition: var(--transition);
+        }
+
+        .token-card:hover {
+            box-shadow: var(--shadow-md);
+            border-color: var(--primary-color);
+        }
+
+        .progress-step {
+            position: relative;
+            margin-bottom: 24px;
+        }
+
+        .progress-step-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 600;
+            transition: var(--transition);
+        }
+
+        .progress-step-icon.completed {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .progress-step-icon.in-progress {
+            background: var(--primary-color);
+            color: white;
+            animation: pulse 2s infinite;
+        }
+
+        .progress-step-icon.pending {
+            background: var(--gray-200);
+            color: var(--gray-600);
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0.4); }
+            70% { box-shadow: 0 0 0 10px rgba(59, 130, 246, 0); }
+            100% { box-shadow: 0 0 0 0 rgba(59, 130, 246, 0); }
+        }
+
+        .blockchain-tx {
+            font-family: 'Courier New', monospace;
+            font-size: 12px;
+            background: var(--gray-100);
+            padding: 8px 12px;
+            border-radius: var(--border-radius-sm);
+            border-left: 4px solid var(--primary-color);
+            word-break: break-all;
+        }
+
+        .wallet-connect-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border-radius: var(--border-radius);
+            padding: 24px;
+            text-align: center;
+        }
+
+        .action-button {
+            transition: var(--transition);
+            border-radius: var(--border-radius-sm);
+            padding: 12px 24px;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border: none;
+            cursor: pointer;
+        }
+
+        .action-button:hover {
+            transform: translateY(-1px);
+            box-shadow: var(--shadow);
+        }
+
+        .action-button.primary {
+            background: var(--primary-color);
+            color: white;
+        }
+
+        .action-button.primary:hover {
+            background: var(--primary-dark);
+        }
+
+        .action-button.success {
+            background: var(--success-color);
+            color: white;
+        }
+
+        .action-button.warning {
+            background: var(--warning-color);
+            color: white;
+        }
+
+        .action-button.danger {
+            background: var(--error-color);
+            color: white;
+        }
+
+        .action-button.secondary {
+            background: white;
+            color: var(--gray-700);
+            border: 1px solid var(--gray-300);
+        }
+
+        .action-button.secondary:hover {
+            background: var(--gray-50);
+            border-color: var(--primary-color);
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            padding: 16px 20px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--error-color); }
+        .toast.warning { border-left-color: var(--warning-color); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .metric-card {
+                padding: 16px;
+            }
+            
+            .tab-container {
+                border-radius: var(--border-radius-sm);
+            }
+            
+            .tab-content-container {
+                border-radius: var(--border-radius-sm);
+            }
+
+            .action-button {
+                padding: 10px 20px;
+                font-size: 14px;
+            }
+        }
+
+        .notification-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--error-color);
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        .modal {
+            backdrop-filter: blur(8px);
+        }
+
+        .animate-fade-in {
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 统一导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo区域 -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>仪表盘
+                    </a>
+                    <a href="asset-list.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-building mr-2"></i>资产管理
+                    </a>
+                    <a href="asset-tokenization.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4 flex items-center">
+                        <i class="fas fa-coins mr-2"></i>代币化
+                    </a>
+                    <a href="#" onclick="showDocumentCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>文档管理
+                    </a>
+                    <a href="#" onclick="showReportsCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i>收益报告
+                    </a>
+                </div>
+
+                <!-- 右侧操作区 -->
+                <div class="flex items-center space-x-4">
+                    <!-- Web3连接状态 -->
+                    <div id="walletStatus" class="hidden md:flex items-center px-3 py-1 rounded-full text-sm font-medium">
+                        <i class="fas fa-wallet mr-2"></i>
+                        <span id="walletText">未连接钱包</span>
+                    </div>
+                    
+                    <!-- 通知 -->
+                    <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">5</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors" onclick="showUserProfile()">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">XX地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 页面标题和快速操作 -->
+        <div class="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+            <div>
+                <h1 class="text-3xl font-bold text-gray-900">代币化管理</h1>
+                <p class="text-gray-600 mt-2">管理您的房地产资产代币化进程和代币表现</p>
+                <div class="flex items-center space-x-4 mt-2">
+                    <span class="text-sm text-gray-500">最后更新：<span id="lastUpdate">刚刚</span></span>
+                    <button onclick="refreshData()" class="text-sm text-blue-600 hover:text-blue-700 transition-colors">
+                        <i class="fas fa-sync-alt mr-1" id="refreshIcon"></i>刷新数据
+                    </button>
+                </div>
+            </div>
+            <div class="flex items-center space-x-3">
+                <button onclick="connectWallet()" id="connectWalletBtn" class="action-button secondary">
+                    <i class="fas fa-wallet"></i>连接钱包
+                </button>
+                <button onclick="createNewToken()" class="action-button primary">
+                    <i class="fas fa-plus"></i>新建代币
+                </button>
+            </div>
+        </div>
+
+        <!-- 代币化概览指标 -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">代币化资产总值</h3>
+                    <i class="fas fa-coins text-purple-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">¥45.6亿</span>
+                    <span class="text-sm price-up">+8.2%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">8处资产已代币化</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">活跃代币数量</h3>
+                    <i class="fas fa-chart-line text-green-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">8</span>
+                    <span class="text-sm price-up">+2</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">本月新增2个代币</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">总交易量</h3>
+                    <i class="fas fa-exchange-alt text-blue-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">¥2.8亿</span>
+                    <span class="text-sm price-up">+15.3%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">24小时交易量</p>
+            </div>
+
+            <div class="metric-card">
+                <div class="flex items-center justify-between mb-3">
+                    <h3 class="text-sm font-medium text-gray-600">平均收益率</h3>
+                    <i class="fas fa-percentage text-orange-600"></i>
+                </div>
+                <div class="flex items-baseline space-x-2">
+                    <span class="text-2xl font-bold text-gray-900">7.2%</span>
+                    <span class="text-sm price-up">+0.5%</span>
+                </div>
+                <p class="text-xs text-gray-500 mt-1">年化收益率</p>
+            </div>
+        </div>
+
+        <!-- 选项卡导航 -->
+        <div class="tab-container">
+            <div class="flex border-b border-gray-200">
+                <button onclick="switchTab('overview')" id="tab-overview" class="flex-1 py-3 px-4 text-sm font-medium tab-active transition-colors">
+                    <i class="fas fa-chart-pie mr-2"></i>概览
+                </button>
+                <button onclick="switchTab('tokens')" id="tab-tokens" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-coins mr-2"></i>代币管理
+                </button>
+                <button onclick="switchTab('trading')" id="tab-trading" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-chart-line mr-2"></i>交易数据
+                </button>
+                <button onclick="switchTab('defi')" id="tab-defi" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-layer-group mr-2"></i>DeFi集成
+                </button>
+                <button onclick="switchTab('governance')" id="tab-governance" class="flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors">
+                    <i class="fas fa-vote-yea mr-2"></i>治理
+                </button>
+            </div>
+        </div>
+
+        <!-- 选项卡内容 -->
+        <div class="tab-content-container p-6">
+            <!-- 概览标签 -->
+            <div id="content-overview" class="tab-content">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- 左侧内容 -->
+                    <div class="lg:col-span-2 space-y-6">
+                        <!-- 代币表现图表 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <div class="flex items-center justify-between mb-6">
+                                <h3 class="text-lg font-semibold text-gray-900">代币表现趋势</h3>
+                                <div class="flex space-x-2">
+                                    <button class="px-3 py-1 text-sm text-blue-600 bg-blue-50 rounded-lg font-medium">7天</button>
+                                    <button class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 rounded-lg">30天</button>
+                                    <button class="px-3 py-1 text-sm text-gray-600 hover:text-gray-900 rounded-lg">90天</button>
+                                </div>
+                            </div>
+                            <div id="tokenPerformanceChart" style="height: 300px;"></div>
+                        </div>
+
+                        <!-- 热门代币 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-6">热门代币</h3>
+                            <div class="space-y-4" id="popularTokensList">
+                                <!-- 热门代币列表将通过JavaScript填充 -->
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 右侧内容 -->
+                    <div class="space-y-6">
+                        <!-- 钱包连接状态 -->
+                        <div id="walletCard" class="wallet-connect-card">
+                            <i class="fas fa-wallet text-4xl mb-4"></i>
+                            <h3 class="text-xl font-semibold mb-2">连接Web3钱包</h3>
+                            <p class="text-sm opacity-90 mb-4">连接您的钱包以管理代币和进行交易</p>
+                            <button onclick="connectWallet()" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                                连接钱包
+                            </button>
+                        </div>
+
+                        <!-- 快速操作 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">快速操作</h3>
+                            <div class="space-y-3">
+                                <button onclick="createNewToken()" class="w-full action-button primary text-left">
+                                    <i class="fas fa-plus"></i>
+                                    创建新代币
+                                </button>
+                                <button onclick="manageLiquidity()" class="w-full action-button secondary text-left">
+                                    <i class="fas fa-water"></i>
+                                    管理流动性
+                                </button>
+                                <button onclick="stakingRewards()" class="w-full action-button secondary text-left">
+                                    <i class="fas fa-coins"></i>
+                                    质押奖励
+                                </button>
+                                <button onclick="governance()" class="w-full action-button secondary text-left">
+                                    <i class="fas fa-vote-yea"></i>
+                                    参与治理
+                                </button>
+                            </div>
+                        </div>
+
+                        <!-- 最新活动 -->
+                        <div class="bg-white border border-gray-200 rounded-lg p-6">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">最新活动</h3>
+                            <div class="space-y-4" id="recentActivities">
+                                <!-- 活动列表将通过JavaScript填充 -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 代币管理标签 -->
+            <div id="content-tokens" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 代币列表 -->
+                    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="tokensList">
+                        <!-- 代币卡片将通过JavaScript填充 -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- 交易数据标签 -->
+            <div id="content-trading" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 交易量图表 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">交易量分析</h3>
+                        <div id="tradingVolumeChart" class="h-64"></div>
+                    </div>
+
+                    <!-- 价格走势 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">价格走势</h3>
+                        <div id="priceChart" class="h-64"></div>
+                    </div>
+
+                    <!-- 交易记录 -->
+                    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-lg overflow-hidden">
+                        <div class="px-6 py-4 border-b border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900">最近交易</h3>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">时间</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">代币</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">类型</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">数量</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">价格</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">总额</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">交易哈希</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200" id="tradingTableBody">
+                                    <!-- 交易数据将通过JavaScript填充 -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DeFi集成标签 -->
+            <div id="content-defi" class="tab-content hidden">
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 流动性池 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">流动性池</h3>
+                        <div class="space-y-4" id="liquidityPools">
+                            <!-- 流动性池列表 -->
+                        </div>
+                    </div>
+
+                    <!-- 质押池 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">质押池</h3>
+                        <div class="space-y-4" id="stakingPools">
+                            <!-- 质押池列表 -->
+                        </div>
+                    </div>
+
+                    <!-- 借贷市场 -->
+                    <div class="lg:col-span-2 bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">借贷市场</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="text-center p-4 bg-blue-50 rounded-lg">
+                                <div class="text-2xl font-bold text-blue-600 mb-1">¥1.2亿</div>
+                                <div class="text-sm text-gray-600">总借出</div>
+                            </div>
+                            <div class="text-center p-4 bg-green-50 rounded-lg">
+                                <div class="text-2xl font-bold text-green-600 mb-1">¥8,500万</div>
+                                <div class="text-sm text-gray-600">总借入</div>
+                            </div>
+                            <div class="text-center p-4 bg-purple-50 rounded-lg">
+                                <div class="text-2xl font-bold text-purple-600 mb-1">8.5%</div>
+                                <div class="text-sm text-gray-600">平均利率</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 治理标签 -->
+            <div id="content-governance" class="tab-content hidden">
+                <div class="space-y-6">
+                    <!-- 治理概览 -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                            <i class="fas fa-vote-yea text-3xl text-blue-600 mb-3"></i>
+                            <div class="text-2xl font-bold text-gray-900 mb-1">12</div>
+                            <div class="text-sm text-gray-600">活跃提案</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                            <i class="fas fa-users text-3xl text-green-600 mb-3"></i>
+                            <div class="text-2xl font-bold text-gray-900 mb-1">8,547</div>
+                            <div class="text-sm text-gray-600">治理代币持有者</div>
+                        </div>
+                        <div class="bg-white border border-gray-200 rounded-lg p-6 text-center">
+                            <i class="fas fa-chart-bar text-3xl text-purple-600 mb-3"></i>
+                            <div class="text-2xl font-bold text-gray-900 mb-1">65%</div>
+                            <div class="text-sm text-gray-600">参与率</div>
+                        </div>
+                    </div>
+
+                    <!-- 活跃提案 -->
+                    <div class="bg-white border border-gray-200 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">活跃提案</h3>
+                        <div class="space-y-4" id="governanceProposals">
+                            <!-- 提案列表将通过JavaScript填充 -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 创建代币模态框 -->
+    <div id="createTokenModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 modal">
+        <div class="bg-white rounded-xl max-w-2xl w-full mx-4 max-h-[90vh] overflow-y-auto animate-fade-in">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-900">创建新代币</h3>
+                    <button onclick="closeCreateTokenModal()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div class="p-6">
+                <form id="createTokenForm" class="space-y-6">
+                    <div>
+                        <label class="form-label">选择资产</label>
+                        <select class="form-input" id="assetSelect" required>
+                            <option value="">请选择要代币化的资产</option>
+                            <option value="1">上海静安嘉里中心</option>
+                            <option value="2">北京国贸大厦</option>
+                            <option value="3">深圳湾科技园</option>
+                        </select>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">代币名称</label>
+                            <input type="text" class="form-input" id="tokenName" placeholder="例：Shanghai Kerry Centre Token" required>
+                        </div>
+                        <div>
+                            <label class="form-label">代币符号</label>
+                            <input type="text" class="form-input" id="tokenSymbol" placeholder="例：SHJA" required>
+                        </div>
+                    </div>
+                    
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="form-label">发行总量</label>
+                            <input type="number" class="form-input" id="totalSupply" placeholder="例：450000000" required>
+                        </div>
+                        <div>
+                            <label class="form-label">初始价格 (¥)</label>
+                            <input type="number" step="0.001" class="form-input" id="initialPrice" placeholder="例：0.351" required>
+                        </div>
+                    </div>
+                    
+                    <div>
+                        <label class="form-label">代币描述</label>
+                        <textarea class="form-input" id="tokenDescription" rows="3" placeholder="描述代币的用途和特点..."></textarea>
+                    </div>
+                    
+                    <div class="flex space-x-3 pt-4">
+                        <button type="button" onclick="closeCreateTokenModal()" class="flex-1 action-button secondary">
+                            取消
+                        </button>
+                        <button type="submit" class="flex-1 action-button primary">
+                            <span id="createTokenText">创建代币</span>
+                            <span id="createTokenLoading" class="hidden">
+                                <span class="loading-spinner mr-2"></span>创建中...
+                            </span>
+                        </button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // 全局变量和状态管理
+        // ========================================
+        let currentTab = 'overview';
+        let walletConnected = false;
+        let web3Provider = null;
+        let userAddress = null;
+
+        // 模拟数据
+        const mockTokens = [
+            {
+                id: 1,
+                name: 'Shanghai Kerry Centre Token',
+                symbol: 'SHJA',
+                price: 0.351,
+                change24h: 5.2,
+                volume24h: 1250000,
+                marketCap: 158000000,
+                totalSupply: 450000000,
+                contractAddress: '0x742d35Cc6634C0532925a3b8D9f9f...',
+                status: 'active'
+            },
+            {
+                id: 2,
+                name: 'Beijing CWTC Tower Token',
+                symbol: 'BJCT',
+                price: 0.489,
+                change24h: -2.1,
+                volume24h: 890000,
+                marketCap: 225000000,
+                totalSupply: 460000000,
+                contractAddress: '0x8f3a9b7c6d2e1f4a5b9c8d7e6f...',
+                status: 'active'
+            },
+            {
+                id: 3,
+                name: 'Shenzhen Bay Tech Park Token',
+                symbol: 'SZBT',
+                price: 0.278,
+                change24h: 8.7,
+                volume24h: 567000,
+                marketCap: 89000000,
+                totalSupply: 320000000,
+                contractAddress: '0x9e4b8a7d6c5f2e1a4b9c8d7e6f...',
+                status: 'paused'
+            }
+        ];
+
+        const mockTradingData = [
+            {
+                time: '14:25:33',
+                token: 'SHJA',
+                type: 'buy',
+                amount: 1000,
+                price: 0.351,
+                total: 351,
+                hash: '0xabc123...'
+            },
+            {
+                time: '14:20:15',
+                token: 'BJCT',
+                type: 'sell',
+                amount: 500,
+                price: 0.489,
+                total: 244.5,
+                hash: '0xdef456...'
+            }
+        ];
+
+        const mockActivities = [
+            {
+                id: 1,
+                type: 'token_created',
+                title: '新代币创建',
+                description: 'SZBT代币已成功创建并上线',
+                time: '2小时前',
+                icon: 'fa-plus-circle',
+                color: 'text-green-600'
+            },
+            {
+                id: 2,
+                type: 'liquidity_added',
+                title: '流动性增加',
+                description: 'SHJA-USDT池新增100万流动性',
+                time: '4小时前',
+                icon: 'fa-water',
+                color: 'text-blue-600'
+            },
+            {
+                id: 3,
+                type: 'governance_proposal',
+                title: '治理提案',
+                description: '新的费率调整提案已提交',
+                time: '6小时前',
+                icon: 'fa-vote-yea',
+                color: 'text-purple-600'
+            }
+        ];
+
+        const mockProposals = [
+            {
+                id: 1,
+                title: '调整平台交易手续费',
+                description: '提议将交易手续费从0.3%降至0.25%',
+                status: 'active',
+                votes: { for: 65, against: 35 },
+                endTime: '2024-01-15',
+                quorum: 75
+            },
+            {
+                id: 2,
+                title: '增加新的抵押品类型',
+                description: '提议增加ETH作为借贷抵押品',
+                status: 'active',
+                votes: { for: 82, against: 18 },
+                endTime: '2024-01-20',
+                quorum: 60
+            }
+        ];
+
+        // ========================================
+        // 页面初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeCharts();
+            renderTokensList();
+            renderPopularTokens();
+            renderRecentActivities();
+            renderTradingTable();
+            renderGovernanceProposals();
+            updateWalletUI();
+            
+            showToast('代币化数据加载完成', 'success', 2000);
+        });
+
+        // ========================================
+        // 标签切换功能
+        // ========================================
+        function switchTab(tabName) {
+            // 隐藏所有内容
+            document.querySelectorAll('.tab-content').forEach(content => {
+                content.classList.add('hidden');
+            });
+            
+            // 更新标签样式
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.className = 'flex-1 py-3 px-4 text-sm font-medium tab-inactive transition-colors';
+            });
+            
+            // 显示当前内容
+            document.getElementById(`content-${tabName}`).classList.remove('hidden');
+            document.getElementById(`tab-${tabName}`).className = 'flex-1 py-3 px-4 text-sm font-medium tab-active transition-colors';
+            
+            currentTab = tabName;
+            
+            // 特殊处理某些标签
+            if (tabName === 'trading') {
+                setTimeout(() => {
+                    initializeTradingCharts();
+                }, 100);
+            }
+        }
+
+        // ========================================
+        // 图表初始化
+        // ========================================
+        function initializeCharts() {
+            initializeTokenPerformanceChart();
+        }
+
+        function initializeTokenPerformanceChart() {
+            const chartDom = document.getElementById('tokenPerformanceChart');
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis',
+                    axisPointer: {
+                        type: 'cross'
+                    }
+                },
+                legend: {
+                    data: ['SHJA', 'BJCT', 'SZBT']
+                },
+                grid: {
+                    left: '3%',
+                    right: '4%',
+                    bottom: '3%',
+                    containLabel: true
+                },
+                xAxis: {
+                    type: 'category',
+                    boundaryGap: false,
+                    data: ['00:00', '04:00', '08:00', '12:00', '16:00', '20:00', '24:00']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '¥{value}'
+                    }
+                },
+                series: [
+                    {
+                        name: 'SHJA',
+                        type: 'line',
+                        smooth: true,
+                        data: [0.334, 0.342, 0.358, 0.351, 0.365, 0.351, 0.351]
+                    },
+                    {
+                        name: 'BJCT',
+                        type: 'line',
+                        smooth: true,
+                        data: [0.499, 0.485, 0.492, 0.489, 0.478, 0.489, 0.489]
+                    },
+                    {
+                        name: 'SZBT',
+                        type: 'line',
+                        smooth: true,
+                        data: [0.256, 0.268, 0.275, 0.278, 0.285, 0.278, 0.278]
+                    }
+                ]
+            };
+
+            myChart.setOption(option);
+            
+            window.addEventListener('resize', function() {
+                myChart.resize();
+            });
+        }
+
+        function initializeTradingCharts() {
+            initializeTradingVolumeChart();
+            initializePriceChart();
+        }
+
+        function initializeTradingVolumeChart() {
+            const chartDom = document.getElementById('tradingVolumeChart');
+            if (!chartDom) return;
+            
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['周一', '周二', '周三', '周四', '周五', '周六', '周日']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '{value}万'
+                    }
+                },
+                series: [{
+                    data: [125, 189, 167, 203, 178, 234, 280],
+                    type: 'bar',
+                    itemStyle: {
+                        color: '#3B82F6'
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+        }
+
+        function initializePriceChart() {
+            const chartDom = document.getElementById('priceChart');
+            if (!chartDom) return;
+            
+            const myChart = echarts.init(chartDom);
+
+            const option = {
+                tooltip: {
+                    trigger: 'axis'
+                },
+                xAxis: {
+                    type: 'category',
+                    data: ['1月', '2月', '3月', '4月', '5月', '6月']
+                },
+                yAxis: {
+                    type: 'value',
+                    axisLabel: {
+                        formatter: '¥{value}'
+                    }
+                },
+                series: [{
+                    data: [0.285, 0.298, 0.334, 0.351, 0.365, 0.351],
+                    type: 'line',
+                    smooth: true,
+                    areaStyle: {
+                        opacity: 0.3
+                    },
+                    itemStyle: {
+                        color: '#10B981'
+                    }
+                }]
+            };
+
+            myChart.setOption(option);
+        }
+
+        // ========================================
+        // 数据渲染函数
+        // ========================================
+        function renderTokensList() {
+            const container = document.getElementById('tokensList');
+            if (!container) return;
+
+            container.innerHTML = mockTokens.map(token => `
+                <div class="token-card">
+                    <div class="p-6">
+                        <div class="flex items-center justify-between mb-4">
+                            <div>
+                                <h3 class="text-lg font-semibold text-gray-900">${token.symbol}</h3>
+                                <p class="text-sm text-gray-600">${token.name}</p>
+                            </div>
+                            <span class="status-badge status-${token.status}">${getTokenStatusText(token.status)}</span>
+                        </div>
+                        
+                        <div class="grid grid-cols-2 gap-4 mb-4">
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">当前价格</p>
+                                <div class="flex items-baseline space-x-2">
+                                    <span class="text-xl font-bold text-gray-900">¥${token.price}</span>
+                                    <span class="text-sm ${token.change24h >= 0 ? 'price-up' : 'price-down'}">
+                                        ${token.change24h >= 0 ? '+' : ''}${token.change24h}%
+                                    </span>
+                                </div>
+                            </div>
+                            <div>
+                                <p class="text-xs text-gray-500 mb-1">24h交易量</p>
+                                <p class="text-lg font-semibold text-gray-900">¥${(token.volume24h / 10000).toFixed(1)}万</p>
+                            </div>
+                        </div>
+                        
+                        <div class="space-y-2 mb-4">
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">市值:</span>
+                                <span class="font-medium">¥${(token.marketCap / 100000000).toFixed(1)}亿</span>
+                            </div>
+                            <div class="flex justify-between text-sm">
+                                <span class="text-gray-600">总供应量:</span>
+                                <span class="font-medium">${(token.totalSupply / 1000000).toFixed(0)}M</span>
+                            </div>
+                        </div>
+                        
+                        <div class="blockchain-tx mb-4">
+                            <div class="text-xs text-gray-600 mb-1">合约地址:</div>
+                            <div class="break-all">${token.contractAddress}</div>
+                        </div>
+                        
+                        <div class="flex space-x-2">
+                            <button onclick="viewTokenDetail(${token.id})" class="flex-1 action-button secondary">
+                                查看详情
+                            </button>
+                            <button onclick="manageToken(${token.id})" class="flex-1 action-button primary">
+                                管理
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderPopularTokens() {
+            const container = document.getElementById('popularTokensList');
+            if (!container) return;
+
+            const sortedTokens = [...mockTokens].sort((a, b) => b.volume24h - a.volume24h).slice(0, 3);
+
+            container.innerHTML = sortedTokens.map(token => `
+                <div class="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 bg-gradient-to-r from-blue-500 to-purple-600 rounded-full flex items-center justify-center text-white font-semibold">
+                            ${token.symbol.substring(0, 2)}
+                        </div>
+                        <div>
+                            <h4 class="font-medium text-gray-900">${token.symbol}</h4>
+                            <p class="text-sm text-gray-600">¥${token.price}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-sm ${token.change24h >= 0 ? 'price-up' : 'price-down'} font-medium">
+                            ${token.change24h >= 0 ? '+' : ''}${token.change24h}%
+                        </div>
+                        <div class="text-xs text-gray-500">24h</div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderRecentActivities() {
+            const container = document.getElementById('recentActivities');
+            if (!container) return;
+
+            container.innerHTML = mockActivities.map(activity => `
+                <div class="flex items-start space-x-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div class="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                        <i class="fas ${activity.icon} ${activity.color} text-sm"></i>
+                    </div>
+                    <div class="flex-1">
+                        <h4 class="text-sm font-medium text-gray-900">${activity.title}</h4>
+                        <p class="text-xs text-gray-600 mt-1">${activity.description}</p>
+                        <p class="text-xs text-gray-500 mt-1">${activity.time}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function renderTradingTable() {
+            const tbody = document.getElementById('tradingTableBody');
+            if (!tbody) return;
+
+            tbody.innerHTML = mockTradingData.map(trade => `
+                <tr class="hover:bg-gray-50">
+                    <td class="px-6 py-4 text-sm text-gray-900">${trade.time}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">${trade.token}</td>
+                    <td class="px-6 py-4">
+                        <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${trade.type === 'buy' ? 'bg-green-100 text-green-800' : 'bg-red-100 text-red-800'}">
+                            ${trade.type === 'buy' ? '买入' : '卖出'}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-sm text-gray-900">${trade.amount.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-gray-900">¥${trade.price}</td>
+                    <td class="px-6 py-4 text-sm font-medium text-gray-900">¥${trade.total.toLocaleString()}</td>
+                    <td class="px-6 py-4 text-sm text-blue-600 font-mono">
+                        <a href="#" class="hover:underline">${trade.hash}</a>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function renderGovernanceProposals() {
+            const container = document.getElementById('governanceProposals');
+            if (!container) return;
+
+            container.innerHTML = mockProposals.map(proposal => `
+                <div class="border border-gray-200 rounded-lg p-6 hover:bg-gray-50 transition-colors">
+                    <div class="flex items-start justify-between mb-4">
+                        <div>
+                            <h4 class="text-lg font-medium text-gray-900 mb-2">${proposal.title}</h4>
+                            <p class="text-sm text-gray-600">${proposal.description}</p>
+                        </div>
+                        <span class="status-badge status-${proposal.status}">${getProposalStatusText(proposal.status)}</span>
+                    </div>
+                    
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">支持票数</p>
+                            <p class="text-lg font-semibold text-green-600">${proposal.votes.for}%</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">反对票数</p>
+                            <p class="text-lg font-semibold text-red-600">${proposal.votes.against}%</p>
+                        </div>
+                        <div>
+                            <p class="text-xs text-gray-500 mb-1">投票截止</p>
+                            <p class="text-lg font-semibold text-gray-900">${proposal.endTime}</p>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between">
+                        <div class="flex-1 bg-gray-200 rounded-full h-2 mr-4">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: ${proposal.votes.for}%"></div>
+                        </div>
+                        <button onclick="voteProposal(${proposal.id})" class="action-button primary">
+                            投票
+                        </button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // ========================================
+        // Web3钱包功能
+        // ========================================
+        async function connectWallet() {
+            if (typeof window.ethereum !== 'undefined') {
+                try {
+                    showToast('正在连接钱包...', 'info');
+                    
+                    const accounts = await window.ethereum.request({
+                        method: 'eth_requestAccounts'
+                    });
+                    
+                    userAddress = accounts[0];
+                    walletConnected = true;
+                    
+                    updateWalletUI();
+                    showToast('钱包连接成功！', 'success');
+                    
+                } catch (error) {
+                    showToast('钱包连接失败：' + error.message, 'error');
+                }
+            } else {
+                showToast('请安装MetaMask钱包', 'warning');
+                window.open('https://metamask.io/', '_blank');
+            }
+        }
+
+        function updateWalletUI() {
+            const walletStatus = document.getElementById('walletStatus');
+            const walletText = document.getElementById('walletText');
+            const connectWalletBtn = document.getElementById('connectWalletBtn');
+            const walletCard = document.getElementById('walletCard');
+
+            if (walletConnected && userAddress) {
+                walletStatus.className = 'hidden md:flex items-center px-3 py-1 rounded-full text-sm font-medium bg-green-100 text-green-700';
+                walletText.innerHTML = `<i class="fas fa-check-circle mr-2"></i>${userAddress.substring(0, 6)}...${userAddress.substring(38)}`;
+                connectWalletBtn.innerHTML = '<i class="fas fa-wallet"></i>已连接';
+                connectWalletBtn.className = 'action-button success';
+                
+                // 更新钱包卡片
+                walletCard.innerHTML = `
+                    <i class="fas fa-check-circle text-4xl mb-4"></i>
+                    <h3 class="text-xl font-semibold mb-2">钱包已连接</h3>
+                    <p class="text-sm opacity-90 mb-2 font-mono">${userAddress}</p>
+                    <p class="text-sm opacity-90 mb-4">您可以开始管理代币和进行交易</p>
+                    <button onclick="disconnectWallet()" class="bg-white text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-colors">
+                        断开连接
+                    </button>
+                `;
+            } else {
+                walletStatus.className = 'hidden md:flex items-center px-3 py-1 rounded-full text-sm font-medium bg-gray-100 text-gray-700';
+                walletText.innerHTML = '<i class="fas fa-wallet mr-2"></i>未连接钱包';
+                connectWalletBtn.innerHTML = '<i class="fas fa-wallet"></i>连接钱包';
+                connectWalletBtn.className = 'action-button secondary';
+            }
+        }
+
+        function disconnectWallet() {
+            walletConnected = false;
+            userAddress = null;
+            updateWalletUI();
+            showToast('钱包已断开连接', 'info');
+        }
+
+        // ========================================
+        // 代币管理功能
+        // ========================================
+        function createNewToken() {
+            document.getElementById('createTokenModal').classList.remove('hidden');
+        }
+
+        function closeCreateTokenModal() {
+            document.getElementById('createTokenModal').classList.add('hidden');
+            document.getElementById('createTokenForm').reset();
+        }
+
+        // 处理创建代币表单提交
+        document.getElementById('createTokenForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!walletConnected) {
+                showToast('请先连接钱包', 'warning');
+                return;
+            }
+            
+            const createTokenText = document.getElementById('createTokenText');
+            const createTokenLoading = document.getElementById('createTokenLoading');
+            
+            createTokenText.classList.add('hidden');
+            createTokenLoading.classList.remove('hidden');
+            
+            // 模拟代币创建过程
+            setTimeout(() => {
+                createTokenText.classList.remove('hidden');
+                createTokenLoading.classList.add('hidden');
+                
+                closeCreateTokenModal();
+                showToast('代币创建成功！正在部署智能合约...', 'success');
+                
+                // 模拟智能合约部署
+                setTimeout(() => {
+                    showToast('智能合约部署成功，代币已上线', 'success');
+                    renderTokensList(); // 刷新代币列表
+                }, 3000);
+            }, 2000);
+        });
+
+        function viewTokenDetail(tokenId) {
+            showToast(`查看代币${tokenId}详情功能开发中...`, 'info');
+        }
+
+        function manageToken(tokenId) {
+            showToast(`管理代币${tokenId}功能开发中...`, 'info');
+        }
+
+        function manageLiquidity() {
+            if (!walletConnected) {
+                showToast('请先连接钱包', 'warning');
+                return;
+            }
+            showToast('流动性管理功能开发中...', 'info');
+        }
+
+        function stakingRewards() {
+            if (!walletConnected) {
+                showToast('请先连接钱包', 'warning');
+                return;
+            }
+            showToast('质押奖励功能开发中...', 'info');
+        }
+
+        function governance() {
+            switchTab('governance');
+        }
+
+        function voteProposal(proposalId) {
+            if (!walletConnected) {
+                showToast('请先连接钱包', 'warning');
+                return;
+            }
+            showToast(`投票提案${proposalId}功能开发中...`, 'info');
+        }
+
+        // ========================================
+        // 数据刷新功能
+        // ========================================
+        function refreshData() {
+            const refreshIcon = document.getElementById('refreshIcon');
+            refreshIcon.classList.add('fa-spin');
+            
+            showToast('正在刷新代币化数据...', 'info');
+            
+            setTimeout(() => {
+                refreshIcon.classList.remove('fa-spin');
+                document.getElementById('lastUpdate').textContent = '刚刚';
+                showToast('数据刷新完成', 'success');
+                
+                // 重新渲染数据
+                renderTokensList();
+                renderPopularTokens();
+                renderRecentActivities();
+            }, 2000);
+        }
+
+        // ========================================
+        // 辅助函数
+        // ========================================
+        function getTokenStatusText(status) {
+            const statusTexts = {
+                active: '活跃',
+                paused: '暂停',
+                locked: '锁定',
+                pending: '待审核'
+            };
+            return statusTexts[status] || status;
+        }
+
+        function getProposalStatusText(status) {
+            const statusTexts = {
+                active: '投票中',
+                passed: '已通过',
+                rejected: '被拒绝',
+                pending: '待开始'
+            };
+            return statusTexts[status] || status;
+        }
+
+        // ========================================
+        // 导航和通用函数
+        // ========================================
+        function showNotifications() {
+            showToast('您有5条未读通知', 'info');
+        }
+
+        function showUserProfile() {
+            showToast('用户资料功能开发中...', 'info');
+        }
+
+        function showDocumentCenter() {
+            showToast('文档管理中心功能开发中...', 'info');
+        }
+
+        function showReportsCenter() {
+            showToast('收益报告中心功能开发中...', 'info');
+        }
+
+        // ========================================
+        // Toast通知系统
+        // ========================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icons = {
+                success: 'fas fa-check-circle text-green-600',
+                error: 'fas fa-exclamation-circle text-red-600',
+                warning: 'fas fa-exclamation-triangle text-yellow-600',
+                info: 'fas fa-info-circle text-blue-600'
+            };
+            
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <i class="${icons[type]}"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, duration);
+        }
+
+        // ========================================
+        // 键盘快捷键
+        // ========================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 'r':
+                        e.preventDefault();
+                        refreshData();
+                        break;
+                    case 'n':
+                        e.preventDefault();
+                        createNewToken();
+                        break;
+                    case 'w':
+                        e.preventDefault();
+                        connectWallet();
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                closeCreateTokenModal();
+            }
+            
+            // 标签切换快捷键
+            if (e.altKey) {
+                switch(e.key) {
+                    case '1':
+                        e.preventDefault();
+                        switchTab('overview');
+                        break;
+                    case '2':
+                        e.preventDefault();
+                        switchTab('tokens');
+                        break;
+                    case '3':
+                        e.preventDefault();
+                        switchTab('trading');
+                        break;
+                    case '4':
+                        e.preventDefault();
+                        switchTab('defi');
+                        break;
+                    case '5':
+                        e.preventDefault();
+                        switchTab('governance');
+                        break;
+                }
+            }
+        });
+
+        // ========================================
+        // 页面离开提醒
+        // ========================================
+        window.addEventListener('beforeunload', function(e) {
+            if (walletConnected) {
+                e.preventDefault();
+                e.returnValue = '您的钱包仍处于连接状态，确定要离开页面吗？';
+                return e.returnValue;
+            }
+        });
+    </script>
+</body>
+</html>

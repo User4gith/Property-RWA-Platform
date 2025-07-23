@@ -1,0 +1,2244 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>新增资产 - PropertyChain RWA平台</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 统一设计系统 */
+        :root {
+            --primary-color: #3B82F6;
+            --primary-dark: #1D4ED8;
+            --secondary-color: #667eea;
+            --secondary-dark: #764ba2;
+            --success-color: #10B981;
+            --success-bg: #DCFCE7;
+            --warning-color: #F59E0B;
+            --warning-bg: #FEF3C7;
+            --error-color: #EF4444;
+            --error-bg: #FEE2E2;
+            --gray-50: #F9FAFB;
+            --gray-100: #F3F4F6;
+            --gray-200: #E5E7EB;
+            --gray-300: #D1D5DB;
+            --gray-500: #6B7280;
+            --gray-600: #4B5563;
+            --gray-700: #374151;
+            --gray-900: #111827;
+            --border-radius: 12px;
+            --border-radius-sm: 8px;
+            --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+            --shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+            --shadow-md: 0 10px 25px rgba(0, 0, 0, 0.1);
+            --transition: all 0.3s ease;
+        }
+
+        .gradient-bg {
+            background: linear-gradient(135deg, var(--secondary-color) 0%, var(--secondary-dark) 100%);
+        }
+        
+        .card-hover {
+            transition: var(--transition);
+        }
+        
+        .card-hover:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 步骤指示器样式 */
+        .step-nav {
+            transition: var(--transition);
+        }
+
+        .step-active {
+            background: linear-gradient(135deg, var(--primary-color), var(--primary-dark));
+            color: white;
+            box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+        }
+        
+        .step-completed {
+            background: linear-gradient(135deg, var(--success-color), #059669);
+            color: white;
+        }
+        
+        .step-pending {
+            background: var(--gray-100);
+            color: var(--gray-500);
+        }
+
+        .step-nav:hover {
+            transform: scale(1.1);
+        }
+
+        /* 表单样式 */
+        .form-section {
+            background: white;
+            border-radius: var(--border-radius);
+            border: 1px solid var(--gray-200);
+            padding: 24px;
+            margin-bottom: 24px;
+            box-shadow: var(--shadow-sm);
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-label {
+            display: block;
+            font-weight: 600;
+            color: var(--gray-700);
+            margin-bottom: 8px;
+            font-size: 14px;
+        }
+
+        .form-input {
+            width: 100%;
+            padding: 12px 16px;
+            border: 1px solid var(--gray-300);
+            border-radius: var(--border-radius-sm);
+            background: white;
+            transition: var(--transition);
+            font-size: 14px;
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1);
+        }
+
+        .form-input:hover {
+            border-color: var(--gray-400);
+        }
+
+        .form-input.error {
+            border-color: var(--error-color);
+            box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.1);
+        }
+
+        .form-input.success {
+            border-color: var(--success-color);
+            box-shadow: 0 0 0 3px rgba(16, 185, 129, 0.1);
+        }
+
+        .form-error {
+            color: var(--error-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-success {
+            color: var(--success-color);
+            font-size: 12px;
+            margin-top: 4px;
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .form-help {
+            color: var(--gray-500);
+            font-size: 12px;
+            margin-top: 4px;
+        }
+
+        /* 上传区域样式 */
+        .upload-area {
+            border: 2px dashed var(--gray-300);
+            border-radius: var(--border-radius);
+            padding: 40px;
+            text-align: center;
+            transition: var(--transition);
+            cursor: pointer;
+            background: var(--gray-50);
+        }
+        
+        .upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #EFF6FF;
+        }
+        
+        .upload-area.dragover {
+            border-color: var(--primary-color);
+            background-color: #EFF6FF;
+            transform: scale(1.02);
+        }
+
+        .upload-area.uploading {
+            border-color: var(--primary-color);
+            background-color: #EFF6FF;
+        }
+
+        .file-preview {
+            background: var(--gray-50);
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius-sm);
+            padding: 12px;
+            transition: var(--transition);
+        }
+        
+        .file-preview:hover {
+            background: white;
+            box-shadow: var(--shadow);
+            transform: translateY(-1px);
+        }
+
+        .progress-bar {
+            background: linear-gradient(90deg, var(--primary-color), var(--primary-dark));
+            height: 6px;
+            border-radius: 3px;
+            transition: width 0.3s ease;
+        }
+
+        .checkbox-custom {
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary-color);
+        }
+
+        /* 进度条样式 */
+        .progress-container {
+            background: var(--gray-200);
+            height: 8px;
+            border-radius: 4px;
+            overflow: hidden;
+            margin: 20px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, var(--primary-color), var(--secondary-color));
+            border-radius: 4px;
+            transition: width 0.5s ease;
+        }
+
+        /* Toast样式 */
+        .toast-container {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+            max-width: 400px;
+        }
+
+        .toast {
+            background: white;
+            border-radius: var(--border-radius-sm);
+            box-shadow: var(--shadow-md);
+            padding: 16px 20px;
+            border-left: 4px solid var(--primary-color);
+            margin-bottom: 12px;
+            animation: slideIn 0.3s ease-out;
+        }
+
+        .toast.success { border-left-color: var(--success-color); }
+        .toast.error { border-left-color: var(--error-color); }
+        .toast.warning { border-left-color: var(--warning-color); }
+
+        @keyframes slideIn {
+            from { transform: translateX(100%); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+
+        /* 加载动画 */
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid var(--gray-200);
+            border-radius: 50%;
+            border-top-color: var(--primary-color);
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .form-section {
+                padding: 16px;
+                margin-bottom: 16px;
+            }
+            
+            .upload-area {
+                padding: 20px;
+            }
+        }
+
+        /* 工具提示 */
+        .tooltip {
+            position: relative;
+            cursor: help;
+        }
+
+        .tooltip::after {
+            content: attr(data-tooltip);
+            position: absolute;
+            bottom: 100%;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--gray-900);
+            color: white;
+            padding: 8px 12px;
+            border-radius: var(--border-radius-sm);
+            font-size: 12px;
+            white-space: nowrap;
+            opacity: 0;
+            visibility: hidden;
+            transition: var(--transition);
+            z-index: 100;
+        }
+
+        .tooltip:hover::after {
+            opacity: 1;
+            visibility: visible;
+        }
+
+        /* 步骤预览 */
+        .step-preview {
+            background: white;
+            border: 1px solid var(--gray-200);
+            border-radius: var(--border-radius);
+            box-shadow: var(--shadow);
+        }
+    </style>
+</head>
+<body class="bg-gray-50">
+    <!-- 统一导航栏 -->
+    <nav class="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-6">
+            <div class="flex justify-between items-center h-16">
+                <!-- Logo区域 -->
+                <div class="flex items-center space-x-4">
+                    <div class="flex items-center space-x-3">
+                        <div class="w-10 h-10 gradient-bg rounded-xl flex items-center justify-center">
+                            <i class="fas fa-building text-white text-lg"></i>
+                        </div>
+                        <div>
+                            <span class="text-xl font-bold text-gray-900">PropertyChain</span>
+                            <div class="text-xs text-gray-500">RWA资产管理平台</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 中间导航 -->
+                <div class="hidden md:flex items-center space-x-8">
+                    <a href="index.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-tachometer-alt mr-2"></i>仪表盘
+                    </a>
+                    <a href="asset-list.html" class="text-blue-600 font-medium border-b-2 border-blue-600 pb-4 flex items-center">
+                        <i class="fas fa-building mr-2"></i>资产管理
+                    </a>
+                    <a href="asset-tokenization.html" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-coins mr-2"></i>代币化
+                    </a>
+                    <a href="#" onclick="showDocumentCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-file-alt mr-2"></i>文档管理
+                    </a>
+                    <a href="#" onclick="showReportsCenter()" class="text-gray-600 hover:text-gray-900 pb-4 transition-colors flex items-center">
+                        <i class="fas fa-chart-line mr-2"></i>收益报告
+                    </a>
+                </div>
+
+                <!-- 右侧操作区 -->
+                <div class="flex items-center space-x-4">
+                    <!-- 保存状态指示 -->
+                    <div id="saveStatus" class="hidden text-sm text-gray-600">
+                        <i class="fas fa-check-circle text-green-600 mr-1"></i>
+                        已自动保存
+                    </div>
+                    
+                    <!-- 通知 -->
+                    <button onclick="showNotifications()" class="relative p-2 text-gray-500 hover:text-gray-700 transition-colors rounded-lg hover:bg-gray-100">
+                        <i class="fas fa-bell text-lg"></i>
+                        <span class="absolute -top-1 -right-1 h-5 w-5 bg-red-500 text-white text-xs rounded-full flex items-center justify-center">3</span>
+                    </button>
+                    
+                    <!-- 用户信息 -->
+                    <div class="flex items-center space-x-3 cursor-pointer hover:bg-gray-50 rounded-lg p-2 transition-colors" onclick="showUserProfile()">
+                        <div class="text-right">
+                            <div class="text-sm font-medium text-gray-900">XX地产</div>
+                            <div class="text-xs text-gray-500">项目方</div>
+                        </div>
+                        <img src="https://images.unsplash.com/photo-1560250097-0b93528c311a?w=40&h=40&fit=crop" 
+                             alt="公司logo" class="w-10 h-10 rounded-full border-2 border-gray-200">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <div class="max-w-7xl mx-auto px-6 py-8">
+        <!-- 页面标题 -->
+        <div class="mb-8">
+            <div class="flex items-center space-x-3 mb-4">
+                <button onclick="window.location.href='asset-list.html'" class="text-gray-500 hover:text-gray-700 transition-colors">
+                    <i class="fas fa-arrow-left text-lg"></i>
+                </button>
+                <h1 class="text-3xl font-bold text-gray-900">新增资产</h1>
+            </div>
+            <p class="text-gray-600">请按照以下步骤完整填写资产信息，确保数据准确性</p>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+            <!-- 步骤导航 -->
+            <div class="lg:col-span-1">
+                <div class="bg-white rounded-xl p-6 border border-gray-200 shadow-sm sticky top-24">
+                    <h3 class="text-lg font-semibold text-gray-900 mb-6">创建步骤</h3>
+                    
+                    <!-- 进度条 -->
+                    <div class="progress-container">
+                        <div id="progressBar" class="progress-fill" style="width: 20%"></div>
+                    </div>
+                    <p class="text-sm text-gray-600 mb-6">步骤 <span id="currentStep">1</span> / 5</p>
+
+                    <!-- 步骤列表 -->
+                    <div class="space-y-4">
+                        <div class="bg-white p-3 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" onclick="goToStep(1)">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="step-nav step-active flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold">1</div>
+                                <h4 class="font-medium text-gray-900">基本信息</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-11">
+                                <li>• 资产名称类型</li>
+                                <li>• 地理位置信息</li>
+                                <li>• 基础资料填写</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" onclick="goToStep(2)">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="step-nav step-pending flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold">2</div>
+                                <h4 class="font-medium text-gray-900">财务信息</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-11">
+                                <li>• 资产估值评估</li>
+                                <li>• 收益情况分析</li>
+                                <li>• 投资回报计算</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" onclick="goToStep(3)">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="step-nav step-pending flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold">3</div>
+                                <h4 class="font-medium text-gray-900">法律文档</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-11">
+                                <li>• 产权证明文件</li>
+                                <li>• 合规性证书</li>
+                                <li>• 相关法律文档</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" onclick="goToStep(4)">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="step-nav step-pending flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold">4</div>
+                                <h4 class="font-medium text-gray-900">物理特征</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-11">
+                                <li>• 建筑年份层数</li>
+                                <li>• 设施配套情况</li>
+                                <li>• 建筑结构等级</li>
+                                <li>• 详细建筑照片</li>
+                            </ul>
+                        </div>
+                        
+                        <div class="bg-white p-3 rounded-lg cursor-pointer hover:bg-blue-50 transition-colors" onclick="goToStep(5)">
+                            <div class="flex items-center space-x-3 mb-2">
+                                <div class="step-nav step-pending flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold">5</div>
+                                <h4 class="font-medium text-gray-900">审核提交</h4>
+                            </div>
+                            <ul class="text-sm text-gray-600 space-y-1 ml-11">
+                                <li>• 风险评估合规</li>
+                                <li>• 信息确认检查</li>
+                                <li>• 合规声明同意</li>
+                                <li>• 提交审核申请</li>
+                            </ul>
+                        </div>
+                    </div>
+
+                    <!-- 快捷操作 -->
+                    <div class="mt-6 pt-6 border-t border-gray-200">
+                        <button onclick="saveDraft()" class="w-full bg-gray-100 text-gray-700 py-2 rounded-lg hover:bg-gray-200 transition-colors mb-2">
+                            <i class="fas fa-save mr-2"></i>保存草稿
+                        </button>
+                        <button onclick="toggleStepPreview()" class="w-full bg-blue-50 text-blue-600 py-2 rounded-lg hover:bg-blue-100 transition-colors">
+                            <i class="fas fa-eye mr-2"></i>预览信息
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 主要内容区域 -->
+            <div class="lg:col-span-3">
+                <form id="assetForm" class="space-y-8">
+                    <!-- 步骤1: 基本信息 -->
+                    <div id="step1" class="step-content">
+                        <div class="form-section">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="w-8 h-8 bg-blue-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-info-circle text-blue-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900">基本资产信息</h3>
+                                <div class="tooltip" data-tooltip="请准确填写资产的基本信息，这些信息将用于资产识别和分类">
+                                    <i class="fas fa-question-circle text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        资产名称 <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           id="assetName" 
+                                           name="assetName" 
+                                           class="form-input" 
+                                           placeholder="例：华润大厦A座"
+                                           data-rules="required|minLength:2|maxLength:50"
+                                           autocomplete="organization">
+                                    <div class="form-help">资产的官方名称或项目名称</div>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                    <div class="form-success hidden">
+                                        <i class="fas fa-check-circle"></i>
+                                        <span>资产名称格式正确</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        资产类型 <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="assetType" 
+                                            name="assetType" 
+                                            class="form-input"
+                                            data-rules="required"
+                                            onchange="handleAssetTypeChange(this.value)">
+                                        <option value="">请选择资产类型</option>
+                                        <option value="office">写字楼</option>
+                                        <option value="retail">零售商业</option>
+                                        <option value="residential">住宅</option>
+                                        <option value="warehouse">仓储物流</option>
+                                        <option value="hotel">酒店</option>
+                                        <option value="industrial">工业</option>
+                                        <option value="mixed">综合体</option>
+                                        <option value="other">其他</option>
+                                    </select>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group lg:col-span-2">
+                                    <label class="form-label">
+                                        详细地址 <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="text" 
+                                           id="address" 
+                                           name="address" 
+                                           class="form-input" 
+                                           placeholder="例：上海市静安区南京西路1539号"
+                                           data-rules="required|minLength:10"
+                                           autocomplete="street-address">
+                                    <div class="form-help">请提供完整的地址信息，包括省市区及详细门牌号</div>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        所属城市 <span class="text-red-500">*</span>
+                                    </label>
+                                    <select id="city" 
+                                            name="city" 
+                                            class="form-input"
+                                            data-rules="required">
+                                        <option value="">请选择城市</option>
+                                        <option value="beijing">北京市</option>
+                                        <option value="shanghai">上海市</option>
+                                        <option value="shenzhen">深圳市</option>
+                                        <option value="guangzhou">广州市</option>
+                                        <option value="hangzhou">杭州市</option>
+                                        <option value="nanjing">南京市</option>
+                                        <option value="suzhou">苏州市</option>
+                                        <option value="chengdu">成都市</option>
+                                        <option value="other">其他城市</option>
+                                    </select>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        资产编号
+                                    </label>
+                                    <input type="text" 
+                                           id="assetCode" 
+                                           name="assetCode" 
+                                           class="form-input" 
+                                           placeholder="系统自动生成或手动输入"
+                                           readonly>
+                                    <div class="form-help">系统将自动生成唯一编号，也可手动修改</div>
+                                </div>
+                            </div>
+
+                            <!-- 导航按钮 -->
+                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                                <button type="button" onclick="window.location.href='asset-list.html'" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-times mr-2"></i>取消
+                                </button>
+                                <button type="button" onclick="nextStep()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    下一步：财务信息 <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤2: 财务信息 -->
+                    <div id="step2" class="step-content hidden">
+                        <div class="form-section">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-dollar-sign text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900">财务信息</h3>
+                                <div class="tooltip" data-tooltip="财务信息用于评估资产价值和投资回报">
+                                    <i class="fas fa-question-circle text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        资产估值 <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                                        <input type="number" 
+                                               id="assetValue" 
+                                               name="assetValue" 
+                                               class="form-input pl-8" 
+                                               placeholder="例：50000000"
+                                               data-rules="required|number|min:1000000"
+                                               onchange="calculateMetrics()">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">元</span>
+                                    </div>
+                                    <div class="form-help">基于最新市场评估的资产价值</div>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        建筑面积 <span class="text-red-500">*</span>
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" 
+                                               id="buildingArea" 
+                                               name="buildingArea" 
+                                               class="form-input pr-12" 
+                                               placeholder="例：15000"
+                                               data-rules="required|number|min:50"
+                                               onchange="calculateMetrics()">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">㎡</span>
+                                    </div>
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        月租金收入
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                                        <input type="number" 
+                                               id="monthlyRent" 
+                                               name="monthlyRent" 
+                                               class="form-input pl-8 pr-12" 
+                                               placeholder="例：500000"
+                                               data-rules="number|min:0"
+                                               onchange="calculateMetrics()">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">元/月</span>
+                                    </div>
+                                    <div class="form-help">当前月度租金收入总额</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        出租率
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" 
+                                               id="occupancyRate" 
+                                               name="occupancyRate" 
+                                               class="form-input pr-8" 
+                                               placeholder="例：85"
+                                               min="0" 
+                                               max="100"
+                                               data-rules="number|min:0|max:100"
+                                               onchange="calculateMetrics()">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <div class="form-help">当前资产的出租率百分比</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        年维护费用
+                                    </label>
+                                    <div class="relative">
+                                        <span class="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500">¥</span>
+                                        <input type="number" 
+                                               id="maintenanceCost" 
+                                               name="maintenanceCost" 
+                                               class="form-input pl-8 pr-12" 
+                                               placeholder="例：200000"
+                                               data-rules="number|min:0">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">元/年</span>
+                                    </div>
+                                    <div class="form-help">包括物业费、维修费等年度支出</div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        预期年增长率
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" 
+                                               id="growthRate" 
+                                               name="growthRate" 
+                                               class="form-input pr-8" 
+                                               placeholder="例：5"
+                                               step="0.1"
+                                               data-rules="number|min:0|max:50">
+                                        <span class="absolute right-3 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <div class="form-help">预期年度资产价值增长率</div>
+                                </div>
+                            </div>
+
+                            <!-- 财务指标计算结果 -->
+                            <div id="financialMetrics" class="mt-8 p-6 bg-blue-50 rounded-lg border border-blue-200">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">自动计算指标</h4>
+                                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                    <div class="text-center">
+                                        <p class="text-sm text-gray-600 mb-1">单价</p>
+                                        <p id="pricePerSqm" class="text-xl font-bold text-blue-600">-</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-sm text-gray-600 mb-1">年化收益率</p>
+                                        <p id="annualYield" class="text-xl font-bold text-green-600">-</p>
+                                    </div>
+                                    <div class="text-center">
+                                        <p class="text-sm text-gray-600 mb-1">净现金流</p>
+                                        <p id="netCashFlow" class="text-xl font-bold text-purple-600">-</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 导航按钮 -->
+                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                                <button type="button" onclick="prevStep()" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>上一步
+                                </button>
+                                <button type="button" onclick="nextStep()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    下一步：法律文档 <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤3: 法律文档 -->
+                    <div id="step3" class="step-content hidden">
+                        <div class="form-section">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="w-8 h-8 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-file-contract text-yellow-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900">法律文档</h3>
+                                <div class="tooltip" data-tooltip="上传必要的法律文档以确保资产的合规性">
+                                    <i class="fas fa-question-circle text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <!-- 文档上传区域 -->
+                            <div class="space-y-6">
+                                <!-- 必需文档 -->
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">必需文档</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- 产权证书 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h5 class="font-medium text-gray-900">产权证书</h5>
+                                                <span class="file-status-badge required">必需</span>
+                                            </div>
+                                            <div class="upload-area" 
+                                                 ondrop="handleFileDrop(event, 'propertyDeed')" 
+                                                 ondragover="handleDragOver(event)"
+                                                 ondragleave="handleDragLeave(event)"
+                                                 onclick="document.getElementById('propertyDeedFile').click()">
+                                                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                                                <p class="text-sm text-gray-600 mb-1">点击上传或拖拽文件到此处</p>
+                                                <p class="text-xs text-gray-500">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                            </div>
+                                            <input type="file" 
+                                                   id="propertyDeedFile" 
+                                                   class="hidden" 
+                                                   accept=".pdf,.jpg,.jpeg,.png"
+                                                   onchange="handleFileSelect(event, 'propertyDeed')">
+                                            <div id="propertyDeedPreview" class="hidden mt-3"></div>
+                                        </div>
+
+                                        <!-- 土地使用证 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h5 class="font-medium text-gray-900">土地使用证</h5>
+                                                <span class="file-status-badge required">必需</span>
+                                            </div>
+                                            <div class="upload-area" 
+                                                 ondrop="handleFileDrop(event, 'landUseCert')" 
+                                                 ondragover="handleDragOver(event)"
+                                                 ondragleave="handleDragLeave(event)"
+                                                 onclick="document.getElementById('landUseCertFile').click()">
+                                                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                                                <p class="text-sm text-gray-600 mb-1">点击上传或拖拽文件到此处</p>
+                                                <p class="text-xs text-gray-500">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                            </div>
+                                            <input type="file" 
+                                                   id="landUseCertFile" 
+                                                   class="hidden" 
+                                                   accept=".pdf,.jpg,.jpeg,.png"
+                                                   onchange="handleFileSelect(event, 'landUseCert')">
+                                            <div id="landUseCertPreview" class="hidden mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 可选文档 -->
+                                <div>
+                                    <h4 class="text-lg font-semibold text-gray-900 mb-4">可选文档</h4>
+                                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <!-- 建筑规划许可证 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h5 class="font-medium text-gray-900">建筑规划许可证</h5>
+                                                <span class="file-status-badge optional">可选</span>
+                                            </div>
+                                            <div class="upload-area" 
+                                                 ondrop="handleFileDrop(event, 'buildingPermit')" 
+                                                 ondragover="handleDragOver(event)"
+                                                 ondragleave="handleDragLeave(event)"
+                                                 onclick="document.getElementById('buildingPermitFile').click()">
+                                                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                                                <p class="text-sm text-gray-600 mb-1">点击上传或拖拽文件到此处</p>
+                                                <p class="text-xs text-gray-500">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                            </div>
+                                            <input type="file" 
+                                                   id="buildingPermitFile" 
+                                                   class="hidden" 
+                                                   accept=".pdf,.jpg,.jpeg,.png"
+                                                   onchange="handleFileSelect(event, 'buildingPermit')">
+                                            <div id="buildingPermitPreview" class="hidden mt-3"></div>
+                                        </div>
+
+                                        <!-- 消防验收证书 -->
+                                        <div class="border border-gray-200 rounded-lg p-4">
+                                            <div class="flex items-center justify-between mb-3">
+                                                <h5 class="font-medium text-gray-900">消防验收证书</h5>
+                                                <span class="file-status-badge optional">可选</span>
+                                            </div>
+                                            <div class="upload-area" 
+                                                 ondrop="handleFileDrop(event, 'fireSafetyCert')" 
+                                                 ondragover="handleDragOver(event)"
+                                                 ondragleave="handleDragLeave(event)"
+                                                 onclick="document.getElementById('fireSafetyCertFile').click()">
+                                                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                                                <p class="text-sm text-gray-600 mb-1">点击上传或拖拽文件到此处</p>
+                                                <p class="text-xs text-gray-500">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+                                            </div>
+                                            <input type="file" 
+                                                   id="fireSafetyCertFile" 
+                                                   class="hidden" 
+                                                   accept=".pdf,.jpg,.jpeg,.png"
+                                                   onchange="handleFileSelect(event, 'fireSafetyCert')">
+                                            <div id="fireSafetyCertPreview" class="hidden mt-3"></div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- 文档完整性检查 -->
+                                <div id="documentCheck" class="bg-gray-50 rounded-lg p-4 border border-gray-200">
+                                    <h5 class="font-medium text-gray-900 mb-3">文档完整性检查</h5>
+                                    <div class="space-y-2" id="documentCheckList">
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="fas fa-circle text-gray-300 mr-2"></i>
+                                            产权证书：未上传
+                                        </div>
+                                        <div class="flex items-center text-sm text-gray-600">
+                                            <i class="fas fa-circle text-gray-300 mr-2"></i>
+                                            土地使用证：未上传
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- 导航按钮 -->
+                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                                <button type="button" onclick="prevStep()" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>上一步
+                                </button>
+                                <button type="button" onclick="nextStep()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    下一步：物理特征 <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤4: 物理特征 -->
+                    <div id="step4" class="step-content hidden">
+                        <div class="form-section">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="w-8 h-8 bg-purple-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-building text-purple-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900">物理特征</h3>
+                                <div class="tooltip" data-tooltip="详细描述资产的物理特征和建筑信息">
+                                    <i class="fas fa-question-circle text-gray-400"></i>
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        建成年份 <span class="text-red-500">*</span>
+                                    </label>
+                                    <input type="number" 
+                                           id="buildYear" 
+                                           name="buildYear" 
+                                           class="form-input" 
+                                           placeholder="例：2015" 
+                                           min="1900" 
+                                           max="2024"
+                                           data-rules="required|number|min:1900|max:2024">
+                                    <div class="form-error hidden">
+                                        <i class="fas fa-exclamation-circle"></i>
+                                        <span class="error-message"></span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        建筑层数
+                                    </label>
+                                    <input type="number" 
+                                           id="floors" 
+                                           name="floors" 
+                                           class="form-input" 
+                                           placeholder="例：45" 
+                                           min="1"
+                                           data-rules="number|min:1">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        电梯数量
+                                    </label>
+                                    <input type="number" 
+                                           id="elevators" 
+                                           name="elevators" 
+                                           class="form-input" 
+                                           placeholder="例：12" 
+                                           min="0"
+                                           data-rules="number|min:0">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        停车位数量
+                                    </label>
+                                    <input type="number" 
+                                           id="parkingSpaces" 
+                                           name="parkingSpaces" 
+                                           class="form-input" 
+                                           placeholder="例：500" 
+                                           min="0"
+                                           data-rules="number|min:0">
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        建筑结构
+                                    </label>
+                                    <select id="structure" name="structure" class="form-input">
+                                        <option value="">请选择建筑结构</option>
+                                        <option value="concrete">钢筋混凝土</option>
+                                        <option value="steel">钢结构</option>
+                                        <option value="mixed">钢混结构</option>
+                                        <option value="other">其他</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label class="form-label">
+                                        建筑等级
+                                    </label>
+                                    <select id="buildingGrade" name="buildingGrade" class="form-input">
+                                        <option value="">请选择建筑等级</option>
+                                        <option value="a">甲级</option>
+                                        <option value="b">乙级</option>
+                                        <option value="c">丙级</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- 设施配套 -->
+                            <div class="mt-8">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">设施配套</h4>
+                                <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="centralAC" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">中央空调</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="security" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">24小时保安</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="cafeteria" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">员工餐厅</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="gym" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">健身房</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="conference" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">会议室</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="garden" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">绿化花园</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="metro" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">地铁直达</span>
+                                    </label>
+                                    <label class="flex items-center space-x-2 cursor-pointer p-3 rounded-lg border border-gray-200 hover:bg-gray-50 transition-colors">
+                                        <input type="checkbox" name="facilities" value="shopping" class="checkbox-custom">
+                                        <span class="text-sm text-gray-700">商业配套</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 资产照片上传 -->
+                            <div class="mt-8">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">资产照片</h4>
+                                <div class="upload-area" 
+                                     ondrop="handleMultipleFileDrop(event)" 
+                                     ondragover="handleDragOver(event)"
+                                     ondragleave="handleDragLeave(event)"
+                                     onclick="document.getElementById('assetPhotos').click()">
+                                    <i class="fas fa-camera text-gray-400 text-3xl mb-3"></i>
+                                    <p class="text-lg text-gray-600 mb-2">上传资产照片</p>
+                                    <p class="text-sm text-gray-500 mb-1">点击上传或拖拽多个文件到此处</p>
+                                    <p class="text-xs text-gray-400">支持 JPG, PNG 格式，每张最大 5MB，最多上传10张</p>
+                                </div>
+                                <input type="file" 
+                                       id="assetPhotos" 
+                                       class="hidden" 
+                                       accept=".jpg,.jpeg,.png"
+                                       multiple
+                                       onchange="handlePhotoSelect(event)">
+                                <div id="photoPreview" class="mt-4 grid grid-cols-2 md:grid-cols-4 gap-4 hidden"></div>
+                            </div>
+
+                            <!-- 导航按钮 -->
+                            <div class="flex justify-between items-center mt-8 pt-6 border-t border-gray-200">
+                                <button type="button" onclick="prevStep()" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>上一步
+                                </button>
+                                <button type="button" onclick="nextStep()" class="bg-blue-600 text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors">
+                                    下一步：审核提交 <i class="fas fa-arrow-right ml-2"></i>
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 步骤5: 审核提交 -->
+                    <div id="step5" class="step-content hidden">
+                        <div class="form-section">
+                            <div class="flex items-center space-x-3 mb-6">
+                                <div class="w-8 h-8 bg-green-100 rounded-lg flex items-center justify-center">
+                                    <i class="fas fa-check-circle text-green-600"></i>
+                                </div>
+                                <h3 class="text-xl font-semibold text-gray-900">审核提交</h3>
+                            </div>
+
+                            <!-- 信息预览 -->
+                            <div id="summaryPreview" class="space-y-6 mb-8">
+                                <!-- 预览内容将通过JavaScript生成 -->
+                            </div>
+
+                            <!-- 合规声明 -->
+                            <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6 mb-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">合规声明</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" id="declaration1" class="checkbox-custom mt-1" required>
+                                        <span class="text-sm text-gray-700">我确认所提供的所有信息真实、准确、完整，无虚假或误导性陈述。</span>
+                                    </label>
+                                    <label class="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" id="declaration2" class="checkbox-custom mt-1" required>
+                                        <span class="text-sm text-gray-700">我同意遵守PropertyChain平台的服务条款和隐私政策。</span>
+                                    </label>
+                                    <label class="flex items-start space-x-3 cursor-pointer">
+                                        <input type="checkbox" id="declaration3" class="checkbox-custom mt-1" required>
+                                        <span class="text-sm text-gray-700">我理解并同意平台有权对提交的资产信息进行审核和验证。</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 提交选项 -->
+                            <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-6">
+                                <h4 class="text-lg font-semibold text-gray-900 mb-4">提交选项</h4>
+                                <div class="space-y-3">
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="radio" name="submitOption" value="review" class="text-blue-600" checked>
+                                        <span class="text-sm text-gray-700">提交审核（推荐）- 平台专业团队将在3-5个工作日内完成审核</span>
+                                    </label>
+                                    <label class="flex items-center space-x-3 cursor-pointer">
+                                        <input type="radio" name="submitOption" value="draft" class="text-blue-600">
+                                        <span class="text-sm text-gray-700">保存为草稿 - 可随时回来继续编辑和完善</span>
+                                    </label>
+                                </div>
+                            </div>
+
+                            <!-- 风险提示 -->
+                            <div class="bg-red-50 border border-red-200 rounded-lg p-6 mb-8">
+                                <h4 class="text-lg font-semibold text-red-800 mb-2">
+                                    <i class="fas fa-exclamation-triangle mr-2"></i>重要提示
+                                </h4>
+                                <ul class="text-sm text-red-700 space-y-1 ml-6 list-disc">
+                                    <li>资产代币化存在市场风险，投资者应充分了解相关风险</li>
+                                    <li>平台不对资产价值的未来表现做任何保证</li>
+                                    <li>请确保遵守当地法律法规，承担相应法律责任</li>
+                                    <li>提交后的信息修改需要重新审核，请仔细检查</li>
+                                </ul>
+                            </div>
+
+                            <!-- 导航按钮 -->
+                            <div class="flex justify-between items-center pt-6 border-t border-gray-200">
+                                <button type="button" onclick="prevStep()" class="bg-gray-100 text-gray-700 px-6 py-3 rounded-lg hover:bg-gray-200 transition-colors">
+                                    <i class="fas fa-arrow-left mr-2"></i>上一步
+                                </button>
+                                <div class="flex space-x-3">
+                                    <button type="button" onclick="saveDraft()" class="bg-gray-600 text-white px-6 py-3 rounded-lg hover:bg-gray-700 transition-colors">
+                                        <i class="fas fa-save mr-2"></i>保存草稿
+                                    </button>
+                                    <button type="submit" id="submitBtn" class="bg-green-600 text-white px-8 py-3 rounded-lg hover:bg-green-700 transition-colors">
+                                        <span id="submitText">
+                                            <i class="fas fa-paper-plane mr-2"></i>提交审核
+                                        </span>
+                                        <span id="submitLoading" class="hidden">
+                                            <span class="loading-spinner mr-2"></span>提交中...
+                                        </span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast容器 -->
+    <div class="toast-container" id="toastContainer"></div>
+
+    <!-- 步骤预览模态框 -->
+    <div id="stepPreview" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <div class="bg-white rounded-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto step-preview">
+            <div class="sticky top-0 bg-white border-b border-gray-200 p-6">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-xl font-semibold text-gray-900">信息预览</h3>
+                    <button onclick="toggleStepPreview()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times text-xl"></i>
+                    </button>
+                </div>
+            </div>
+            <div id="previewContent" class="p-6">
+                <!-- 预览内容将通过JavaScript动态生成 -->
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ========================================
+        // 全局变量和状态管理
+        // ========================================
+        let currentStep = 1;
+        const totalSteps = 5;
+        let formData = {};
+        let uploadedFiles = {};
+        let isDraftSaved = false;
+
+        // ========================================
+        // 页面初始化
+        // ========================================
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeForm();
+            generateAssetCode();
+            bindFormValidation();
+            
+            // 自动保存功能
+            setInterval(autoSave, 30000); // 每30秒自动保存
+        });
+
+        function initializeForm() {
+            showStep(currentStep);
+            updateProgress();
+            
+            // 加载草稿数据（如果有）
+            loadDraftData();
+            
+            showToast('表单初始化完成', 'success', 2000);
+        }
+
+        // ========================================
+        // 步骤导航功能
+        // ========================================
+        function goToStep(step) {
+            if (step >= 1 && step <= totalSteps) {
+                if (step > currentStep && !validateCurrentStep()) {
+                    showToast('请完成当前步骤的必填信息', 'warning');
+                    return;
+                }
+                
+                hideStep(currentStep);
+                currentStep = step;
+                showStep(currentStep);
+                updateProgress();
+                updateStepNavigation();
+            }
+        }
+
+        function nextStep() {
+            if (validateCurrentStep()) {
+                saveCurrentStepData();
+                if (currentStep < totalSteps) {
+                    goToStep(currentStep + 1);
+                }
+            } else {
+                showToast('请检查并完成必填信息', 'error');
+            }
+        }
+
+        function prevStep() {
+            if (currentStep > 1) {
+                saveCurrentStepData();
+                goToStep(currentStep - 1);
+            }
+        }
+
+        function showStep(step) {
+            // 隐藏所有步骤
+            for (let i = 1; i <= totalSteps; i++) {
+                const stepElement = document.getElementById(`step${i}`);
+                if (stepElement) {
+                    stepElement.classList.add('hidden');
+                }
+            }
+            
+            // 显示当前步骤
+            const currentStepElement = document.getElementById(`step${step}`);
+            if (currentStepElement) {
+                currentStepElement.classList.remove('hidden');
+            }
+            
+            document.getElementById('currentStep').textContent = step;
+            
+            // 特殊处理：第5步显示预览
+            if (step === 5) {
+                generateSummaryPreview();
+            }
+        }
+
+        function hideStep(step) {
+            const stepElement = document.getElementById(`step${step}`);
+            if (stepElement) {
+                stepElement.classList.add('hidden');
+            }
+        }
+
+        function updateProgress() {
+            const progress = (currentStep / totalSteps) * 100;
+            document.getElementById('progressBar').style.width = `${progress}%`;
+        }
+
+        function updateStepNavigation() {
+            const stepNavs = document.querySelectorAll('.step-nav');
+            stepNavs.forEach((el, index) => {
+                const stepNumber = index + 1;
+                if (stepNumber < currentStep) {
+                    el.className = 'step-nav step-completed flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold';
+                } else if (stepNumber === currentStep) {
+                    el.className = 'step-nav step-active flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold';
+                } else {
+                    el.className = 'step-nav step-pending flex items-center justify-center w-8 h-8 rounded-full text-sm font-bold';
+                }
+            });
+        }
+
+        // ========================================
+        // 表单验证系统
+        // ========================================
+        function bindFormValidation() {
+            const formInputs = document.querySelectorAll('[data-rules]');
+            formInputs.forEach(input => {
+                input.addEventListener('blur', function() {
+                    validateField(this);
+                });
+
+                input.addEventListener('input', function() {
+                    clearFieldValidation(this);
+                    // 实时计算（财务指标）
+                    if (['assetValue', 'buildingArea', 'monthlyRent', 'occupancyRate', 'maintenanceCost'].includes(this.id)) {
+                        calculateMetrics();
+                    }
+                });
+            });
+        }
+
+        function validateField(field) {
+            const rules = field.dataset.rules;
+            if (!rules) return true;
+
+            const value = field.value.trim();
+            const ruleList = rules.split('|');
+            
+            for (let rule of ruleList) {
+                const [ruleName, ...params] = rule.split(':');
+                
+                if (!applyValidationRule(value, ruleName, params)) {
+                    showFieldError(field, getErrorMessage(ruleName, params));
+                    return false;
+                }
+            }
+            
+            showFieldSuccess(field);
+            return true;
+        }
+
+        function applyValidationRule(value, ruleName, params) {
+            const rules = {
+                required: () => value !== '',
+                minLength: (min) => value.length >= parseInt(min),
+                maxLength: (max) => value.length <= parseInt(max),
+                number: () => !isNaN(Number(value)) && isFinite(Number(value)),
+                min: (min) => Number(value) >= Number(min),
+                max: (max) => Number(value) <= Number(max)
+            };
+
+            const ruleFunction = rules[ruleName];
+            return ruleFunction ? ruleFunction(...params) : true;
+        }
+
+        function getErrorMessage(ruleName, params) {
+            const messages = {
+                required: '此字段为必填项',
+                minLength: `最少需要${params[0]}个字符`,
+                maxLength: `最多允许${params[0]}个字符`,
+                number: '请输入有效的数字',
+                min: `数值不能小于${params[0]}`,
+                max: `数值不能大于${params[0]}`
+            };
+            return messages[ruleName] || '输入格式不正确';
+        }
+
+        function showFieldError(field, message) {
+            field.classList.remove('success');
+            field.classList.add('error');
+            
+            const errorElement = field.parentNode.querySelector('.form-error');
+            const successElement = field.parentNode.querySelector('.form-success');
+            
+            if (errorElement) {
+                errorElement.querySelector('.error-message').textContent = message;
+                errorElement.classList.remove('hidden');
+            }
+            
+            if (successElement) {
+                successElement.classList.add('hidden');
+            }
+        }
+
+        function showFieldSuccess(field) {
+            field.classList.remove('error');
+            field.classList.add('success');
+            
+            const errorElement = field.parentNode.querySelector('.form-error');
+            const successElement = field.parentNode.querySelector('.form-success');
+            
+            if (errorElement) {
+                errorElement.classList.add('hidden');
+            }
+            
+            if (successElement) {
+                successElement.classList.remove('hidden');
+            }
+        }
+
+        function clearFieldValidation(field) {
+            field.classList.remove('error', 'success');
+            
+            const errorElement = field.parentNode.querySelector('.form-error');
+            const successElement = field.parentNode.querySelector('.form-success');
+            
+            if (errorElement) errorElement.classList.add('hidden');
+            if (successElement) successElement.classList.add('hidden');
+        }
+
+        function validateCurrentStep() {
+            const currentStepElement = document.getElementById(`step${currentStep}`);
+            const requiredFields = currentStepElement.querySelectorAll('[data-rules*="required"]');
+            let isValid = true;
+
+            requiredFields.forEach(field => {
+                if (!validateField(field)) {
+                    isValid = false;
+                }
+            });
+
+            // 步骤3特殊验证：检查必需文档
+            if (currentStep === 3) {
+                const requiredDocs = ['propertyDeed', 'landUseCert'];
+                for (let docType of requiredDocs) {
+                    if (!uploadedFiles[docType]) {
+                        showToast(`请上传${getDocumentName(docType)}`, 'warning');
+                        isValid = false;
+                    }
+                }
+            }
+
+            // 步骤5特殊验证：检查合规声明
+            if (currentStep === 5) {
+                const declarations = ['declaration1', 'declaration2', 'declaration3'];
+                for (let decl of declarations) {
+                    if (!document.getElementById(decl).checked) {
+                        showToast('请阅读并同意所有合规声明', 'warning');
+                        isValid = false;
+                    }
+                }
+            }
+
+            return isValid;
+        }
+
+        // ========================================
+        // 数据处理和计算
+        // ========================================
+        function generateAssetCode() {
+            const prefix = 'PA'; // PropertyAsset
+            const timestamp = Date.now().toString().slice(-6);
+            const random = Math.floor(Math.random() * 1000).toString().padStart(3, '0');
+            const code = `${prefix}${timestamp}${random}`;
+            
+            document.getElementById('assetCode').value = code;
+        }
+
+        function handleAssetTypeChange(type) {
+            // 根据资产类型调整表单显示
+            console.log('Asset type changed to:', type);
+            // 可以根据类型显示/隐藏特定字段
+        }
+
+        function calculateMetrics() {
+            const assetValue = parseFloat(document.getElementById('assetValue').value) || 0;
+            const buildingArea = parseFloat(document.getElementById('buildingArea').value) || 0;
+            const monthlyRent = parseFloat(document.getElementById('monthlyRent').value) || 0;
+            const occupancyRate = parseFloat(document.getElementById('occupancyRate').value) || 0;
+            const maintenanceCost = parseFloat(document.getElementById('maintenanceCost').value) || 0;
+
+            // 计算单价
+            const pricePerSqm = buildingArea > 0 ? (assetValue / buildingArea).toFixed(0) : 0;
+            document.getElementById('pricePerSqm').textContent = pricePerSqm > 0 ? `¥${Number(pricePerSqm).toLocaleString()}/㎡` : '-';
+
+            // 计算年化收益率
+            const annualRent = monthlyRent * 12 * (occupancyRate / 100);
+            const netAnnualRent = annualRent - maintenanceCost;
+            const annualYield = assetValue > 0 ? ((netAnnualRent / assetValue) * 100).toFixed(2) : 0;
+            document.getElementById('annualYield').textContent = annualYield > 0 ? `${annualYield}%` : '-';
+
+            // 计算净现金流
+            const netCashFlow = (netAnnualRent / 10000).toFixed(1); // 转换为万元
+            document.getElementById('netCashFlow').textContent = netCashFlow > 0 ? `¥${netCashFlow}万/年` : '-';
+        }
+
+        function saveCurrentStepData() {
+            const currentStepElement = document.getElementById(`step${currentStep}`);
+            const inputs = currentStepElement.querySelectorAll('input, select, textarea');
+            
+            inputs.forEach(input => {
+                if (input.type === 'checkbox' || input.type === 'radio') {
+                    if (input.checked) {
+                        if (!formData[input.name]) {
+                            formData[input.name] = [];
+                        }
+                        if (Array.isArray(formData[input.name])) {
+                            formData[input.name].push(input.value);
+                        } else {
+                            formData[input.name] = input.value;
+                        }
+                    }
+                } else {
+                    formData[input.name] = input.value;
+                }
+            });
+        }
+
+        // ========================================
+        // 文件上传处理
+        // ========================================
+        function handleFileDrop(event, docType) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+            
+            const files = event.dataTransfer.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0], docType);
+            }
+        }
+
+        function handleDragOver(event) {
+            event.preventDefault();
+            event.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(event) {
+            event.preventDefault();
+            event.currentTarget.classList.remove('dragover');
+        }
+
+        function handleFileSelect(event, docType) {
+            const files = event.target.files;
+            if (files.length > 0) {
+                handleFileUpload(files[0], docType);
+            }
+        }
+
+        function handleFileUpload(file, docType) {
+            // 文件大小验证
+            if (file.size > 10 * 1024 * 1024) { // 10MB
+                showToast('文件大小不能超过10MB', 'error');
+                return;
+            }
+
+            // 文件类型验证
+            const allowedTypes = ['application/pdf', 'image/jpeg', 'image/png'];
+            if (!allowedTypes.includes(file.type)) {
+                showToast('只支持PDF、JPG、PNG格式文件', 'error');
+                return;
+            }
+
+            // 模拟上传过程
+            const uploadArea = document.querySelector(`[onclick*="${docType}"]`);
+            uploadArea.classList.add('uploading');
+            uploadArea.innerHTML = `
+                <i class="fas fa-spinner fa-spin text-blue-600 text-2xl mb-2"></i>
+                <p class="text-sm text-blue-600 mb-1">正在上传...</p>
+                <div class="w-full bg-gray-200 rounded-full h-2 mt-2">
+                    <div class="bg-blue-600 h-2 rounded-full transition-all duration-300" style="width: 0%"></div>
+                </div>
+            `;
+
+            // 模拟上传进度
+            let progress = 0;
+            const progressBar = uploadArea.querySelector('.bg-blue-600');
+            const progressInterval = setInterval(() => {
+                progress += Math.random() * 30;
+                if (progress >= 100) {
+                    progress = 100;
+                    clearInterval(progressInterval);
+                    
+                    // 上传完成
+                    setTimeout(() => {
+                        uploadedFiles[docType] = {
+                            name: file.name,
+                            size: file.size,
+                            type: file.type,
+                            uploadTime: new Date()
+                        };
+                        
+                        showFilePreview(file, docType);
+                        updateDocumentCheck();
+                        showToast(`${getDocumentName(docType)}上传成功`, 'success');
+                    }, 500);
+                }
+                progressBar.style.width = `${progress}%`;
+            }, 200);
+        }
+
+        function showFilePreview(file, docType) {
+            const previewContainer = document.getElementById(`${docType}Preview`);
+            const uploadArea = document.querySelector(`[onclick*="${docType}"]`);
+            
+            previewContainer.classList.remove('hidden');
+            previewContainer.innerHTML = `
+                <div class="file-preview flex items-center justify-between p-3 rounded-lg">
+                    <div class="flex items-center space-x-3">
+                        <div class="file-icon ${getFileIconClass(file.name)}">
+                            <i class="fas ${getFileIcon(file.name)}"></i>
+                        </div>
+                        <div>
+                            <p class="text-sm font-medium text-gray-900">${file.name}</p>
+                            <p class="text-xs text-gray-500">${formatFileSize(file.size)} • ${formatDateTime(new Date())}</p>
+                        </div>
+                    </div>
+                    <button onclick="removeFile('${docType}')" class="text-gray-400 hover:text-red-600 transition-colors">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            // 重置上传区域
+            uploadArea.classList.remove('uploading');
+            uploadArea.innerHTML = `
+                <i class="fas fa-check-circle text-green-600 text-2xl mb-2"></i>
+                <p class="text-sm text-green-600 mb-1">上传成功</p>
+                <p class="text-xs text-gray-500">点击重新上传</p>
+            `;
+        }
+
+        function removeFile(docType) {
+            delete uploadedFiles[docType];
+            
+            const previewContainer = document.getElementById(`${docType}Preview`);
+            const uploadArea = document.querySelector(`[onclick*="${docType}"]`);
+            
+            previewContainer.classList.add('hidden');
+            previewContainer.innerHTML = '';
+            
+            // 重置上传区域
+            uploadArea.classList.remove('uploading');
+            uploadArea.innerHTML = `
+                <i class="fas fa-cloud-upload-alt text-gray-400 text-2xl mb-2"></i>
+                <p class="text-sm text-gray-600 mb-1">点击上传或拖拽文件到此处</p>
+                <p class="text-xs text-gray-500">支持 PDF, JPG, PNG 格式，最大 10MB</p>
+            `;
+            
+            updateDocumentCheck();
+            showToast(`${getDocumentName(docType)}已移除`, 'info');
+        }
+
+        function updateDocumentCheck() {
+            const checkList = document.getElementById('documentCheckList');
+            const requiredDocs = [
+                { key: 'propertyDeed', name: '产权证书' },
+                { key: 'landUseCert', name: '土地使用证' }
+            ];
+            
+            checkList.innerHTML = requiredDocs.map(doc => {
+                const uploaded = uploadedFiles[doc.key];
+                const iconClass = uploaded ? 'fas fa-check-circle text-green-600' : 'fas fa-circle text-gray-300';
+                const status = uploaded ? '已上传' : '未上传';
+                return `
+                    <div class="flex items-center text-sm text-gray-600">
+                        <i class="${iconClass} mr-2"></i>
+                        ${doc.name}：${status}
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function handlePhotoSelect(event) {
+            const files = Array.from(event.target.files);
+            const previewContainer = document.getElementById('photoPreview');
+            
+            if (files.length === 0) return;
+            
+            // 限制最多10张照片
+            if (files.length > 10) {
+                showToast('最多只能上传10张照片', 'warning');
+                return;
+            }
+            
+            previewContainer.classList.remove('hidden');
+            previewContainer.innerHTML = '';
+            
+            files.forEach((file, index) => {
+                if (file.size > 5 * 1024 * 1024) { // 5MB限制
+                    showToast(`${file.name} 文件过大，跳过上传`, 'warning');
+                    return;
+                }
+                
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    const photoDiv = document.createElement('div');
+                    photoDiv.className = 'relative group';
+                    photoDiv.innerHTML = `
+                        <img src="${e.target.result}" alt="Asset photo ${index + 1}" 
+                             class="w-full h-24 object-cover rounded-lg border border-gray-200">
+                        <button onclick="this.parentElement.remove()" 
+                                class="absolute -top-2 -right-2 w-6 h-6 bg-red-500 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity">
+                            <i class="fas fa-times text-xs"></i>
+                        </button>
+                    `;
+                    previewContainer.appendChild(photoDiv);
+                };
+                reader.readAsDataURL(file);
+            });
+            
+            showToast(`成功添加${files.length}张照片`, 'success');
+        }
+
+        // ========================================
+        // 工具函数
+        // ========================================
+        function getDocumentName(docType) {
+            const names = {
+                propertyDeed: '产权证书',
+                landUseCert: '土地使用证',
+                buildingPermit: '建筑规划许可证',
+                fireSafetyCert: '消防验收证书'
+            };
+            return names[docType] || docType;
+        }
+
+        function getFileIcon(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf': return 'fa-file-pdf';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'fa-file-image';
+                case 'doc':
+                case 'docx': return 'fa-file-word';
+                default: return 'fa-file';
+            }
+        }
+
+        function getFileIconClass(filename) {
+            const ext = filename.split('.').pop().toLowerCase();
+            switch(ext) {
+                case 'pdf': return 'pdf';
+                case 'jpg':
+                case 'jpeg':
+                case 'png': return 'image';
+                case 'doc':
+                case 'docx': return 'doc';
+                default: return 'other';
+            }
+        }
+
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+
+        function formatDateTime(date) {
+            return date.toLocaleString('zh-CN', {
+                year: 'numeric',
+                month: '2-digit',
+                day: '2-digit',
+                hour: '2-digit',
+                minute: '2-digit'
+            });
+        }
+
+        // ========================================
+        // 预览和保存功能
+        // ========================================
+        function toggleStepPreview() {
+            const preview = document.getElementById('stepPreview');
+            if (preview.classList.contains('hidden')) {
+                generatePreviewContent();
+                preview.classList.remove('hidden');
+            } else {
+                preview.classList.add('hidden');
+            }
+        }
+
+        function generatePreviewContent() {
+            const previewContent = document.getElementById('previewContent');
+            saveCurrentStepData(); // 确保包含当前步骤数据
+            
+            previewContent.innerHTML = `
+                <div class="space-y-6">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">基本信息</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>资产名称：${formData.assetName || '未填写'}</div>
+                            <div>资产类型：${getAssetTypeText(formData.assetType) || '未选择'}</div>
+                            <div>详细地址：${formData.address || '未填写'}</div>
+                            <div>所属城市：${getCityText(formData.city) || '未选择'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">财务信息</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>资产估值：${formData.assetValue ? `¥${Number(formData.assetValue).toLocaleString()}元` : '未填写'}</div>
+                            <div>建筑面积：${formData.buildingArea ? `${formData.buildingArea}㎡` : '未填写'}</div>
+                            <div>月租金收入：${formData.monthlyRent ? `¥${Number(formData.monthlyRent).toLocaleString()}元` : '未填写'}</div>
+                            <div>出租率：${formData.occupancyRate ? `${formData.occupancyRate}%` : '未填写'}</div>
+                        </div>
+                    </div>
+                    
+                    <div class="bg-yellow-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">文档状态</h4>
+                        <div class="text-sm space-y-1">
+                            ${Object.entries(uploadedFiles).map(([key, file]) => 
+                                `<div class="flex items-center"><i class="fas fa-check-circle text-green-600 mr-2"></i>${getDocumentName(key)}：${file.name}</div>`
+                            ).join('')}
+                            ${Object.keys(uploadedFiles).length === 0 ? '<div class="text-gray-500">暂无上传文档</div>' : ''}
+                        </div>
+                    </div>
+                    
+                    <div class="bg-purple-50 p-4 rounded-lg">
+                        <h4 class="font-semibold text-gray-900 mb-2">物理特征</h4>
+                        <div class="grid grid-cols-2 gap-4 text-sm">
+                            <div>建成年份：${formData.buildYear || '未填写'}</div>
+                            <div>建筑层数：${formData.floors || '未填写'}</div>
+                            <div>电梯数量：${formData.elevators || '未填写'}</div>
+                            <div>停车位：${formData.parkingSpaces || '未填写'}</div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        function generateSummaryPreview() {
+            const summaryContainer = document.getElementById('summaryPreview');
+            saveCurrentStepData();
+            
+            summaryContainer.innerHTML = `
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <!-- 基本信息卡片 -->
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-info-circle text-blue-600 mr-2"></i>
+                            基本信息
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">资产名称：</span>
+                                <span class="font-medium">${formData.assetName || '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">资产类型：</span>
+                                <span class="font-medium">${getAssetTypeText(formData.assetType) || '未选择'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">所属城市：</span>
+                                <span class="font-medium">${getCityText(formData.city) || '未选择'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">资产编号：</span>
+                                <span class="font-medium font-mono">${formData.assetCode || '未生成'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 财务信息卡片 -->
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-dollar-sign text-green-600 mr-2"></i>
+                            财务信息
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">资产估值：</span>
+                                <span class="font-medium">${formData.assetValue ? `¥${Number(formData.assetValue).toLocaleString()}元` : '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">建筑面积：</span>
+                                <span class="font-medium">${formData.buildingArea ? `${Number(formData.buildingArea).toLocaleString()}㎡` : '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">月租金收入：</span>
+                                <span class="font-medium">${formData.monthlyRent ? `¥${Number(formData.monthlyRent).toLocaleString()}元` : '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">出租率：</span>
+                                <span class="font-medium">${formData.occupancyRate ? `${formData.occupancyRate}%` : '未填写'}</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- 文档状态卡片 -->
+                    <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-file-contract text-yellow-600 mr-2"></i>
+                            文档状态
+                        </h4>
+                        <div class="space-y-2">
+                            ${Object.entries(uploadedFiles).map(([key, file]) => 
+                                `<div class="flex items-center justify-between">
+                                    <span class="text-gray-600">${getDocumentName(key)}：</span>
+                                    <span class="text-green-600 text-sm flex items-center">
+                                        <i class="fas fa-check-circle mr-1"></i>已上传
+                                    </span>
+                                </div>`
+                            ).join('')}
+                            ${Object.keys(uploadedFiles).length === 0 ? 
+                                '<div class="text-gray-500 text-center py-4">暂无上传文档</div>' : ''}
+                        </div>
+                    </div>
+
+                    <!-- 物理特征卡片 -->
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-6">
+                        <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                            <i class="fas fa-building text-purple-600 mr-2"></i>
+                            物理特征
+                        </h4>
+                        <div class="space-y-3">
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">建成年份：</span>
+                                <span class="font-medium">${formData.buildYear || '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">建筑层数：</span>
+                                <span class="font-medium">${formData.floors || '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">电梯数量：</span>
+                                <span class="font-medium">${formData.elevators || '未填写'}</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-600">停车位：</span>
+                                <span class="font-medium">${formData.parkingSpaces || '未填写'}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- 完整地址 -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-2 flex items-center">
+                        <i class="fas fa-map-marker-alt text-gray-600 mr-2"></i>
+                        详细地址
+                    </h4>
+                    <p class="text-gray-700">${formData.address || '未填写详细地址'}</p>
+                </div>
+
+                <!-- 设施配套 -->
+                <div class="bg-gray-50 border border-gray-200 rounded-lg p-6">
+                    <h4 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <i class="fas fa-cogs text-gray-600 mr-2"></i>
+                        设施配套
+                    </h4>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-2">
+                        ${getFacilitiesDisplay()}
+                    </div>
+                </div>
+            `;
+        }
+
+        function getFacilitiesDisplay() {
+            const facilitiesChecked = document.querySelectorAll('input[name="facilities"]:checked');
+            const facilitiesMap = {
+                centralAC: '中央空调',
+                security: '24小时保安',
+                cafeteria: '员工餐厅',
+                gym: '健身房',
+                conference: '会议室',
+                garden: '绿化花园',
+                metro: '地铁直达',
+                shopping: '商业配套'
+            };
+
+            if (facilitiesChecked.length === 0) {
+                return '<div class="text-gray-500 col-span-full text-center py-4">暂无选择设施配套</div>';
+            }
+
+            return Array.from(facilitiesChecked).map(checkbox => 
+                `<div class="flex items-center text-sm text-gray-700">
+                    <i class="fas fa-check-circle text-green-600 mr-2"></i>
+                    ${facilitiesMap[checkbox.value] || checkbox.value}
+                </div>`
+            ).join('');
+        }
+
+        function getAssetTypeText(value) {
+            const types = {
+                office: '写字楼',
+                retail: '零售商业',
+                residential: '住宅',
+                warehouse: '仓储物流',
+                hotel: '酒店',
+                industrial: '工业',
+                mixed: '综合体',
+                other: '其他'
+            };
+            return types[value] || value;
+        }
+
+        function getCityText(value) {
+            const cities = {
+                beijing: '北京市',
+                shanghai: '上海市',
+                shenzhen: '深圳市',
+                guangzhou: '广州市',
+                hangzhou: '杭州市',
+                nanjing: '南京市',
+                suzhou: '苏州市',
+                chengdu: '成都市',
+                other: '其他城市'
+            };
+            return cities[value] || value;
+        }
+
+        // ========================================
+        // 保存和提交功能
+        // ========================================
+        function saveDraft() {
+            saveCurrentStepData();
+            
+            // 模拟保存到本地存储或服务器
+            try {
+                const draftData = {
+                    formData: formData,
+                    uploadedFiles: uploadedFiles,
+                    currentStep: currentStep,
+                    saveTime: new Date().toISOString()
+                };
+                
+                // 这里应该调用API保存到服务器
+                console.log('Saving draft:', draftData);
+                
+                isDraftSaved = true;
+                showSaveStatus();
+                showToast('草稿保存成功', 'success');
+                
+            } catch (error) {
+                console.error('Save draft failed:', error);
+                showToast('草稿保存失败，请重试', 'error');
+            }
+        }
+
+        function autoSave() {
+            if (currentStep > 1 && !isDraftSaved) {
+                saveDraft();
+            }
+        }
+
+        function showSaveStatus() {
+            const saveStatus = document.getElementById('saveStatus');
+            saveStatus.classList.remove('hidden');
+            
+            setTimeout(() => {
+                saveStatus.classList.add('hidden');
+            }, 3000);
+        }
+
+        function loadDraftData() {
+            // 这里应该从服务器加载草稿数据
+            // 模拟加载过程
+            const savedDraft = null; // 从服务器获取
+            
+            if (savedDraft) {
+                formData = savedDraft.formData || {};
+                uploadedFiles = savedDraft.uploadedFiles || {};
+                currentStep = savedDraft.currentStep || 1;
+                
+                // 恢复表单数据
+                restoreFormData();
+                showToast('已恢复草稿数据', 'info');
+            }
+        }
+
+        function restoreFormData() {
+            // 恢复表单字段值
+            Object.entries(formData).forEach(([key, value]) => {
+                const field = document.getElementById(key) || document.querySelector(`[name="${key}"]`);
+                if (field) {
+                    if (field.type === 'checkbox' || field.type === 'radio') {
+                        field.checked = Array.isArray(value) ? value.includes(field.value) : field.value === value;
+                    } else {
+                        field.value = value;
+                    }
+                }
+            });
+
+            // 恢复上传文件显示
+            Object.entries(uploadedFiles).forEach(([docType, file]) => {
+                showFilePreview(file, docType);
+            });
+        }
+
+        // ========================================
+        // 表单提交
+        // ========================================
+        document.getElementById('assetForm').addEventListener('submit', function(e) {
+            e.preventDefault();
+            
+            if (!validateCurrentStep()) {
+                showToast('请检查并完成所有必填信息', 'error');
+                return;
+            }
+            
+            const submitBtn = document.getElementById('submitBtn');
+            const submitText = document.getElementById('submitText');
+            const submitLoading = document.getElementById('submitLoading');
+            
+            // 显示加载状态
+            submitText.classList.add('hidden');
+            submitLoading.classList.remove('hidden');
+            submitBtn.disabled = true;
+
+            // 准备提交数据
+            saveCurrentStepData();
+            const submitData = {
+                formData: formData,
+                uploadedFiles: uploadedFiles,
+                submitTime: new Date().toISOString(),
+                submitOption: document.querySelector('input[name="submitOption"]:checked').value
+            };
+
+            // 模拟API提交
+            setTimeout(() => {
+                submitText.classList.remove('hidden');
+                submitLoading.classList.add('hidden');
+                submitBtn.disabled = false;
+                
+                if (submitData.submitOption === 'review') {
+                    showToast('资产信息提交成功，审核结果将在3-5个工作日内通知您', 'success', 5000);
+                    setTimeout(() => {
+                        window.location.href = 'asset-list.html';
+                    }, 2000);
+                } else {
+                    showToast('草稿保存成功，您可以随时回来继续编辑', 'success');
+                }
+                
+                console.log('Form submitted:', submitData);
+            }, 3000);
+        });
+
+        // ========================================
+        // 导航和通用函数
+        // ========================================
+        function showNotifications() {
+            showToast('您有3条未读通知', 'info');
+        }
+
+        function showUserProfile() {
+            showToast('用户资料功能开发中...', 'info');
+        }
+
+        function showDocumentCenter() {
+            showToast('文档管理中心功能开发中...', 'info');
+        }
+
+        function showReportsCenter() {
+            showToast('收益报告中心功能开发中...', 'info');
+        }
+
+        // ========================================
+        // Toast通知系统
+        // ========================================
+        function showToast(message, type = 'info', duration = 3000) {
+            const toastContainer = document.getElementById('toastContainer');
+            const toast = document.createElement('div');
+            
+            const icons = {
+                success: 'fas fa-check-circle text-green-600',
+                error: 'fas fa-exclamation-circle text-red-600',
+                warning: 'fas fa-exclamation-triangle text-yellow-600',
+                info: 'fas fa-info-circle text-blue-600'
+            };
+            
+            toast.className = `toast ${type}`;
+            toast.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <i class="${icons[type]}"></i>
+                    <div class="flex-1">
+                        <div class="font-medium text-gray-900">${message}</div>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            setTimeout(() => {
+                if (toast.parentElement) {
+                    toast.style.animation = 'slideOut 0.3s ease-out';
+                    setTimeout(() => toast.remove(), 300);
+                }
+            }, duration);
+        }
+
+        // ========================================
+        // 键盘快捷键
+        // ========================================
+        document.addEventListener('keydown', function(e) {
+            if (e.ctrlKey || e.metaKey) {
+                switch(e.key) {
+                    case 's':
+                        e.preventDefault();
+                        saveDraft();
+                        break;
+                    case 'Enter':
+                        if (e.target.tagName !== 'TEXTAREA') {
+                            e.preventDefault();
+                            nextStep();
+                        }
+                        break;
+                }
+            }
+            
+            if (e.key === 'Escape') {
+                const preview = document.getElementById('stepPreview');
+                if (!preview.classList.contains('hidden')) {
+                    toggleStepPreview();
+                }
+            }
+        });
+
+        // ========================================
+        // 页面离开提醒
+        // ========================================
+        window.addEventListener('beforeunload', function(e) {
+            if (!isDraftSaved && Object.keys(formData).length > 0) {
+                e.preventDefault();
+                e.returnValue = '您有未保存的数据，确定要离开页面吗？';
+                return e.returnValue;
+            }
+        });
+
+        // ========================================
+        // 初始化完成提示
+        // ========================================
+        console.log('PropertyChain Asset Creation Form initialized successfully');
+    </script>
+</body>
+</html>
